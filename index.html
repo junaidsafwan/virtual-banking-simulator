@@ -1,928 +1,1750 @@
 <!DOCTYPE html>
-<html lang="bn" class="dark">
+<html lang="bn" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ভার্চুয়াল ব্যাংকিং ও ওয়ালেট সিস্টেম</title>
+    <title>ভার্চুয়াল ওয়ালেট এবং ব্যাংকিং সিস্টেম</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Noto+Sans+Bengali:wght@400;600&display=swap" rel="stylesheet">
     
-    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --glass-bg-dark: rgba(255, 255, 255, 0.05);
+            --glass-border-dark: rgba(255, 255, 255, 0.1);
+            --glass-bg-light: rgba(255, 255, 255, 0.7);
+            --glass-border-light: rgba(0, 0, 0, 0.1);
+        }
+        body {
+            font-family: 'Inter', 'Noto Sans Bengali', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+            overflow-x: hidden;
+        }
+        .card-glass {
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        [data-bs-theme="dark"] body {
+            background: linear-gradient(135deg, #1a1c2c 0%, #121212 100%);
+            color: #e0e0e0;
+        }
+        [data-bs-theme="dark"] .card-glass {
+            background: var(--glass-bg-dark);
+            border: 1px solid var(--glass-border-dark);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        [data-bs-theme="light"] body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+        }
+        [data-bs-theme="light"] .card-glass {
+            background: var(--glass-bg-light);
+            border: 1px solid var(--glass-border-light);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+        }
+        .card-glass:hover {
+            transform: translateY(-2px);
+        }
+        
+        .clock-display {
+            font-family: monospace;
+            font-size: 1.1rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            color: #0dcaf0;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+        .nav-tabs .nav-link {
+            border-radius: 0.5rem 0.5rem 0 0;
+            font-weight: 600;
+        }
+        .card-credit {
+            background: linear-gradient(45deg, #d4af37, #f3e5ab);
+            color: #000;
+            border-radius: 15px;
+            padding: 15px;
+            text-shadow: 0px 1px 2px rgba(255,255,255,0.5);
+            font-family: monospace;
+        }
+        .card-debit {
+            background: linear-gradient(45deg, #2c3e50, #3498db);
+            color: #fff;
+            border-radius: 15px;
+            padding: 15px;
+            text-shadow: 0px 1px 2px rgba(0,0,0,0.5);
+            font-family: monospace;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(100,100,100,0.5); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(100,100,100,0.8); }
+        
+        .toast-container { z-index: 1060; }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#"><i class="fa-solid fa-building-columns text-info"></i> ভি-ব্যাংকিং</a>
+            
+            <div class="d-flex align-items-center ms-auto gap-3">
+                <div class="clock-display" id="virtualClock" title="ভার্চুয়াল সময় (৫ গুন দ্রুত)">
+                    <i class="fa-regular fa-clock"></i> 00:00:00
+                </div>
+                <button class="btn btn-outline-light btn-sm rounded-circle" id="themeToggleBtn" onclick="toggleTheme()" title="থিম পরিবর্তন করুন">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4 mb-5">
+        
+        <!-- Global Lock Alert -->
+        <div id="globalLockAlert" class="alert alert-danger d-none text-center fw-bold shadow-sm" role="alert">
+            <i class="fa-solid fa-triangle-exclamation"></i> বিগ ব্যাংক কর্তৃক সকল ব্যাংকিং লেনদেন সাময়িকভাবে বন্ধ রয়েছে!
+        </div>
+
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-tabs mb-4 border-bottom-0" id="mainTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin" type="button" role="tab">
+                    <i class="fa-solid fa-user-shield"></i> এডমিন (বিগ ব্যাংক)
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="services-tab" data-bs-toggle="tab" data-bs-target="#services" type="button" role="tab">
+                    <i class="fa-solid fa-network-wired"></i> সার্ভিসেস (ওয়ালেট/ব্যাংক)
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="customers-tab" data-bs-toggle="tab" data-bs-target="#customers" type="button" role="tab">
+                    <i class="fa-solid fa-users"></i> গ্রাহক সমূহ
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Contents -->
+        <div class="tab-content" id="mainTabsContent">
+            
+            <!-- ADMIN TAB -->
+            <div class="tab-pane fade show active" id="admin" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="card card-glass p-4 text-center h-100">
+                            <h3 class="text-primary"><i class="fa-solid fa-building-columns"></i> বিগ ব্যাংক</h3>
+                            <hr class="border-secondary">
+                            <div class="row mt-3">
+                                <div class="col-6">
+                                    <h6 class="text-muted">মূল একাউন্ট</h6>
+                                    <h4 class="text-success" id="bbMainBal">$0.00</h4>
+                                </div>
+                                <div class="col-6 border-start border-secondary">
+                                    <h6 class="text-muted">মুনাফা একাউন্ট</h6>
+                                    <h4 class="text-info" id="bbProfitBal">$0.00</h4>
+                                </div>
+                            </div>
+                            <div class="mt-4 d-flex justify-content-center gap-2">
+                                <button class="btn btn-success" onclick="modifyBigBankBal('add')"><i class="fa-solid fa-plus"></i> ডলার যোগ</button>
+                                <button class="btn btn-danger" onclick="modifyBigBankBal('sub')"><i class="fa-solid fa-minus"></i> ডলার বিয়োগ</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card card-glass p-4 h-100">
+                            <h4 class="text-warning"><i class="fa-solid fa-gears"></i> সিস্টেম কন্ট্রোল</h4>
+                            <hr class="border-secondary">
+                            <div class="d-flex justify-content-between align-items-center mb-3 p-2 rounded bg-opacity-10 bg-secondary">
+                                <span>গ্লোবাল ট্রানজেকশন (System Wide)</span>
+                                <button id="globalTxBtn" class="btn btn-sm btn-success" onclick="toggleGlobalTx()">চালু আছে</button>
+                            </div>
+                            <p class="text-muted small mb-0"><i class="fa-solid fa-circle-info"></i> এখান থেকে পুরো সিস্টেমের ট্রানজেকশন একসাথে অফ/অন করা যাবে।</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card card-glass p-4">
+                            <h5 class="text-white"><i class="fa-solid fa-list-check"></i> বিগ ব্যাংক লোন প্যানেল (সার্ভিস সমূহ)</h5>
+                            <div class="table-responsive mt-3">
+                                <table class="table table-dark table-hover table-bordered align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>সার্ভিস নাম</th>
+                                            <th>লোন আসল</th>
+                                            <th>উৎস</th>
+                                            <th>লোন মুনাফা</th>
+                                            <th>পরিশোধিত</th>
+                                            <th>বকেয়া</th>
+                                            <th>স্ট্যাটাস</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="bbLoanTableBody">
+                                        <!-- Populated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SERVICES TAB -->
+            <div class="tab-pane fade" id="services" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="mb-0">ওয়ালেট এবং ব্যাংক সার্ভিস</h3>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createServiceModal">
+                        <i class="fa-solid fa-plus"></i> নতুন সার্ভিস তৈরী
+                    </button>
+                </div>
+                <div id="servicesContainer" class="row g-4">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- CUSTOMERS TAB -->
+            <div class="tab-pane fade" id="customers" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="mb-0">গ্রাহক সমূহ</h3>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCustomerModal">
+                        <i class="fa-solid fa-user-plus"></i> নতুন গ্রাহক তৈরী
+                    </button>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6 d-flex gap-2">
+                        <select id="customerSelect" class="form-select bg-dark text-white border-secondary flex-grow-1" onchange="renderCustomerDashboard()">
+                            <option value="">-- গ্রাহক নির্বাচন করুন --</option>
+                        </select>
+                        <button class="btn btn-outline-info" id="btnRenameCustomer" onclick="renameCustomer()" title="নাম পরিবর্তন" style="display:none;"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn btn-outline-danger" id="btnDeleteCustomer" onclick="deleteCustomer()" title="একাউন্ট ডিলিট" style="display:none;"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>
+
+                <div id="customerDashboard" class="d-none">
+                    <!-- Specific Customer Dashboard rendered by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+
+    <!-- Create Service Modal -->
+    <div class="modal fade" id="createServiceModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-white border-secondary">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title">নতুন সার্ভিস তৈরী</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">সার্ভিস এর নাম</label>
+                        <input type="text" id="newServiceName" class="form-control bg-dark text-white border-secondary" placeholder="উদাঃ Bkash / DBBL">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">সার্ভিস এর ধরণ</label>
+                        <select id="newServiceType" class="form-select bg-dark text-white border-secondary">
+                            <option value="Wallet">ওয়ালেট (Wallet)</option>
+                            <option value="Bank">ব্যাংক (Bank)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">ট্রানজেকশন ফি (%)</label>
+                        <input type="number" id="newServiceFee" class="form-control bg-dark text-white border-secondary" value="1.5" step="0.1">
+                    </div>
+                    <div class="alert alert-info py-2 small"><i class="fa-solid fa-gift"></i> তৈরি হলেই ২ মিলিয়ন ডলার বোনাস মূল একাউন্টে যুক্ত হবে!</div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">বাতিল</button>
+                    <button type="button" class="btn btn-primary" onclick="createService()">তৈরী করুন</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Customer Modal -->
+    <div class="modal fade" id="createCustomerModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-white border-secondary">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title">নতুন গ্রাহক তৈরী</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">গ্রাহকের নাম</label>
+                        <input type="text" id="newCustomerName" class="form-control bg-dark text-white border-secondary" placeholder="পুরো নাম">
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">বাতিল</button>
+                    <button type="button" class="btn btn-primary" onclick="createCustomer()">তৈরী করুন</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Take Service Loan Modal (Big Bank -> Service) -->
+    <div class="modal fade" id="takeServiceLoanModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-white border-secondary">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title">বিগ ব্যাংক থেকে লোন গ্রহণ</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="takeSrvLoanSrvId">
+                    <div class="mb-3">
+                        <label class="form-label">লোনের পরিমাণ ($)</label>
+                        <input type="number" id="takeSrvLoanAmount" class="form-control bg-dark text-white border-secondary" placeholder="কত ডলার নিতে চান?">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">কোন একাউন্ট থেকে লোন নিবেন?</label>
+                        <select id="takeSrvLoanSource" class="form-select bg-dark text-white border-secondary">
+                            <option value="main">বিগ ব্যাংক মূল একাউন্ট (Main)</option>
+                            <option value="profit">বিগ ব্যাংক মুনাফা একাউন্ট (Profit)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">ইন্টারেস্ট রেট (%)</label>
+                        <input type="number" id="takeSrvLoanInterest" class="form-control bg-dark text-white border-secondary" value="25" placeholder="ইন্টারেস্ট রেট দিন">
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">বাতিল</button>
+                    <button type="button" class="btn btn-primary" onclick="submitTakeServiceLoan()">লোন নিন</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Loan Modal (Service -> Customer) -->
+    <div class="modal fade" id="customerLoanModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-white border-secondary">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title">ব্যাংক থেকে লোন গ্রহণ</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="loanAccId">
+                    <div class="mb-3">
+                        <label class="form-label">লোনের পরিমাণ ($)</label>
+                        <input type="number" id="loanAmount" class="form-control bg-dark text-white border-secondary" placeholder="কত ডলার নিতে চান?">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">ইন্টারেস্ট রেট (%)</label>
+                        <input type="number" id="loanInterest" class="form-control bg-dark text-white border-secondary" value="10">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">কোন একাউন্ট থেকে লোন নিবেন?</label>
+                        <select id="loanSource" class="form-select bg-dark text-white border-secondary">
+                            <option value="main">মূল একাউন্ট (Main)</option>
+                            <option value="profit">মুনাফা একাউন্ট (Profit)</option>
+                        </select>
+                        <small class="text-info mt-1 d-block" id="loanSourceBalance"></small>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">বাতিল</button>
+                    <button type="button" class="btn btn-primary" onclick="submitCustomerLoan()">লোন নিন</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Loan Repayment Modal -->
+    <div class="modal fade" id="payServiceLoanModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-white border-secondary">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title">বিগ ব্যাংকের লোন পরিশোধ</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="paySrvLoanId">
+                    <div class="mb-3">
+                        <div class="alert alert-warning py-2 mb-3">
+                            <strong>মোট বকেয়া: <span id="paySrvTotalDue"></span></strong>
+                        </div>
+                        <label class="form-label">পরিশোধের পরিমাণ ($)</label>
+                        <input type="number" id="paySrvAmount" class="form-control bg-dark text-white border-secondary" placeholder="কত ডলার পরিশোধ করবেন?">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">আপনার কোন একাউন্ট থেকে পরিশোধ করবেন?</label>
+                        <select id="paySrvSource" class="form-select bg-dark text-white border-secondary">
+                            <option value="main">মূল একাউন্ট (Main)</option>
+                            <option value="profit">মুনাফা একাউন্ট (Profit)</option>
+                        </select>
+                        <small class="text-info mt-1 d-block" id="paySrvSourceBalance"></small>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">বাতিল</button>
+                    <button type="button" class="btn btn-success" onclick="submitPayServiceLoan()">পরিশোধ করুন</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transfer Modal -->
+    <div class="modal fade" id="transferModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-white border-secondary">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title">মানি ট্রান্সফার</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="transferFromAccId">
+                    <div class="mb-3">
+                        <label class="form-label">কাকে পাঠাবেন?</label>
+                        <select id="transferTargetSelect" class="form-select bg-dark text-white border-secondary">
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">পরিমাণ ($)</label>
+                        <input type="number" id="transferAmount" class="form-control bg-dark text-white border-secondary" placeholder="কত ডলার পাঠাবেন?">
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">বাতিল</button>
+                    <button type="button" class="btn btn-primary" onclick="submitTransfer()">ট্রান্সফার করুন</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FDR List Modal -->
+    <div class="modal fade" id="fdrListModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content bg-dark text-white border-secondary">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title">আপনার FDR তালিকা</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover table-bordered align-middle text-center">
+                            <thead>
+                                <tr>
+                                    <th>জমাকৃত অর্থ</th>
+                                    <th>মুনাফার হার</th>
+                                    <th>ব্যবধান (Interval)</th>
+                                    <th>স্ট্যাটাস</th>
+                                    <th>অ্যাকশন</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fdrListBody">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Prompt Modal -->
+    <div class="modal fade" id="customPromptModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-white border-secondary">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title" id="promptTitle">তথ্য দিন</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="resolvePrompt(null)"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="promptMessage" class="mb-2"></p>
+                    <input type="text" id="promptInput" class="form-control bg-dark text-white border-secondary">
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="resolvePrompt(null)">বাতিল</button>
+                    <button type="button" class="btn btn-primary" onclick="submitPrompt()">নিশ্চিত</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="liveToast" class="toast text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header border-0 bg-transparent text-white">
+                <strong class="me-auto" id="toastTitle"><i class="fa-solid fa-bell"></i> নোটিফিকেশন</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body fw-bold" id="toastMessage"></div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
-                    colors: {
-                        primary: '#3b82f6',
-                        darkBg: '#0f172a',
-                        darkCard: '#1e293b'
+        // --- Core Application State ---
+        let state = {
+            virtualTime: Date.now(),
+            lastRealTime: Date.now(),
+            bigBank: {
+                main: 10000000,
+                profit: 0,
+                txEnabled: true
+            },
+            services: [],  // {id, name, type, fee, main, profit, blocked, txEnabled, partners: [id]}
+            customers: [], // {id, name, blocked, txEnabled}
+            accounts: [],  // {id, customerId, serviceId, balance}
+            loans: [],     // {id, serviceId, accountId, type:'BB_TO_SRV'|'SRV_TO_CUST', principal, interest, paid, active, source:'main'|'profit', bbSource: 'main'|'profit'}
+            fdrs: [],      // {id, accountId, principal, rate, intervalSec, lastYieldTime, durationSec, active}
+            cards: []      // {id, accountId, serviceId, type:'DEBIT'|'CREDIT', number, exp, cvv, limit, spent, active, lastBillingDate}
+        };
+
+        // Custom Prompt logic
+        let promptResolver = null;
+        function showPrompt(message, defaultValue = "") {
+            return new Promise((resolve) => {
+                document.getElementById('promptMessage').innerText = message;
+                document.getElementById('promptInput').value = defaultValue;
+                promptResolver = resolve;
+                let modal = new bootstrap.Modal(document.getElementById('customPromptModal'));
+                modal.show();
+                // Focus input
+                setTimeout(() => document.getElementById('promptInput').focus(), 500);
+            });
+        }
+        function submitPrompt() {
+            let val = document.getElementById('promptInput').value;
+            let modal = bootstrap.Modal.getInstance(document.getElementById('customPromptModal'));
+            modal.hide();
+            resolvePrompt(val);
+        }
+        function resolvePrompt(val) {
+            if (promptResolver) {
+                promptResolver(val);
+                promptResolver = null;
+            }
+        }
+
+        // Custom Alert Logic (Toasts)
+        function showAlert(msg, isError = false) {
+            const toastEl = document.getElementById('liveToast');
+            const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+            
+            toastEl.classList.remove('bg-success', 'bg-danger', 'bg-info');
+            toastEl.classList.add(isError ? 'bg-danger' : 'bg-success');
+            
+            document.getElementById('toastMessage').innerText = msg;
+            toast.show();
+        }
+
+        // Helpers
+        const generateId = () => Math.random().toString(36).substr(2, 9);
+        const formatMoney = (amount) => parseFloat(amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+        // LocalStorage Management
+        function saveState() {
+            localStorage.setItem('vBankingState', JSON.stringify(state));
+        }
+
+        function loadState() {
+            const saved = localStorage.getItem('vBankingState');
+            if(saved) {
+                const parsed = JSON.parse(saved);
+                state = { ...state, ...parsed };
+                // Calculate passed time while offline
+                const now = Date.now();
+                const offlineRealMs = now - (state.lastRealTime || now);
+                const offlineVirtualMs = offlineRealMs * 5; // 5x speed
+                state.virtualTime += offlineVirtualMs;
+                state.lastRealTime = now;
+                
+                // Fix missing fields
+                state.services.forEach(s => {
+                    if(s.main === undefined) s.main = 2000000;
+                    if(s.profit === undefined) s.profit = 0;
+                });
+            }
+        }
+
+        // Virtual Time Loop (Runs every 1 real second = 5 virtual seconds)
+        function startVirtualClock() {
+            setInterval(() => {
+                const now = Date.now();
+                const realDelta = now - state.lastRealTime;
+                state.virtualTime += (realDelta * 5); // 5x speed
+                state.lastRealTime = now;
+                
+                updateClockUI();
+                processBackgroundTasks();
+            }, 1000);
+        }
+
+        function updateClockUI() {
+            const vDate = new Date(state.virtualTime);
+            document.getElementById('virtualClock').innerHTML = `<i class="fa-regular fa-clock"></i> ` + 
+                vDate.toLocaleString('bn-BD', {
+                    day: '2-digit', month: 'short', year:'numeric',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit'
+                });
+        }
+
+        function processBackgroundTasks() {
+            let stateChanged = false;
+
+            // 1. Process FDR
+            state.fdrs.forEach(fdr => {
+                if(!fdr.active) return;
+                const msPassed = state.virtualTime - fdr.lastYieldTime;
+                const msInterval = fdr.intervalSec * 1000;
+                
+                if(msPassed >= msInterval) {
+                    const cycles = Math.floor(msPassed / msInterval);
+                    const yieldAmount = (fdr.principal * (fdr.rate / 100)) * cycles;
+                    
+                    const acc = state.accounts.find(a => a.id === fdr.accountId);
+                    if(acc) {
+                        acc.balance += yieldAmount;
+                        fdr.lastYieldTime += (cycles * msInterval);
+                        stateChanged = true;
                     }
+                }
+            });
+
+            // 2. Process Credit Card Fines (10 Virtual Days cycle)
+            const virtualDayMs = 86400000;
+            state.cards.forEach(card => {
+                if(card.type === 'CREDIT' && card.active && card.spent > 0) {
+                    const msSinceBilling = state.virtualTime - card.lastBillingDate;
+                    const daysSinceBilling = Math.floor(msSinceBilling / virtualDayMs);
+                    
+                    if(daysSinceBilling > 10) { 
+                        const penaltyDays = daysSinceBilling - 10;
+                        const expectedFines = penaltyDays * 2; // $2 per day fine
+                        
+                        if(card.fines === undefined) card.fines = 0;
+                        if(expectedFines > card.fines) {
+                            card.fines = expectedFines;
+                            stateChanged = true;
+                        }
+                    }
+                }
+            });
+
+            if(stateChanged) {
+                saveState();
+                if(document.getElementById('customerDashboard').classList.contains('d-none') === false) {
+                    renderCustomerDashboard(false); // Silent re-render
                 }
             }
         }
-    </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    
-    <style>
-        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
-        .glass-panel { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
-        .dark .glass-panel { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.05); }
-        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
-        .fade-enter-from, .fade-leave-to { opacity: 0; }
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .dark ::-webkit-scrollbar-thumb { background: #475569; }
-    </style>
-</head>
-<body class="bg-gray-50 text-gray-800 dark:bg-darkBg dark:text-gray-100 min-h-screen flex flex-col">
 
-    <div id="app" class="flex flex-col h-screen overflow-hidden" v-cloak>
-        
-        <!-- Toast Notification -->
-        <div class="fixed top-4 right-4 z-[60] flex flex-col gap-2">
-            <transition-group name="fade">
-                <div v-for="toast in toasts" :key="toast.id" 
-                     class="px-4 py-3 rounded shadow-lg text-white font-medium flex items-center gap-2"
-                     :class="toast.type === 'error' ? 'bg-red-500' : (toast.type === 'success' ? 'bg-green-500' : 'bg-blue-500')">
-                    <i :class="toast.type === 'error' ? 'fa-solid fa-circle-exclamation' : 'fa-solid fa-circle-check'"></i>
-                    {{ toast.msg }}
-                </div>
-            </transition-group>
-        </div>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-bs-theme');
+            const target = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-bs-theme', target);
+            document.getElementById('themeToggleBtn').innerHTML = target === 'dark' ? '<i class="fa-solid fa-moon"></i>' : '<i class="fa-solid fa-sun text-warning"></i>';
+        }
 
-        <!-- Header -->
-        <header class="bg-white dark:bg-darkCard shadow-sm z-10 flex-shrink-0">
-            <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white text-xl shadow-lg">
-                        <i class="fa-solid fa-building-columns"></i>
-                    </div>
-                    <h1 class="text-xl font-bold hidden sm:block text-gray-800 dark:text-white">ভার্চুয়াল ফাইন্যান্স</h1>
-                </div>
-                
-                <div class="flex items-center gap-4 sm:gap-6">
-                    <div class="bg-blue-100 dark:bg-blue-900/40 px-3 py-1.5 rounded-lg flex flex-col items-end">
-                        <span class="text-xs text-blue-600 dark:text-blue-400 font-semibold uppercase">ভার্চুয়াল সময় (5x)</span>
-                        <span class="text-sm font-mono font-bold">{{ formattedVirtualTime }}</span>
-                    </div>
-                    
-                    <div v-if="state.bigBank" class="flex items-center gap-2">
-                        <span class="text-xs font-semibold">গ্লোবাল লেনদেন:</span>
-                        <button @click="toggleGlobalTx" :class="state.bigBank.globalTx ? 'bg-green-500' : 'bg-red-500'" class="w-10 h-5 rounded-full relative transition-colors duration-200">
-                            <div :class="state.bigBank.globalTx ? 'translate-x-5' : 'translate-x-0'" class="w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-200 absolute top-0 left-0"></div>
-                        </button>
-                    </div>
-
-                    <button @click="toggleTheme" class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-600 transition">
-                        <i v-if="isDark" class="fa-solid fa-sun text-yellow-400"></i>
-                        <i v-else class="fa-solid fa-moon text-gray-700"></i>
-                    </button>
-                </div>
-            </div>
+        // --- Admin/Big Bank Functions ---
+        async function modifyBigBankBal(type) {
+            const val = await showPrompt(type === 'add' ? "কত ডলার যোগ করতে চান?" : "কত ডলার বিয়োগ করতে চান?");
+            const amt = parseFloat(val);
+            if(isNaN(amt) || amt <= 0) return showAlert("সঠিক পরিমাণ দিন", true);
             
-            <div class="max-w-7xl mx-auto px-4 flex overflow-x-auto hide-scrollbar border-b border-gray-200 dark:border-gray-700">
-                <button v-for="tab in tabs" :key="tab.id" @click="currentTab = tab.id"
-                    :class="['px-5 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors', 
-                             currentTab === tab.id ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200']">
-                    <i :class="tab.icon" class="mr-2"></i> {{ tab.name }}
-                </button>
-            </div>
-        </header>
+            if(type === 'add') state.bigBank.main += amt;
+            else {
+                if(state.bigBank.main < amt) return showAlert("পর্যাপ্ত ব্যালেন্স নেই!", true);
+                state.bigBank.main -= amt;
+            }
+            saveState();
+            renderAdmin();
+            showAlert('ব্যালেন্স আপডেট সফল হয়েছে');
+        }
 
-        <main class="flex-1 overflow-y-auto p-4 sm:p-6 pb-20">
-            <div class="max-w-7xl mx-auto h-full relative">
+        function toggleGlobalTx() {
+            state.bigBank.txEnabled = !state.bigBank.txEnabled;
+            saveState();
+            renderAll();
+            showAlert(state.bigBank.txEnabled ? 'গ্লোবাল ট্রানজেকশন চালু হয়েছে' : 'গ্লোবাল ট্রানজেকশন বন্ধ হয়েছে', !state.bigBank.txEnabled);
+        }
+
+        function renderAdmin() {
+            document.getElementById('bbMainBal').innerText = '$' + formatMoney(state.bigBank.main);
+            document.getElementById('bbProfitBal').innerText = '$' + formatMoney(state.bigBank.profit);
+            
+            const gBtn = document.getElementById('globalTxBtn');
+            const gAlert = document.getElementById('globalLockAlert');
+            
+            if(state.bigBank.txEnabled) {
+                gBtn.className = "btn btn-sm btn-success";
+                gBtn.innerText = "চালু আছে";
+                gAlert.classList.add('d-none');
+            } else {
+                gBtn.className = "btn btn-sm btn-danger";
+                gBtn.innerText = "বন্ধ আছে";
+                gAlert.classList.remove('d-none');
+            }
+
+            // Loan Table
+            let loanHtml = '';
+            state.loans.filter(l => l.type === 'BB_TO_SRV').forEach(l => {
+                const srv = state.services.find(s => s.id === l.serviceId);
+                const srvName = srv ? srv.name : 'Unknown';
+                const due = (l.principal + l.interest) - l.paid;
+                const status = l.active ? `<span class="badge bg-warning">চলমান</span>` : `<span class="badge bg-success">পরিশোধিত</span>`;
+                const bbSrcText = l.bbSource === 'profit' ? 'মুনাফা একাউন্ট' : 'মূল একাউন্ট';
                 
-                <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-darkBg/80 z-20">
-                    <div class="text-center">
-                        <i class="fa-solid fa-circle-notch fa-spin text-4xl text-primary mb-3"></i>
-                        <p class="animate-pulse font-semibold">ডেটা সিঙ্ক হচ্ছে...</p>
-                    </div>
-                </div>
+                loanHtml += `
+                    <tr>
+                        <td>${srvName}</td>
+                        <td>$${formatMoney(l.principal)}</td>
+                        <td>${bbSrcText}</td>
+                        <td>$${formatMoney(l.interest)}</td>
+                        <td>$${formatMoney(l.paid)}</td>
+                        <td class="${due > 0 ? 'text-danger fw-bold' : 'text-success'}">$${formatMoney(due)}</td>
+                        <td>${status}</td>
+                    </tr>
+                `;
+            });
+            if(loanHtml === '') loanHtml = `<tr><td colspan="7" class="text-center text-muted">কোন লোন রেকর্ড নেই</td></tr>`;
+            document.getElementById('bbLoanTableBody').innerHTML = loanHtml;
+        }
 
-                <!-- TAB 1: Admin / Big Bank -->
-                <div v-show="currentTab === 'admin' && state.bigBank" class="space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="glass-panel rounded-2xl p-6 relative overflow-hidden">
-                            <div class="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full -mr-10 -mt-10 blur-xl"></div>
-                            <h2 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="fa-solid fa-building text-primary"></i> বিগ ব্যাংক একাউন্ট</h2>
-                            <div class="space-y-4">
-                                <div class="bg-white/50 dark:bg-black/20 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
-                                    <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">মূল একাউন্ট ব্যালেন্স</p>
-                                    <p class="text-3xl font-bold text-gray-800 dark:text-white">${{ formatMoney(state.bigBank.mainBal) }}</p>
+        // --- Services Functions ---
+        function createService() {
+            const name = document.getElementById('newServiceName').value.trim();
+            const type = document.getElementById('newServiceType').value;
+            const fee = parseFloat(document.getElementById('newServiceFee').value);
+
+            if(!name || isNaN(fee) || fee < 0) return showAlert("সঠিক তথ্য দিন", true);
+
+            state.services.push({
+                id: generateId(),
+                name, type, fee,
+                main: 2000000, // 2 million default bonus
+                profit: 0,
+                blocked: false, txEnabled: true,
+                partners: []
+            });
+
+            saveState();
+            bootstrap.Modal.getInstance(document.getElementById('createServiceModal')).hide();
+            document.getElementById('newServiceName').value = '';
+            showAlert(`নতুন সার্ভিস তৈরী হয়েছে (২ মিলিয়ন ডলার বোনাস সহ!)`);
+            renderServices();
+        }
+
+        async function renameService(id) {
+            const s = state.services.find(x => x.id === id);
+            const val = await showPrompt("নতুন নাম দিন:", s.name);
+            if(val && val.trim() !== '') {
+                s.name = val.trim();
+                saveState(); renderServices(); renderAdmin();
+                showAlert("নাম পরিবর্তন হয়েছে");
+            }
+        }
+
+        async function deleteService(id) {
+            const conf = await showPrompt("আপনি কি এই সার্ভিসটি ডিলিট করতে চান? 'হ্যাঁ' লিখে নিশ্চিত করুন।\n(সতর্কতা: এর সকল একাউন্ট, লোন, কার্ড মুছে যাবে!)", "");
+            if(conf !== "হ্যাঁ") return showAlert("ডিলিট বাতিল করা হয়েছে");
+
+            const accsToDel = state.accounts.filter(a => a.serviceId === id).map(a => a.id);
+            state.fdrs = state.fdrs.filter(f => !accsToDel.includes(f.accountId));
+            state.cards = state.cards.filter(c => c.serviceId !== id);
+            state.loans = state.loans.filter(l => l.serviceId !== id); // Remove both BB loans and Customer loans related to this service
+            state.accounts = state.accounts.filter(a => a.serviceId !== id);
+            
+            // Remove from partners
+            state.services.forEach(s => {
+                s.partners = s.partners.filter(p => p !== id);
+            });
+            
+            state.services = state.services.filter(s => s.id !== id);
+
+            saveState(); renderAll();
+            showAlert("সার্ভিসটি ডিলিট করা হয়েছে", true);
+        }
+
+        function toggleServiceBlock(id) {
+            const s = state.services.find(x => x.id === id);
+            s.blocked = !s.blocked;
+            saveState(); renderServices();
+        }
+
+        function toggleServiceTx(id) {
+            const s = state.services.find(x => x.id === id);
+            s.txEnabled = !s.txEnabled;
+            saveState(); renderServices();
+        }
+
+        async function promptChangeFee(id) {
+            const s = state.services.find(x => x.id === id);
+            const val = await showPrompt(`বর্তমান ফি: ${s.fee}%\nনতুন ফি পরিমাণ দিন:`, s.fee);
+            if(val !== null) {
+                const f = parseFloat(val);
+                if(!isNaN(f) && f >= 0) {
+                    s.fee = f;
+                    saveState(); renderServices();
+                    showAlert("ফি আপডেট হয়েছে");
+                }
+            }
+        }
+
+        function togglePartner(id1, id2) {
+            const s1 = state.services.find(x => x.id === id1);
+            const s2 = state.services.find(x => x.id === id2);
+            
+            if(s1.partners.includes(id2)) {
+                s1.partners = s1.partners.filter(x => x !== id2);
+                s2.partners = s2.partners.filter(x => x !== id1);
+                showAlert("পার্টনারশিপ বাতিল হয়েছে");
+            } else {
+                s1.partners.push(id2);
+                s2.partners.push(id1);
+                showAlert("নতুন পার্টনারশিপ তৈরী হয়েছে (৫৫% ছাড়)");
+            }
+            saveState(); renderServices();
+        }
+
+        function showTakeServiceLoanModal(serviceId) {
+            document.getElementById('takeSrvLoanSrvId').value = serviceId;
+            document.getElementById('takeSrvLoanAmount').value = '';
+            document.getElementById('takeSrvLoanInterest').value = '25';
+            new bootstrap.Modal(document.getElementById('takeServiceLoanModal')).show();
+        }
+
+        function submitTakeServiceLoan() {
+            const serviceId = document.getElementById('takeSrvLoanSrvId').value;
+            const amt = parseFloat(document.getElementById('takeSrvLoanAmount').value);
+            const rate = parseFloat(document.getElementById('takeSrvLoanInterest').value);
+            const source = document.getElementById('takeSrvLoanSource').value; // 'main' or 'profit'
+
+            if(isNaN(amt) || amt <= 0 || isNaN(rate) || rate < 0) return showAlert("সঠিক তথ্য দিন", true);
+            
+            if(state.bigBank[source] < amt) {
+                return showAlert(`বিগ ব্যাংকের নির্বাচিত একাউন্টে লোন দেওয়ার মতো পর্যাপ্ত ফান্ড নেই!`, true);
+            }
+
+            // Deduct from Big Bank Source, Add to Service Main
+            state.bigBank[source] -= amt;
+            const srv = state.services.find(s => s.id === serviceId);
+            srv.main += amt; 
+
+            // Register Loan
+            state.loans.push({
+                id: generateId(),
+                serviceId: serviceId,
+                type: 'BB_TO_SRV',
+                principal: amt,
+                interest: amt * (rate/100),
+                paid: 0,
+                active: true,
+                bbSource: source
+            });
+
+            showAlert(`বিগ ব্যাংকের ${source==='main'?'মূল':'মুনাফা'} একাউন্ট থেকে লোন সফলভাবে গ্রহণ করা হয়েছে!`);
+            saveState(); renderAll();
+            bootstrap.Modal.getInstance(document.getElementById('takeServiceLoanModal')).hide();
+        }
+
+        function showServiceLoanPayUI(loanId) {
+            const loan = state.loans.find(l => l.id === loanId);
+            const srv = state.services.find(s => s.id === loan.serviceId);
+            const due = loan.principal + loan.interest - loan.paid;
+            
+            document.getElementById('paySrvLoanId').value = loanId;
+            document.getElementById('paySrvTotalDue').innerText = `$${formatMoney(due)}`;
+            document.getElementById('paySrvAmount').value = due.toFixed(2);
+            
+            const sourceSelect = document.getElementById('paySrvSource');
+            const balLabel = document.getElementById('paySrvSourceBalance');
+            
+            const updateLabel = () => {
+                const type = sourceSelect.value;
+                balLabel.innerText = `নির্বাচিত একাউন্টে এভেইলেবল ব্যালেন্স: $${formatMoney(srv[type])}`;
+            };
+            sourceSelect.onchange = updateLabel;
+            updateLabel();
+            
+            new bootstrap.Modal(document.getElementById('payServiceLoanModal')).show();
+        }
+
+        function submitPayServiceLoan() {
+            const loanId = document.getElementById('paySrvLoanId').value;
+            const loan = state.loans.find(l => l.id === loanId);
+            const srv = state.services.find(s => s.id === loan.serviceId);
+            const source = document.getElementById('paySrvSource').value;
+            
+            const amt = parseFloat(document.getElementById('paySrvAmount').value);
+            const due = loan.principal + loan.interest - loan.paid;
+            
+            if(isNaN(amt) || amt <= 0) return showAlert("ভুল পরিমাণ", true);
+            if(amt > (due + 0.01)) return showAlert("বকেয়ার চেয়ে বেশি পরিশোধ করা যাবে না!", true);
+            if(srv[source] < amt) return showAlert("আপনার নির্বাচিত একাউন্টে পর্যাপ্ত ব্যালেন্স নেই!", true);
+
+            srv[source] -= amt;
+
+            // Distribute repayment
+            const totalOriginal = loan.principal + loan.interest;
+            const toPrincipal = amt * (loan.principal / totalOriginal);
+            const toInterest = amt - toPrincipal;
+
+            // Principal goes back to the source it was taken from
+            const bbSrc = loan.bbSource || 'main';
+            state.bigBank[bbSrc] += toPrincipal;
+            state.bigBank.profit += toInterest; // Interest always goes to profit
+            
+            loan.paid += amt;
+
+            if(Math.abs((loan.principal + loan.interest) - loan.paid) < 0.01) {
+                loan.active = false; 
+            }
+
+            showAlert(`লোন পরিশোধ সফল হয়েছে (${source === 'main'?'মূল':'মুনাফা'} একাউন্ট থেকে)!`);
+            saveState(); 
+            bootstrap.Modal.getInstance(document.getElementById('payServiceLoanModal')).hide();
+            renderAll();
+        }
+
+        function renderServices() {
+            const container = document.getElementById('servicesContainer');
+            if(state.services.length === 0) {
+                container.innerHTML = `<div class="col-12 text-center text-muted py-5">কোন সার্ভিস তৈরী করা হয়নি।</div>`;
+                return;
+            }
+
+            container.innerHTML = state.services.map(srv => {
+                const otherServices = state.services.filter(s => s.id !== srv.id);
+                const partnersHtml = otherServices.map(os => {
+                    const isPartner = srv.partners.includes(os.id);
+                    return `<button class="btn btn-sm ${isPartner ? 'btn-success' : 'btn-outline-secondary'} m-1" onclick="togglePartner('${srv.id}', '${os.id}')">${os.name} ${isPartner ? '<i class="fa-solid fa-check"></i>' : ''}</button>`;
+                }).join('');
+
+                const srvLoans = state.loans.filter(l => l.serviceId === srv.id && l.type === 'BB_TO_SRV' && l.active);
+                const loanListHtml = srvLoans.length === 0 ? '<small class="text-muted">কোন লোন নেই</small>' : srvLoans.map(l => {
+                    const due = l.principal + l.interest - l.paid;
+                    const srcTxt = l.bbSource === 'profit' ? 'মুনাফা একাউন্ট' : 'মূল একাউন্ট';
+                    return `<div class="d-flex justify-content-between align-items-center border-top border-secondary pt-2 mt-2">
+                                <div>
+                                    <small class="text-muted">উৎস: ${srcTxt} | আসল: $${formatMoney(l.principal)} | মুনাফা: $${formatMoney(l.interest)}</small><br>
+                                    <strong class="text-danger">বকেয়া: $${formatMoney(due)}</strong>
                                 </div>
-                                <div class="bg-green-500/10 p-4 rounded-xl border border-green-500/20">
-                                    <p class="text-sm text-green-600 dark:text-green-400 font-medium">মুনাফা একাউন্ট ব্যালেন্স</p>
-                                    <p class="text-2xl font-bold text-green-700 dark:text-green-300">${{ formatMoney(state.bigBank.profitBal) }}</p>
+                                <button class="btn btn-sm btn-outline-success" onclick="showServiceLoanPayUI('${l.id}')">পরিশোধ</button>
+                            </div>`;
+                }).join('');
+
+                return `
+                    <div class="col-md-12 col-lg-12 mb-3">
+                        <div class="card card-glass p-0 border-${srv.blocked ? 'danger' : 'secondary'}">
+                            <div class="card-header border-bottom-0 d-flex justify-content-between align-items-center bg-opacity-10 ${srv.blocked ? 'bg-danger' : 'bg-primary'} rounded-top" style="padding: 15px;">
+                                <h4 class="mb-0 text-white"><i class="fa-solid ${srv.type==='Bank'?'fa-building-columns':'fa-wallet'}"></i> ${srv.name} <span class="badge bg-secondary fs-6">${srv.type}</span></h4>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-light me-1" onclick="renameService('${srv.id}')" title="নাম পরিবর্তন"><i class="fa-solid fa-pen"></i></button>
+                                    <button class="btn btn-sm btn-outline-danger me-2" onclick="deleteService('${srv.id}')" title="ডিলিট"><i class="fa-solid fa-trash"></i></button>
+                                    <span class="badge ${srv.txEnabled ? 'bg-success' : 'bg-danger'}">${srv.txEnabled ? 'লেনদেন চালু' : 'লেনদেন বন্ধ'}</span>
+                                    <span class="badge ${srv.blocked ? 'bg-danger' : 'bg-success'}">${srv.blocked ? 'ব্লকড' : 'সক্রিয়'}</span>
                                 </div>
                             </div>
                             
-                            <div class="mt-6 flex flex-wrap gap-2">
-                                <input v-model.number="adminFundAmount" type="number" placeholder="পরিমাণ ($)" class="flex-1 px-4 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary outline-none">
-                                <button @click="modifyAdminFunds('add')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition"><i class="fa-solid fa-plus"></i> যুক্ত</button>
-                                <button @click="modifyAdminFunds('sub')" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition"><i class="fa-solid fa-minus"></i> বিয়োগ</button>
-                            </div>
-                        </div>
-
-                        <div class="glass-panel rounded-2xl p-6">
-                            <h2 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="fa-solid fa-hand-holding-dollar text-primary"></i> বিগ ব্যাংক থেকে ঋণ প্রদান (২৫% ইন্টারেস্ট)</h2>
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium mb-1">প্রাপক (ওয়ালেট/ব্যাংক/গ্রাহক)</label>
-                                    <select v-model="loanData.receiverId" class="w-full px-4 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 outline-none">
-                                        <option value="">নির্বাচন করুন...</option>
-                                        <optgroup label="ওয়ালেট/ব্যাংক সমূহ">
-                                            <option v-for="e in state.entities" :key="e.id" :value="'E_'+e.id">{{ e.name }} ({{ e.type }})</option>
-                                        </optgroup>
-                                        <optgroup label="গ্রাহক সমূহ">
-                                            <option v-for="u in state.users" :key="u.id" :value="'U_'+u.id">{{ u.name }}</option>
-                                        </optgroup>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium mb-1">ঋণের পরিমাণ ($)</label>
-                                    <input v-model.number="loanData.amount" type="number" class="w-full px-4 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 outline-none">
-                                </div>
-                                <button @click="issueBigBankLoan" class="w-full bg-primary hover:bg-blue-600 text-white py-2 rounded-lg font-semibold shadow-md transition">ঋণ প্রদান করুন</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TAB 2: Entities -->
-                <div v-show="currentTab === 'entities'" class="space-y-6">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                        <h2 class="text-2xl font-bold">ওয়ালেট ও ব্যাংক সার্ভিস</h2>
-                        <button @click="showEntityModal = true" class="bg-primary text-white px-5 py-2 rounded-lg shadow hover:bg-blue-600 transition"><i class="fa-solid fa-plus mr-1"></i> নতুন সার্ভিস তৈরি</button>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <div v-for="entity in state.entities" :key="entity.id" class="glass-panel rounded-xl p-5 relative">
-                            <div class="absolute top-4 right-4 flex gap-2">
-                                <button @click="toggleEntityBlock(entity)" :class="entity.isBlocked ? 'text-red-500' : 'text-green-500'" title="ব্লক/আনব্লক"><i class="fa-solid fa-shield-halved"></i></button>
-                                <button @click="toggleEntityTx(entity)" :class="entity.txEnabled ? 'text-blue-500' : 'text-gray-500'" title="লেনদেন চালু/বন্ধ"><i class="fa-solid fa-right-left"></i></button>
-                            </div>
-                            
-                            <div class="flex items-center gap-3 mb-4">
-                                <div :class="entity.type === 'bank' ? 'bg-indigo-500' : 'bg-teal-500'" class="w-12 h-12 rounded-full text-white flex items-center justify-center text-xl shadow">
-                                    <i :class="entity.type === 'bank' ? 'fa-solid fa-building-columns' : 'fa-solid fa-wallet'"></i>
-                                </div>
-                                <div>
-                                    <h3 class="font-bold text-lg leading-tight">{{ entity.name }} <span v-if="entity.isBlocked" class="text-xs text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded">Blocked</span></h3>
-                                    <span class="text-xs text-gray-500 dark:text-gray-400 capitalize">{{ entity.type }}</span>
-                                </div>
-                            </div>
-
-                            <div class="bg-white/50 dark:bg-black/20 p-3 rounded-lg mb-4 text-sm">
-                                <div class="flex justify-between mb-1"><span class="text-gray-500">মূল ব্যালেন্স:</span> <span class="font-bold">${{ formatMoney(entity.mainBal) }}</span></div>
-                                <div class="flex justify-between mb-1"><span class="text-gray-500">মুনাফা ব্যালেন্স:</span> <span class="font-bold text-green-500">${{ formatMoney(entity.profitBal) }}</span></div>
-                                <div class="flex justify-between"><span class="text-gray-500">ট্রানজেকশন ফি:</span> <span class="font-bold text-blue-500">{{ entity.txFee }}%</span></div>
-                            </div>
-                            
-                            <div class="flex gap-2">
-                                <button @click="openEntityManageModal(entity)" class="flex-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 py-1.5 rounded text-sm font-medium transition">
-                                    <i class="fa-solid fa-sliders"></i> ম্যানেজমেন্ট প্যানেল
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TAB 3: Customers -->
-                <div v-show="currentTab === 'customers'" class="space-y-6">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                        <h2 class="text-2xl font-bold">গ্রাহক প্যানেল</h2>
-                        <button @click="showUserModal = true" class="bg-primary text-white px-5 py-2 rounded-lg shadow hover:bg-blue-600 transition"><i class="fa-solid fa-user-plus mr-1"></i> নতুন গ্রাহক</button>
-                    </div>
-
-                    <div class="flex flex-col md:flex-row gap-6">
-                        <div class="w-full md:w-1/3 glass-panel rounded-xl p-4 overflow-y-auto max-h-[70vh]">
-                            <h3 class="font-semibold mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">সকল গ্রাহক</h3>
-                            <div v-if="state.users.length === 0" class="text-sm text-gray-500 text-center py-4">কোন গ্রাহক নেই</div>
-                            <div class="space-y-2">
-                                <div v-for="user in state.users" :key="user.id" @click="selectUser(user)"
-                                     :class="['p-3 rounded-lg cursor-pointer transition flex items-center gap-3', 
-                                              selectedUser?.id === user.id ? 'bg-primary text-white shadow-md' : 'hover:bg-gray-200 dark:hover:bg-gray-700 bg-white dark:bg-gray-800']">
-                                    <div class="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center font-bold text-gray-700 dark:text-gray-200">
-                                        {{ user.name.charAt(0) }}
+                            <div class="card-body row g-3">
+                                <div class="col-md-6">
+                                    <div class="p-3 bg-dark bg-opacity-50 rounded border border-secondary mb-3">
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <small class="text-muted">মূল একাউন্ট</small>
+                                                <h5 class="text-success">$${formatMoney(srv.main)}</h5>
+                                            </div>
+                                            <div class="col-6 border-start border-secondary">
+                                                <small class="text-muted">মুনাফা একাউন্ট</small>
+                                                <h5 class="text-info">$${formatMoney(srv.profit)}</h5>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="flex-1 overflow-hidden">
-                                        <p class="font-medium truncate">{{ user.name }}</p>
+                                    <div class="mb-3">
+                                        <strong class="text-white">ট্রানজেকশন ফি:</strong> <span class="badge bg-primary fs-6">${srv.fee}%</span>
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <button class="btn btn-sm btn-danger" onclick="toggleServiceBlock('${srv.id}')">${srv.blocked ? 'আনব্লক করুন' : 'ব্লক করুন'}</button>
+                                        <button class="btn btn-sm btn-warning" onclick="toggleServiceTx('${srv.id}')">${srv.txEnabled ? 'লেনদেন বন্ধ করুন' : 'লেনদেন চালু করুন'}</button>
+                                        <button class="btn btn-sm btn-info" onclick="promptChangeFee('${srv.id}')">ফি পরিবর্তন</button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card card-glass p-3 mb-3 border-secondary bg-transparent">
+                                        <h6 class="text-info"><i class="fa-solid fa-handshake"></i> পার্টনারশিপ (৫৫% ফি ছাড়)</h6>
+                                        <div class="d-flex flex-wrap">${partnersHtml || '<small class="text-muted">অন্য কোন সার্ভিস নেই</small>'}</div>
+                                    </div>
+                                    <div class="card card-glass p-3 border-warning bg-transparent">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h6 class="text-warning mb-0"><i class="fa-solid fa-building-columns"></i> বিগ ব্যাংক লোন</h6>
+                                            <button class="btn btn-sm btn-primary" onclick="showTakeServiceLoanModal('${srv.id}')">লোন নিন</button>
+                                        </div>
+                                        ${loanListHtml}
                                     </div>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                `;
+            }).join('');
+        }
 
-                        <div class="w-full md:w-2/3" v-if="selectedUser">
-                            <div class="glass-panel rounded-xl p-6 mb-6">
-                                <div class="flex justify-between items-start mb-4">
+        // --- Customer Functions ---
+        function createCustomer() {
+            const name = document.getElementById('newCustomerName').value.trim();
+            if(!name) return showAlert("নাম দিন", true);
+            
+            state.customers.push({
+                id: generateId(),
+                name,
+                blocked: false,
+                txEnabled: true
+            });
+            saveState();
+            bootstrap.Modal.getInstance(document.getElementById('createCustomerModal')).hide();
+            document.getElementById('newCustomerName').value = '';
+            showAlert("নতুন গ্রাহক তৈরী হয়েছে");
+            populateCustomerSelect();
+        }
+
+        async function renameCustomer() {
+            const cId = document.getElementById('customerSelect').value;
+            if(!cId) return;
+            const c = state.customers.find(x => x.id === cId);
+            const val = await showPrompt("নতুন নাম দিন:", c.name);
+            if(val && val.trim() !== '') {
+                c.name = val.trim();
+                saveState(); populateCustomerSelect(); renderCustomerDashboard();
+                showAlert("গ্রাহকের নাম পরিবর্তন হয়েছে");
+            }
+        }
+
+        async function deleteCustomer() {
+            const cId = document.getElementById('customerSelect').value;
+            if(!cId) return;
+            
+            const conf = await showPrompt("আপনি কি এই গ্রাহক একাউন্টটি ডিলিট করতে চান? 'হ্যাঁ' লিখে নিশ্চিত করুন।\n(সতর্কতা: এর সকল ব্যাংক একাউন্ট, লোন, কার্ড মুছে যাবে!)", "");
+            if(conf !== "হ্যাঁ") return showAlert("ডিলিট বাতিল করা হয়েছে");
+
+            const accsToDel = state.accounts.filter(a => a.customerId === cId).map(a => a.id);
+            state.fdrs = state.fdrs.filter(f => !accsToDel.includes(f.accountId));
+            state.cards = state.cards.filter(c => !accsToDel.includes(c.accountId));
+            state.loans = state.loans.filter(l => !(l.type === 'SRV_TO_CUST' && accsToDel.includes(l.accountId)));
+            state.accounts = state.accounts.filter(a => a.customerId !== cId);
+            state.customers = state.customers.filter(c => c.id !== cId);
+
+            saveState(); populateCustomerSelect(); renderCustomerDashboard();
+            showAlert("গ্রাহক একাউন্টটি ডিলিট করা হয়েছে", true);
+        }
+
+        function populateCustomerSelect() {
+            const sel = document.getElementById('customerSelect');
+            const currentVal = sel.value;
+            sel.innerHTML = '<option value="">-- গ্রাহক নির্বাচন করুন --</option>' + 
+                state.customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            
+            if(currentVal && state.customers.find(c => c.id === currentVal)) {
+                sel.value = currentVal;
+            } else {
+                sel.value = '';
+            }
+            toggleCustomerBtns();
+        }
+
+        function toggleCustomerBtns() {
+            const val = document.getElementById('customerSelect').value;
+            document.getElementById('btnRenameCustomer').style.display = val ? 'block' : 'none';
+            document.getElementById('btnDeleteCustomer').style.display = val ? 'block' : 'none';
+        }
+
+        async function openAccount(customerId) {
+            const availableServices = state.services.filter(s => !s.blocked);
+            if(availableServices.length === 0) return showAlert("কোন সক্রিয় সার্ভিস নেই!", true);
+
+            let optionsStr = availableServices.map((s, i) => `${i+1}. ${s.name} (${s.type})`).join("\n");
+            const val = await showPrompt(`কোন সার্ভিসে একাউন্ট খুলতে চান? নম্বর দিন:\n${optionsStr}`);
+            if(!val) return;
+            
+            const idx = parseInt(val) - 1;
+            if(isNaN(idx) || idx < 0 || idx >= availableServices.length) return showAlert("ভুল নির্বাচন", true);
+            
+            const srv = availableServices[idx];
+            
+            if(state.accounts.some(a => a.customerId === customerId && a.serviceId === srv.id)) {
+                return showAlert("এই সার্ভিসে আপনার আগেই একাউন্ট আছে!", true);
+            }
+
+            state.accounts.push({
+                id: generateId(),
+                customerId,
+                serviceId: srv.id,
+                balance: 0
+            });
+            saveState(); renderCustomerDashboard();
+            showAlert(`${srv.name} এ একাউন্ট খোলা হয়েছে!`);
+        }
+
+        async function manualBalChange(accId, type) {
+            const val = await showPrompt(type==='add' ? "কত আয় যুক্ত করতে চান?" : "কত ব্যয় যুক্ত করতে চান?");
+            if(!val) return;
+            const amt = parseFloat(val);
+            if(isNaN(amt) || amt <= 0) return showAlert("ভুল পরিমাণ", true);
+            
+            const acc = state.accounts.find(a => a.id === accId);
+            if(type === 'sub' && acc.balance < amt) return showAlert("পর্যাপ্ত ব্যালেন্স নেই!", true);
+            
+            if(type==='add') acc.balance += amt;
+            else acc.balance -= amt;
+            
+            saveState(); renderCustomerDashboard();
+            showAlert("ব্যালেন্স আপডেট হয়েছে");
+        }
+
+        function renderCustomerDashboard(forceRefresh = true) {
+            toggleCustomerBtns();
+            const cId = document.getElementById('customerSelect').value;
+            const dash = document.getElementById('customerDashboard');
+            if(!cId) { dash.classList.add('d-none'); return; }
+            
+            const cust = state.customers.find(c => c.id === cId);
+            const myAccounts = state.accounts.filter(a => a.customerId === cId);
+            
+            let html = `
+                <div class="card card-glass p-4 mb-4 border-${cust.blocked?'danger':'primary'}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0"><i class="fa-solid fa-user-circle"></i> ${cust.name} এর ড্যাশবোর্ড</h4>
+                        <div>
+                            <button class="btn btn-sm btn-outline-light" onclick="openAccount('${cId}')"><i class="fa-solid fa-folder-plus"></i> একাউন্ট খুলুন</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row g-4">
+            `;
+
+            if(myAccounts.length === 0) {
+                html += `<div class="col-12 text-center text-muted">কোন একাউন্ট নেই। একটি নতুন একাউন্ট খুলুন।</div>`;
+            }
+
+            myAccounts.forEach(acc => {
+                const srv = state.services.find(s => s.id === acc.serviceId);
+                if(!srv) return; // safety
+                const isBlocked = cust.blocked || srv.blocked || !cust.txEnabled || !srv.txEnabled || !state.bigBank.txEnabled;
+                
+                const myLoans = state.loans.filter(l => l.type === 'SRV_TO_CUST' && l.accountId === acc.id && l.active);
+                let loansHtml = '';
+                if(myLoans.length > 0) {
+                    loansHtml = `<hr class="border-secondary"><h6 class="text-warning">আমার লোনসমূহ</h6>`;
+                    myLoans.forEach(l => {
+                        const due = l.principal + l.interest - l.paid;
+                        loansHtml += `
+                            <div class="bg-dark bg-opacity-50 p-2 rounded mb-2 border border-warning border-opacity-25">
+                                <small class="text-muted d-block">উৎস: ${l.source === 'main' ? 'মূল একাউন্ট' : 'মুনাফা একাউন্ট'}</small>
+                                <div class="d-flex justify-content-between align-items-center">
                                     <div>
-                                        <h2 class="text-2xl font-bold">{{ selectedUser.name }} এর ড্যাশবোর্ড</h2>
-                                        <p class="text-sm text-gray-500">ম্যানুয়াল আয়/ব্যয় ও একাউন্ট ম্যানেজমেন্ট</p>
+                                        <small>আসল: $${formatMoney(l.principal)} | মুনাফা: $${formatMoney(l.interest)}</small><br>
+                                        <strong class="text-danger">বকেয়া: $${formatMoney(due)}</strong>
                                     </div>
-                                    <button @click="showOpenAccountModal = true" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm shadow transition">
-                                        <i class="fa-solid fa-folder-plus mr-1"></i> একাউন্ট খুলুন
+                                    <button class="btn btn-sm btn-outline-success" onclick="payCustomerLoan('${l.id}')">পরিশোধ</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                const activeFDRs = state.fdrs.filter(f => f.accountId === acc.id && f.active).length;
+                let fdrBadge = activeFDRs > 0 ? `<span class="badge bg-dark ms-2">${activeFDRs}</span>` : '';
+                
+                html += `
+                    <div class="col-md-6 col-xl-4">
+                        <div class="card card-glass h-100 border-${isBlocked ? 'danger':'secondary'}">
+                            <div class="card-header bg-dark d-flex justify-content-between">
+                                <strong>${srv.name} <span class="badge bg-secondary">${srv.type}</span></strong>
+                                <span>${isBlocked ? '<i class="fa-solid fa-lock text-danger"></i> Locked' : '<i class="fa-solid fa-lock-open text-success"></i>'}</span>
+                            </div>
+                            <div class="card-body">
+                                <h2 class="text-center text-success">$${formatMoney(acc.balance)}</h2>
+                                <div class="d-flex justify-content-center gap-2 mt-3 mb-3">
+                                    <button class="btn btn-sm btn-outline-success" onclick="manualBalChange('${acc.id}', 'add')">আয়</button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="manualBalChange('${acc.id}', 'sub')">ব্যয়</button>
+                                </div>
+                                <hr class="border-secondary">
+                                <button class="btn btn-primary w-100 mb-2" onclick="showTransferUI('${acc.id}')" ${isBlocked?'disabled':''}>
+                                    <i class="fa-solid fa-paper-plane"></i> মানি ট্রান্সফার
+                                </button>
+                                <button class="btn btn-secondary w-100 mb-2" onclick="showCustomerLoanUI('${acc.id}')" ${isBlocked?'disabled':''}>
+                                    <i class="fa-solid fa-hand-holding-dollar"></i> ব্যাংক লোন নিন
+                                </button>
+                                <div class="d-flex gap-2 mb-2">
+                                    <button class="btn btn-info flex-grow-1" onclick="showFDRUI('${acc.id}')" ${isBlocked?'disabled':''}>
+                                        <i class="fa-solid fa-piggy-bank"></i> FDR করুন
+                                    </button>
+                                    <button class="btn btn-outline-info" onclick="showFDRList('${acc.id}')" title="FDR তালিকা দেখুন">
+                                        <i class="fa-solid fa-list"></i> ${fdrBadge}
                                     </button>
                                 </div>
-                                
-                                <h3 class="font-semibold mt-6 mb-3 text-lg">এক্টিভ একাউন্ট সমূহ</h3>
-                                <div v-if="getUserAccounts.length === 0" class="text-sm text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded">
-                                    এই গ্রাহকের কোন ব্যাংক বা ওয়ালেট একাউন্ট নেই।
-                                </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div v-for="acc in getUserAccounts" :key="acc.id" class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 relative">
-                                        <div class="absolute top-2 right-2 flex gap-1">
-                                            <span v-if="acc.isBlocked" class="text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded">Blocked</span>
-                                            <span v-if="!acc.txEnabled" class="text-[10px] bg-yellow-500 text-white px-1.5 py-0.5 rounded">Tx Off</span>
-                                        </div>
-                                        <div class="flex items-center gap-2 mb-2">
-                                            <i :class="getEntity(acc.entityId)?.type === 'bank' ? 'fa-solid fa-building-columns text-indigo-500' : 'fa-solid fa-wallet text-teal-500'"></i>
-                                            <span class="font-semibold">{{ getEntity(acc.entityId)?.name || 'Unknown' }}</span>
-                                        </div>
-                                        <div class="text-2xl font-bold mb-1">${{ formatMoney(acc.balance) }}</div>
-                                        <p class="text-xs text-gray-500 font-mono mb-4">A/C: {{ acc.id.substring(0,8) }}...</p>
-                                        
-                                        <div class="flex flex-wrap gap-2">
-                                            <button @click="openAccountAction(acc, 'deposit')" class="text-xs bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 px-2 py-1 rounded hover:bg-green-200">আয় যুক্ত</button>
-                                            <button @click="openAccountAction(acc, 'withdraw')" class="text-xs bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 px-2 py-1 rounded hover:bg-red-200">ব্যয় (উত্তোলন)</button>
-                                            <button @click="openAccountAction(acc, 'transfer')" class="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 px-2 py-1 rounded hover:bg-blue-200">ট্রান্সফার</button>
-                                            <button @click="openCards(acc)" class="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 px-2 py-1 rounded hover:bg-purple-200">কার্ডস <i class="fa-regular fa-credit-card"></i></button>
-                                            <button @click="openFdrModal(acc)" class="text-xs bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300 px-2 py-1 rounded hover:bg-yellow-200">FDR</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </main>
-
-        
-        <!-- Entity Creation Modal -->
-        <div v-if="showEntityModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div class="bg-white dark:bg-darkCard rounded-2xl p-6 w-full max-w-md shadow-2xl transform transition-all">
-                <h3 class="text-xl font-bold mb-4">নতুন সার্ভিস তৈরি করুন</h3>
-                <div class="space-y-4">
-                    <div><label class="text-sm">নাম</label><input v-model="newEntity.name" type="text" class="w-full mt-1 px-3 py-2 border rounded dark:bg-gray-800 dark:border-gray-600"></div>
-                    <div>
-                        <label class="text-sm">ধরন</label>
-                        <select v-model="newEntity.type" class="w-full mt-1 px-3 py-2 border rounded dark:bg-gray-800 dark:border-gray-600">
-                            <option value="bank">ব্যাংক (Bank)</option>
-                            <option value="wallet">ওয়ালেট (Wallet)</option>
-                        </select>
-                    </div>
-                    <div><label class="text-sm">ট্রানজেকশন ফি (%)</label><input v-model.number="newEntity.txFee" type="number" step="0.1" class="w-full mt-1 px-3 py-2 border rounded dark:bg-gray-800 dark:border-gray-600"></div>
-                    <div class="flex gap-3 mt-6">
-                        <button @click="showEntityModal = false" class="flex-1 bg-gray-300 dark:bg-gray-700 py-2 rounded font-medium">বাতিল</button>
-                        <button @click="createEntity" class="flex-1 bg-primary text-white py-2 rounded font-medium">তৈরি করুন</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Entity Management Modal (Panel) -->
-        <div v-if="entityManageModal.show" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div class="bg-white dark:bg-darkCard rounded-2xl p-6 w-full max-w-3xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col">
-                <div class="flex justify-between items-center mb-6 border-b border-gray-200 dark:border-gray-700 pb-3">
-                    <h3 class="text-xl font-bold text-primary"><i class="fa-solid fa-sliders mr-2"></i> {{ entityManageModal.entity.name }} - ম্যানেজমেন্ট প্যানেল</h3>
-                    <button @click="entityManageModal.show = false" class="text-gray-500 hover:text-red-500"><i class="fa-solid fa-xmark text-xl"></i></button>
-                </div>
-
-                <div class="flex gap-2 mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">
-                    <button @click="entityManageModal.tab = 'settings'" :class="entityManageModal.tab === 'settings' ? 'text-primary font-bold border-b-2 border-primary' : 'text-gray-500'" class="px-4 py-1">সার্ভিস সেটিংস</button>
-                    <button @click="entityManageModal.tab = 'accounts'" :class="entityManageModal.tab === 'accounts' ? 'text-primary font-bold border-b-2 border-primary' : 'text-gray-500'" class="px-4 py-1">গ্রাহক একাউন্ট ম্যানেজ</button>
-                </div>
-
-                <div class="overflow-y-auto flex-1 pr-2">
-                    <!-- Settings Tab -->
-                    <div v-if="entityManageModal.tab === 'settings'" class="space-y-4">
-                        <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border dark:border-gray-700">
-                            <h4 class="font-bold mb-3"><i class="fa-solid fa-chart-line text-yellow-500"></i> FDR সেটিংস</h4>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="text-sm block mb-1">মুনাফার হার (%)</label>
-                                    <input v-model.number="entityManageModal.entity.fdrRate" type="number" step="0.1" class="w-full px-3 py-2 border rounded dark:bg-gray-900 dark:border-gray-600">
-                                </div>
-                                <div>
-                                    <label class="text-sm block mb-1">মুনাফা প্রদানের সময়কাল (Interval)</label>
-                                    <div class="flex gap-2">
-                                        <input v-model.number="entityManageModal.entity.fdrIntervalVal" type="number" class="w-1/2 px-3 py-2 border rounded dark:bg-gray-900 dark:border-gray-600">
-                                        <select v-model="entityManageModal.entity.fdrIntervalUnit" class="w-1/2 px-3 py-2 border rounded dark:bg-gray-900 dark:border-gray-600">
-                                            <option value="minute">মিনিট</option>
-                                            <option value="hour">ঘন্টা</option>
-                                            <option value="day">দিন</option>
-                                            <option value="month">মাস</option>
-                                        </select>
-                                    </div>
-                                    <p class="text-xs text-gray-500 mt-1">* ভার্চুয়াল সময়ের উপর ভিত্তি করে</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <button @click="saveState(); showToast('সেটিংস সেভ হয়েছে', 'success')" class="bg-primary text-white px-6 py-2 rounded shadow hover:bg-blue-600">আপডেট করুন</button>
-                        </div>
-                    </div>
-
-                    <!-- Accounts Tab -->
-                    <div v-if="entityManageModal.tab === 'accounts'" class="space-y-3">
-                        <div v-if="getAccountsForEntity(entityManageModal.entity.id).length === 0" class="text-center py-6 text-gray-500">কোন একাউন্ট নেই</div>
-                        
-                        <div v-for="acc in getAccountsForEntity(entityManageModal.entity.id)" :key="acc.id" class="flex flex-col sm:flex-row justify-between items-center p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-sm gap-3">
-                            <div>
-                                <p class="font-bold text-sm">{{ getUserName(acc.userId) }} <span class="font-mono text-gray-500 text-xs ml-2">({{acc.id}})</span></p>
-                                <p class="text-xs text-gray-500">ব্যালেন্স: <span class="font-bold text-gray-800 dark:text-gray-200">${{formatMoney(acc.balance)}}</span></p>
-                            </div>
-                            <div class="flex gap-2">
-                                <button @click="acc.txEnabled = !acc.txEnabled; saveState()" :class="acc.txEnabled ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'" class="px-3 py-1.5 rounded text-xs font-semibold transition">
-                                    <i class="fa-solid fa-right-left"></i> {{ acc.txEnabled ? 'Tx On' : 'Tx Off' }}
+                                <button class="btn btn-warning w-100" onclick="showCardsUI('${acc.id}')">
+                                    <i class="fa-solid fa-credit-card"></i> কার্ড ম্যানেজমেন্ট
                                 </button>
-                                <button @click="acc.isBlocked = !acc.isBlocked; saveState()" :class="acc.isBlocked ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-red-100 text-red-700 hover:bg-red-200'" class="px-3 py-1.5 rounded text-xs font-semibold transition">
-                                    <i class="fa-solid fa-lock"></i> {{ acc.isBlocked ? 'Unblock' : 'Block' }}
-                                </button>
+                                ${loansHtml}
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
+                `;
+            });
+            html += `</div>`;
+            
+            dash.innerHTML = html;
+            dash.classList.remove('d-none');
+        }
 
-        <!-- FDR Modal -->
-        <div v-if="fdrModal.show" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[55] flex items-center justify-center p-4">
-            <div class="bg-white dark:bg-darkCard rounded-2xl p-6 w-full max-w-lg shadow-2xl">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold text-yellow-600 dark:text-yellow-400"><i class="fa-solid fa-piggy-bank mr-2"></i> ফিক্সড ডিপোজিট (FDR)</h3>
-                    <button @click="fdrModal.show = false" class="text-gray-500 hover:text-red-500"><i class="fa-solid fa-xmark text-xl"></i></button>
-                </div>
-                
-                <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700/50 p-4 rounded-xl mb-6">
-                    <p class="text-sm font-semibold text-yellow-800 dark:text-yellow-300">ব্যাংকের বর্তমান অফার:</p>
-                    <p class="text-xl font-bold my-1 text-gray-800 dark:text-white">{{ getEntity(fdrModal.account.entityId)?.fdrRate }}% <span class="text-sm font-normal text-gray-500">মুনাফা</span></p>
-                    <p class="text-xs text-gray-600 dark:text-gray-400">প্রতি {{ getEntity(fdrModal.account.entityId)?.fdrIntervalVal }} {{ translateUnit(getEntity(fdrModal.account.entityId)?.fdrIntervalUnit) }} অন্তর অন্তর মুনাফা প্রদান করা হবে।</p>
-                </div>
+        // --- Transfer Engine ---
+        function showTransferUI(fromAccId) {
+            if(!state.bigBank.txEnabled) return showAlert("বিগ ব্যাংক কর্তৃক গ্লোবাল ট্রানজেকশন বন্ধ!", true);
+            const fromAcc = state.accounts.find(a => a.id === fromAccId);
+            const fromSrv = state.services.find(s => s.id === fromAcc.serviceId);
+            if(fromSrv.blocked || !fromSrv.txEnabled) return showAlert("এই সার্ভিস থেকে ট্রানজেকশন বন্ধ!", true);
 
-                <div class="mb-6 border-b dark:border-gray-700 pb-6">
-                    <h4 class="font-bold text-sm mb-2">নতুন FDR খুলুন</h4>
-                    <p class="text-xs text-gray-500 mb-2">আপনার ব্যালেন্স: ${{ formatMoney(fdrModal.account.balance) }}</p>
-                    <div class="flex gap-2">
-                        <input v-model.number="fdrAmount" type="number" placeholder="ডিপোজিটের পরিমাণ ($)" class="flex-1 px-3 py-2 border rounded dark:bg-gray-800 dark:border-gray-600 text-sm">
-                        <button @click="createFdr" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded text-sm font-bold shadow">জমা করুন</button>
-                    </div>
-                </div>
+            document.getElementById('transferFromAccId').value = fromAccId;
+            const select = document.getElementById('transferTargetSelect');
+            
+            let options = `<optgroup label="বিগ ব্যাংক">
+                            <option value="bb_main">বিগ ব্যাংক (মূল একাউন্ট)</option>
+                            <option value="bb_profit">বিগ ব্যাংক (মুনাফা একাউন্ট)</option>
+                           </optgroup>`;
 
-                <div>
-                    <h4 class="font-bold text-sm mb-3">আপনার এক্টিভ FDR সমূহ</h4>
-                    <div v-if="getActiveFdrs(fdrModal.account.id).length === 0" class="text-xs text-gray-500">কোন এক্টিভ FDR নেই।</div>
-                    <div class="space-y-3 max-h-48 overflow-y-auto pr-1">
-                        <div v-for="fdr in getActiveFdrs(fdrModal.account.id)" :key="fdr.id" class="bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 p-3 rounded-lg flex justify-between items-center">
-                            <div>
-                                <p class="font-bold text-sm">ডিপোজিট: ${{ formatMoney(fdr.amount) }}</p>
-                                <p class="text-xs text-green-600 dark:text-green-400">অর্জিত মুনাফা: +${{ formatMoney(fdr.totalProfit || 0) }}</p>
-                            </div>
-                            <button @click="closeFdr(fdr)" class="text-xs bg-red-100 text-red-600 hover:bg-red-200 px-2 py-1.5 rounded font-semibold">FDR ভাঙুন</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Create User Modal -->
-        <div v-if="showUserModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div class="bg-white dark:bg-darkCard rounded-2xl p-6 w-full max-w-sm shadow-2xl">
-                <h3 class="text-xl font-bold mb-4">নতুন গ্রাহক</h3>
-                <input v-model="newUserName" type="text" placeholder="গ্রাহকের নাম" class="w-full px-3 py-2 border rounded dark:bg-gray-800 dark:border-gray-600 mb-4">
-                <div class="flex gap-3">
-                    <button @click="showUserModal = false" class="flex-1 bg-gray-300 dark:bg-gray-700 py-2 rounded">বাতিল</button>
-                    <button @click="createUser" class="flex-1 bg-primary text-white py-2 rounded">যুক্ত করুন</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Open Account Modal -->
-        <div v-if="showOpenAccountModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div class="bg-white dark:bg-darkCard rounded-2xl p-6 w-full max-w-md shadow-2xl">
-                <h3 class="text-xl font-bold mb-4">নতুন একাউন্ট খুলুন</h3>
-                <label class="block text-sm mb-2">সার্ভিস নির্বাচন করুন</label>
-                <select v-model="selectedEntityForAccount" class="w-full px-3 py-2 border rounded dark:bg-gray-800 dark:border-gray-600 mb-6">
-                    <option value="">নির্বাচন করুন...</option>
-                    <option v-for="e in state.entities" :key="e.id" :value="e.id">{{ e.name }} ({{ e.type }})</option>
-                </select>
-                <div class="flex gap-3">
-                    <button @click="showOpenAccountModal = false" class="flex-1 bg-gray-300 dark:bg-gray-700 py-2 rounded">বাতিল</button>
-                    <button @click="openAccount" class="flex-1 bg-green-600 text-white py-2 rounded">একাউন্ট খুলুন</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Account Actions Modal (Deposit/Withdraw/Transfer) -->
-        <div v-if="actionModal.show" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div class="bg-white dark:bg-darkCard rounded-2xl p-6 w-full max-w-md shadow-2xl">
-                <h3 class="text-xl font-bold mb-4 capitalize text-blue-500 border-b border-gray-200 dark:border-gray-700 pb-2">
-                    {{ actionModal.type === 'deposit' ? 'ম্যানুয়াল আয় যুক্ত' : (actionModal.type === 'withdraw' ? 'ম্যানুয়াল ব্যয়' : 'ফান্ড ট্রান্সফার') }}
-                </h3>
-                
-                <div class="space-y-4">
-                    <p class="text-sm font-medium text-gray-500">বর্তমান ব্যালেন্স: <span class="font-bold text-gray-800 dark:text-white">${{ formatMoney(actionModal.account.balance) }}</span></p>
-                    
-                    <div v-if="actionModal.type === 'transfer'">
-                        <label class="block text-sm mb-1">প্রাপক একাউন্ট আইডি</label>
-                        <input v-model="actionModal.targetAccountId" type="text" placeholder="প্রাপকের A/C ID" class="w-full px-3 py-2 border rounded dark:bg-gray-800 dark:border-gray-600 font-mono text-sm">
-                        
-                        <div class="mt-2 text-xs text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded">
-                            * সেন্ডার সার্ভিসের ট্রানজেকশন ফি: <b>{{ getEntity(actionModal.account.entityId)?.txFee }}%</b><br>
-                            * পার্টনারশিপ থাকলে ৫৫% ফি ছাড় পাওয়া যাবে।
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm mb-1">পরিমাণ ($)</label>
-                        <input v-model.number="actionModal.amount" type="number" class="w-full px-3 py-2 border rounded dark:bg-gray-800 dark:border-gray-600">
-                    </div>
-                </div>
-
-                <div class="flex gap-3 mt-6">
-                    <button @click="actionModal.show = false" class="flex-1 bg-gray-300 dark:bg-gray-700 py-2 rounded">বাতিল</button>
-                    <button @click="executeAccountAction" class="flex-1 bg-primary text-white py-2 rounded">নিশ্চিত করুন</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Cards Modal -->
-        <div v-if="cardsModal.show" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div class="bg-white dark:bg-darkCard rounded-2xl p-6 w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl font-bold"><i class="fa-regular fa-credit-card text-primary mr-2"></i> ভার্চুয়াল কার্ডস</h3>
-                    <button @click="cardsModal.show = false" class="text-gray-500 hover:text-red-500"><i class="fa-solid fa-xmark text-xl"></i></button>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Debit Card -->
-                    <div class="border dark:border-gray-700 rounded-xl p-4">
-                        <h4 class="font-bold mb-3 text-center">ডেবিট কার্ড</h4>
-                        <div v-if="!getDebitCard(cardsModal.account.id)" class="text-center py-4">
-                            <button @click="issueCard(cardsModal.account, 'debit')" class="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-200">কার্ড ইস্যু করুন</button>
-                        </div>
-                        <div v-else class="bg-gradient-to-br from-gray-700 to-gray-900 text-white p-5 rounded-xl shadow-lg relative overflow-hidden">
-                            <div class="absolute right-[-20px] top-[-20px] text-white/10 text-8xl"><i class="fa-brands fa-cc-visa"></i></div>
-                            <p class="text-xs text-gray-300 mb-1">ডেবিট ব্যালেন্স</p>
-                            <h2 class="text-2xl font-bold mb-4">${{ formatMoney(cardsModal.account.balance) }}</h2>
-                            <p class="font-mono tracking-widest mb-2">{{ formatCardNumber(getDebitCard(cardsModal.account.id).number) }}</p>
-                            <div class="flex justify-between text-xs text-gray-300">
-                                <span>EXP: {{ getDebitCard(cardsModal.account.id).exp }}</span>
-                                <span>CVV: ***</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Credit Card -->
-                    <div class="border dark:border-gray-700 rounded-xl p-4">
-                        <h4 class="font-bold mb-3 text-center text-purple-600 dark:text-purple-400">ক্রেডিট কার্ড (লোন)</h4>
-                        <div v-if="!getCreditCard(cardsModal.account.id)" class="text-center py-4 space-y-3">
-                            <input v-model.number="tempCreditLimit" type="number" placeholder="ক্রেডিট লিমিট ($)" class="w-full px-3 py-2 border rounded text-sm dark:bg-gray-800 dark:border-gray-600">
-                            <button @click="issueCard(cardsModal.account, 'credit', tempCreditLimit)" class="w-full bg-purple-100 text-purple-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-200">ক্রেডিট কার্ড আবেদন</button>
-                        </div>
-                        <div v-else class="bg-gradient-to-br from-purple-700 to-indigo-900 text-white p-5 rounded-xl shadow-lg relative">
-                            <div class="absolute right-4 top-4">
-                                <button @click="closeCreditCard(getCreditCard(cardsModal.account.id))" title="কার্ড বন্ধ করুন" class="text-red-300 hover:text-red-100"><i class="fa-solid fa-power-off"></i></button>
-                            </div>
-                            <div class="mb-4">
-                                <span class="text-xs text-gray-300">লিমিট: ${{ getCreditCard(cardsModal.account.id).limit }}</span>
-                                <div class="flex justify-between items-baseline">
-                                    <span class="text-xs text-gray-300">ব্যবহৃত:</span>
-                                    <h2 class="text-xl font-bold text-red-300">${{ getCreditCard(cardsModal.account.id).spent }}</h2>
-                                </div>
-                                <p v-if="getCreditCard(cardsModal.account.id).fine > 0" class="text-xs text-red-400 mt-1"><i class="fa-solid fa-triangle-exclamation"></i> ফাইন: ${{ getCreditCard(cardsModal.account.id).fine }}</p>
-                            </div>
-                            <p class="font-mono tracking-widest text-sm mb-2">{{ getCreditCard(cardsModal.account.id).number }}</p>
-                            
-                            <div class="mt-4 pt-3 border-t border-white/20 flex gap-2">
-                                <button @click="spendCreditModal = true" class="flex-1 bg-white/20 hover:bg-white/30 py-1 text-xs rounded transition">খরচ করুন</button>
-                                <button @click="payCreditBill(getCreditCard(cardsModal.account.id))" class="flex-1 bg-green-500/80 hover:bg-green-500 py-1 text-xs rounded transition">বিল দিন</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div v-if="spendCreditModal && getCreditCard(cardsModal.account.id)" class="mt-4 p-4 border rounded-xl dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-                    <h5 class="text-sm font-bold mb-2">ক্রেডিট কার্ড থেকে খরচ</h5>
-                    <div class="flex gap-2">
-                        <input v-model.number="ccSpendAmount" type="number" placeholder="পরিমাণ" class="flex-1 px-3 py-1.5 border rounded text-sm dark:bg-gray-900 dark:border-gray-600">
-                        <button @click="spendCreditCard(getCreditCard(cardsModal.account.id))" class="bg-primary text-white px-4 py-1.5 rounded text-sm">নিশ্চিত</button>
-                        <button @click="spendCreditModal = false" class="bg-gray-300 text-gray-800 px-3 py-1.5 rounded text-sm">বাতিল</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        const { createApp, ref, computed, onMounted, onUnmounted, reactive } = Vue;
-
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'virtual-bank-demo';
-        const fbConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        let db, auth, stateDocRef;
-
-        const app = createApp({
-            setup() {
-                const isDark = ref(true);
-                const currentTab = ref('admin');
-                const isLoading = ref(true);
-                const toasts = ref([]);
-                let toastId = 0;
-
-                const tabs = [
-                    { id: 'admin', name: 'বিগ ব্যাংক (Admin)', icon: 'fa-solid fa-landmark' },
-                    { id: 'entities', name: 'সার্ভিস ম্যানেজমেন্ট', icon: 'fa-solid fa-server' },
-                    { id: 'customers', name: 'গ্রাহক প্যানেল', icon: 'fa-solid fa-users' }
-                ];
-
-                const state = reactive({
-                    system: { startRealTime: Date.now(), startVirtualTime: Date.now() },
-                    bigBank: { mainBal: 10000000, profitBal: 0, globalTx: true },
-                    entities: [], 
-                    users: [],    
-                    accounts: [], 
-                    cards: [],    
-                    fdrs: []      
+            const otherAccs = state.accounts.filter(a => a.id !== fromAccId);
+            if(otherAccs.length > 0) {
+                options += `<optgroup label="গ্রাহক একাউন্টসমূহ">`;
+                otherAccs.forEach(a => {
+                    const c = state.customers.find(c => c.id === a.customerId);
+                    const s = state.services.find(s => s.id === a.serviceId);
+                    if(c && s) {
+                        options += `<option value="acc_${a.id}">${c.name} - ${s.name}</option>`;
+                    }
                 });
-
-                const currentVirtualTime = ref(Date.now());
-                const VIRTUAL_SPEED = 5;
-                let clockInterval;
-
-                const adminFundAmount = ref(0);
-                const showEntityModal = ref(false);
-                const newEntity = reactive({ name: '', type: 'wallet', txFee: 2.5 });
-                const showUserModal = ref(false);
-                const newUserName = ref('');
-                const selectedUser = ref(null);
-                
-                const showOpenAccountModal = ref(false);
-                const selectedEntityForAccount = ref('');
-
-                const actionModal = reactive({ show: false, type: '', account: null, amount: 0, targetAccountId: '' });
-                const cardsModal = reactive({ show: false, account: null });
-                const spendCreditModal = ref(false);
-                const tempCreditLimit = ref('');
-                const ccSpendAmount = ref(0);
-                const loanData = reactive({ receiverId: '', amount: 0 });
-
-                // New Modals State
-                const entityManageModal = reactive({ show: false, entity: null, tab: 'settings' });
-                const fdrModal = reactive({ show: false, account: null });
-                const fdrAmount = ref(0);
-
-                onMounted(async () => {
-                    if (document.documentElement.classList.contains('dark')) isDark.value = true;
-                    
-                    if (fbConfig) {
-                        try {
-                            const fbApp = initializeApp(fbConfig);
-                            auth = getAuth(fbApp);
-                            db = getFirestore(fbApp);
-
-                            // Strict Auth Sequence to prevent data wiping
-                            const initialToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                            if (initialToken) {
-                                await signInWithCustomToken(auth, initialToken);
-                            } else {
-                                await signInAnonymously(auth);
-                            }
-
-                            onAuthStateChanged(auth, (user) => {
-                                if (!user) return;
-                                stateDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'core_banking_state', 'main_system');
-
-                                onSnapshot(stateDocRef, (docSnap) => {
-                                    if (docSnap.exists()) {
-                                        const data = docSnap.data();
-                                        // Safely merge to preserve reactivity
-                                        if(data.system) state.system = data.system;
-                                        if(data.bigBank) state.bigBank = data.bigBank;
-                                        if(data.entities) state.entities = data.entities;
-                                        if(data.users) state.users = data.users;
-                                        if(data.accounts) state.accounts = data.accounts;
-                                        if(data.cards) state.cards = data.cards;
-                                        if(data.fdrs) state.fdrs = data.fdrs;
-
-                                        // Ensure Defaults for new updates
-                                        state.entities.forEach(e => {
-                                            if(e.fdrRate === undefined) e.fdrRate = 5.0;
-                                            if(e.fdrIntervalVal === undefined) e.fdrIntervalVal = 1;
-                                            if(e.fdrIntervalUnit === undefined) e.fdrIntervalUnit = 'month';
-                                        });
-                                        state.accounts.forEach(a => {
-                                            if(a.txEnabled === undefined) a.txEnabled = true;
-                                        });
-                                    } else {
-                                        saveState(true); // Force Initial Save
-                                    }
-                                    isLoading.value = false;
-                                }, (error) => {
-                                    showToast('ডাটা কানেকশন এরর!', 'error');
-                                    console.error(error);
-                                });
-                            });
-                        } catch (err) {
-                            console.error("Firebase init failed:", err);
-                            isLoading.value = false;
-                            showToast('সিস্টেম ইনিশিয়ালাইজেশন ব্যর্থ হয়েছে!', 'error');
-                        }
-                    } else {
-                        isLoading.value = false;
-                        showToast('Firebase Config Not Found. Running locally.', 'error');
-                    }
-
-                    // Start Clock only if safely loaded to avoid overwrite
-                    clockInterval = setInterval(() => {
-                        if(isLoading.value) return; 
-                        
-                        const realElapsed = Date.now() - state.system.startRealTime;
-                        currentVirtualTime.value = state.system.startVirtualTime + (realElapsed * VIRTUAL_SPEED);
-                        
-                        processBackgroundTasks();
-                    }, 1000);
-                });
-
-                onUnmounted(() => clearInterval(clockInterval));
-
-                const saveState = async (force = false) => {
-                    // Prevent saving before initial data load finishes (Stops Refresh Wipe Bug)
-                    if ((isLoading.value && !force) || !stateDocRef || !auth?.currentUser) return;
-                    try {
-                        const rawData = JSON.parse(JSON.stringify(state));
-                        await setDoc(stateDocRef, rawData);
-                    } catch (err) { console.error("Save Error:", err); }
-                };
-
-                const showToast = (msg, type = 'info') => {
-                    const id = toastId++;
-                    toasts.value.push({ id, msg, type });
-                    setTimeout(() => { toasts.value = toasts.value.filter(t => t.id !== id); }, 3000);
-                };
-
-                const formatMoney = (val) => Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                const generateId = () => Math.random().toString(36).substr(2, 9);
-                
-                const toggleTheme = () => { isDark.value = !isDark.value; document.documentElement.classList.toggle('dark'); };
-
-                const formattedVirtualTime = computed(() => {
-                    const d = new Date(currentVirtualTime.value);
-                    return d.toLocaleString('bn-BD', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' });
-                });
-
-                const checkTxPossible = (entityId = null, accountId = null) => {
-                    if (!state.bigBank.globalTx) { showToast('গ্লোবাল লেনদেন সাময়িক বন্ধ আছে।', 'error'); return false; }
-                    if (entityId) {
-                        const e = state.entities.find(x => x.id === entityId);
-                        if (!e || e.isBlocked || !e.txEnabled) { showToast('সার্ভিসটি ব্লক করা বা লেনদেন বন্ধ।', 'error'); return false; }
-                    }
-                    if (accountId) {
-                        const a = state.accounts.find(x => x.id === accountId);
-                        if (!a || a.isBlocked) { showToast('একাউন্টটি ব্লক করা আছে।', 'error'); return false; }
-                        if (a.txEnabled === false) { showToast('এই একাউন্টের ট্রানজেকশন বন্ধ করা হয়েছে।', 'error'); return false; }
-                    }
-                    return true;
-                };
-
-                const toggleGlobalTx = () => { state.bigBank.globalTx = !state.bigBank.globalTx; saveState(); showToast(state.bigBank.globalTx ? 'গ্লোবাল লেনদেন চালু' : 'গ্লোবাল লেনদেন বন্ধ', state.bigBank.globalTx ? 'success' : 'error'); };
-
-                const modifyAdminFunds = (type) => {
-                    if (adminFundAmount.value <= 0) return;
-                    if (type === 'add') state.bigBank.mainBal += adminFundAmount.value;
-                    if (type === 'sub' && state.bigBank.mainBal >= adminFundAmount.value) state.bigBank.mainBal -= adminFundAmount.value;
-                    else if (type === 'sub') { showToast('পর্যাপ্ত ব্যালেন্স নেই', 'error'); return; }
-                    adminFundAmount.value = 0; saveState(); showToast('ফান্ড আপডেট সফল', 'success');
-                };
-
-                const issueBigBankLoan = () => {
-                    if (!loanData.receiverId || loanData.amount <= 0) { showToast('সঠিক তথ্য দিন', 'error'); return; }
-                    if (state.bigBank.mainBal < loanData.amount) { showToast('বিগ ব্যাংকে পর্যাপ্ত ফান্ড নেই', 'error'); return; }
-                    const [type, id] = loanData.receiverId.split('_');
-                    state.bigBank.mainBal -= loanData.amount;
-                    if (type === 'E') { const e = state.entities.find(x => x.id === id); if(e) e.mainBal += loanData.amount; } 
-                    else if (type === 'U') {
-                        const acc = state.accounts.find(a => a.userId === id);
-                        if(acc) acc.balance += loanData.amount; else { showToast('গ্রাহকের কোন একাউন্ট নেই', 'error'); return; }
-                    }
-                    loanData.amount = 0; loanData.receiverId = ''; saveState(); showToast('ঋণ প্রদান সফল হয়েছে', 'success');
-                };
-
-                const createEntity = () => {
-                    if (!newEntity.name.trim()) return;
-                    state.entities.push({
-                        id: generateId(), name: newEntity.name, type: newEntity.type, txFee: newEntity.txFee,
-                        mainBal: 0, profitBal: 0, partners: [], isBlocked: false, txEnabled: true,
-                        fdrRate: 5, fdrIntervalVal: 1, fdrIntervalUnit: 'month'
-                    });
-                    showEntityModal.value = false; newEntity.name = ''; saveState(); showToast('সার্ভিস তৈরি হয়েছে', 'success');
-                };
-
-                const toggleEntityBlock = (e) => { e.isBlocked = !e.isBlocked; saveState(); };
-                const toggleEntityTx = (e) => { e.txEnabled = !e.txEnabled; saveState(); };
-                const getEntity = (id) => state.entities.find(e => e.id === id);
-                const getUserName = (id) => state.users.find(u => u.id === id)?.name || 'Unknown';
-
-                const openEntityManageModal = (entity) => {
-                    entityManageModal.entity = entity;
-                    entityManageModal.tab = 'settings';
-                    entityManageModal.show = true;
-                };
-                const getAccountsForEntity = (entityId) => state.accounts.filter(a => a.entityId === entityId);
-
-                const createUser = () => {
-                    if (!newUserName.value.trim()) return;
-                    state.users.push({ id: generateId(), name: newUserName.value });
-                    newUserName.value = ''; showUserModal.value = false; saveState();
-                };
-
-                const selectUser = (u) => { selectedUser.value = u; };
-                const getUserAccounts = computed(() => state.accounts.filter(a => a.userId === selectedUser.value?.id));
-
-                const openAccount = () => {
-                    if (!selectedEntityForAccount.value || !selectedUser.value) return;
-                    state.accounts.push({
-                        id: 'AC' + Math.floor(Math.random()*1000000000),
-                        userId: selectedUser.value.id, entityId: selectedEntityForAccount.value,
-                        balance: 0, isBlocked: false, txEnabled: true
-                    });
-                    showOpenAccountModal.value = false; saveState(); showToast('একাউন্ট খোলা সফল', 'success');
-                };
-
-                const openAccountAction = (acc, type) => {
-                    actionModal.type = type; actionModal.account = acc; actionModal.amount = 0; actionModal.targetAccountId = ''; actionModal.show = true;
-                };
-
-                const executeAccountAction = () => {
-                    const amt = actionModal.amount;
-                    if (amt <= 0) { showToast('সঠিক পরিমাণ দিন', 'error'); return; }
-                    const acc = actionModal.account;
-                    if (!checkTxPossible(acc.entityId, acc.id)) return;
-
-                    if (actionModal.type === 'deposit') { acc.balance += amt; } 
-                    else if (actionModal.type === 'withdraw') {
-                        if (acc.balance < amt) { showToast('অপ্রতুল ব্যালেন্স', 'error'); return; }
-                        acc.balance -= amt;
-                    } 
-                    else if (actionModal.type === 'transfer') {
-                        if (acc.balance < amt) { showToast('অপ্রতুল ব্যালেন্স', 'error'); return; }
-                        const targetAcc = state.accounts.find(a => a.id === actionModal.targetAccountId);
-                        if (!targetAcc) { showToast('প্রাপক একাউন্ট পাওয়া যায়নি', 'error'); return; }
-                        if (!checkTxPossible(targetAcc.entityId, targetAcc.id)) return;
-
-                        const senderEntity = getEntity(acc.entityId);
-                        let feePct = senderEntity.txFee || 0;
-                        if (senderEntity.partners?.includes(targetAcc.entityId)) feePct = feePct * 0.45;
-
-                        const feeAmount = (amt * feePct) / 100;
-                        const totalDeduction = amt + feeAmount;
-
-                        if (acc.balance < totalDeduction) { showToast('ফি সহ ট্রানজেকশনের জন্য ব্যালেন্স নেই', 'error'); return; }
-
-                        acc.balance -= totalDeduction;
-                        senderEntity.profitBal += feeAmount; 
-                        targetAcc.balance += amt;
-                        showToast(`ট্রান্সফার সফল। ফি কাটা হয়েছে: $${feeAmount.toFixed(2)}`, 'success');
-                    }
-                    actionModal.show = false; saveState();
-                };
-
-                // FDR Functions
-                const translateUnit = (u) => { const dict = {minute:'মিনিট', hour:'ঘন্টা', day:'দিন', month:'মাস'}; return dict[u] || u; };
-                const openFdrModal = (acc) => { fdrModal.account = acc; fdrAmount.value = 0; fdrModal.show = true; };
-                const getActiveFdrs = (accId) => state.fdrs.filter(f => f.accountId === accId && f.active);
-                
-                const createFdr = () => {
-                    if(fdrAmount.value <= 0) return;
-                    if(fdrModal.account.balance < fdrAmount.value) { showToast('অপ্রতুল ব্যালেন্স', 'error'); return; }
-                    
-                    fdrModal.account.balance -= fdrAmount.value;
-                    state.fdrs.push({
-                        id: generateId(), accountId: fdrModal.account.id, entityId: fdrModal.account.entityId,
-                        amount: fdrAmount.value, lastProfitTime: currentVirtualTime.value, totalProfit: 0, active: true
-                    });
-                    fdrAmount.value = 0; saveState(); showToast('FDR খোলা সম্পন্ন হয়েছে', 'success');
-                };
-
-                const closeFdr = (fdr) => {
-                    const acc = state.accounts.find(a => a.id === fdr.accountId);
-                    if(acc) { acc.balance += fdr.amount; }
-                    fdr.active = false;
-                    saveState(); showToast('FDR বাতিল করা হয়েছে এবং আসল টাকা ফেরত দেওয়া হয়েছে', 'success');
-                };
-
-                const openCards = (acc) => { cardsModal.account = acc; cardsModal.show = true; };
-                const getDebitCard = (accId) => state.cards.find(c => c.accountId === accId && c.type === 'debit');
-                const getCreditCard = (accId) => state.cards.find(c => c.accountId === accId && c.type === 'credit');
-                const formatCardNumber = (num) => num.match(/.{1,4}/g)?.join(' ') || num;
-
-                const issueCard = (acc, type, limit = 0) => {
-                    let numPattern = type === 'debit' ? '4000' : '5ABC';
-                    for(let i=0; i<12; i++) numPattern += Math.floor(Math.random()*10);
-                    const expMs = currentVirtualTime.value + (3 * 365 * 24 * 60 * 60 * 1000);
-                    const expDate = new Date(expMs);
-                    const expStr = `${String(expDate.getMonth()+1).padStart(2,'0')}/${String(expDate.getFullYear()).slice(-2)}`;
-
-                    state.cards.push({
-                        id: generateId(), accountId: acc.id, type, number: numPattern, cvv: Math.floor(100 + Math.random()*900).toString(),
-                        exp: expStr, limit: type === 'credit' ? limit : 0, spent: 0, dueDate: null, fine: 0, active: true
-                    });
-                    tempCreditLimit.value = ''; saveState(); showToast(`${type} কার্ড ইস্যু সম্পন্ন`, 'success');
-                };
-
-                const spendCreditCard = (cc) => {
-                    if (ccSpendAmount.value <= 0) return;
-                    if (cc.spent + ccSpendAmount.value > cc.limit) { showToast('ক্রেডিট লিমিট অতিক্রম করবে!', 'error'); return; }
-                    cc.spent += ccSpendAmount.value;
-                    if (!cc.dueDate) cc.dueDate = currentVirtualTime.value + (45 * 24 * 60 * 60 * 1000);
-                    ccSpendAmount.value = 0; spendCreditModal.value = false; saveState(); showToast('পেমেন্ট সফল', 'success');
-                };
-
-                const payCreditBill = (cc) => {
-                    const totalBill = cc.spent + cc.fine;
-                    if (totalBill === 0) { showToast('কোন বকেয়া নেই', 'info'); return; }
-                    const acc = state.accounts.find(a => a.id === cc.accountId);
-                    if (acc.balance < totalBill) { showToast('একাউন্টে পর্যাপ্ত ব্যালেন্স নেই', 'error'); return; }
-                    
-                    acc.balance -= totalBill;
-                    const entity = getEntity(acc.entityId);
-                    if(entity) entity.profitBal += cc.fine;
-
-                    cc.spent = 0; cc.fine = 0; cc.dueDate = null; saveState(); showToast('ক্রেডিট বিল পরিশোধিত', 'success');
-                };
-
-                const closeCreditCard = (cc) => {
-                    if (cc.spent > 0) { showToast('আগে বিল পরিশোধ করুন', 'error'); return; }
-                    state.cards = state.cards.filter(c => c.id !== cc.id); saveState(); showToast('ক্রেডিট কার্ড বাতিল করা হয়েছে', 'success');
-                };
-
-                const processBackgroundTasks = () => {
-                    let needsSave = false;
-                    const vTime = currentVirtualTime.value;
-
-                    // 1. Credit Card Fines
-                    state.cards.forEach(cc => {
-                        if (cc.type === 'credit' && cc.spent > 0 && cc.dueDate && vTime > cc.dueDate) {
-                            const virtualDayMs = 24 * 60 * 60 * 1000;
-                            const overdueDays = Math.floor((vTime - cc.dueDate) / virtualDayMs);
-                            if (overdueDays > cc.fine) { cc.fine = overdueDays; needsSave = true; }
-                        }
-                    });
-
-                    // 2. FDR Profit Calculation
-                    state.fdrs.forEach(fdr => {
-                        if(!fdr.active) return;
-                        const entity = getEntity(fdr.entityId);
-                        if(!entity) return;
-
-                        let intervalMs = 0;
-                        if(entity.fdrIntervalUnit === 'minute') intervalMs = entity.fdrIntervalVal * 60000;
-                        else if(entity.fdrIntervalUnit === 'hour') intervalMs = entity.fdrIntervalVal * 3600000;
-                        else if(entity.fdrIntervalUnit === 'day') intervalMs = entity.fdrIntervalVal * 86400000;
-                        else if(entity.fdrIntervalUnit === 'month') intervalMs = entity.fdrIntervalVal * 2592000000; // 30 days
-
-                        if(intervalMs > 0 && (vTime - fdr.lastProfitTime) >= intervalMs) {
-                            const intervalsPassed = Math.floor((vTime - fdr.lastProfitTime) / intervalMs);
-                            const profit = (fdr.amount * (entity.fdrRate / 100)) * intervalsPassed;
-                            
-                            const acc = state.accounts.find(a => a.id === fdr.accountId);
-                            if(acc) {
-                                acc.balance += profit;
-                                entity.profitBal -= profit; // Deduct from Bank's profit balance
-                                fdr.lastProfitTime += intervalsPassed * intervalMs;
-                                fdr.totalProfit = (fdr.totalProfit || 0) + profit;
-                                needsSave = true;
-                            }
-                        }
-                    });
-
-                    if (needsSave && Math.random() < 0.1) { saveState(); } // Throttle auto saves
-                };
-
-                return {
-                    isDark, tabs, currentTab, isLoading, toasts, state, formatMoney, toggleTheme,
-                    formattedVirtualTime, toggleGlobalTx, adminFundAmount, modifyAdminFunds, issueBigBankLoan, loanData,
-                    showEntityModal, newEntity, createEntity, toggleEntityBlock, toggleEntityTx, getEntity, getUserName,
-                    entityManageModal, openEntityManageModal, getAccountsForEntity, saveState, showToast,
-                    showUserModal, newUserName, createUser, selectedUser, selectUser, getUserAccounts,
-                    showOpenAccountModal, selectedEntityForAccount, openAccount,
-                    actionModal, openAccountAction, executeAccountAction,
-                    fdrModal, fdrAmount, translateUnit, openFdrModal, getActiveFdrs, createFdr, closeFdr,
-                    cardsModal, openCards, getDebitCard, getCreditCard, formatCardNumber, issueCard, tempCreditLimit,
-                    spendCreditModal, ccSpendAmount, spendCreditCard, payCreditBill, closeCreditCard
-                };
+                options += `</optgroup>`;
             }
-        });
 
-        app.mount('#app');
+            select.innerHTML = options;
+            document.getElementById('transferAmount').value = '';
+
+            new bootstrap.Modal(document.getElementById('transferModal')).show();
+        }
+
+        function submitTransfer() {
+            const fromAccId = document.getElementById('transferFromAccId').value;
+            const targetVal = document.getElementById('transferTargetSelect').value;
+            const amount = parseFloat(document.getElementById('transferAmount').value);
+
+            if(isNaN(amount) || amount <= 0) return showAlert("ভুল পরিমাণ", true);
+
+            const fromAcc = state.accounts.find(a => a.id === fromAccId);
+            const fromSrv = state.services.find(s => s.id === fromAcc.serviceId);
+            
+            // Calculate fees based on sending service
+            let feePercent = fromSrv.fee;
+            let isPartner = false;
+            let toSrv = null;
+
+            if(targetVal.startsWith('acc_')) {
+                const toAccId = targetVal.split('_')[1];
+                const toAcc = state.accounts.find(a => a.id === toAccId);
+                toSrv = state.services.find(s => s.id === toAcc.serviceId);
+                const toCust = state.customers.find(c => c.id === toAcc.customerId);
+
+                if(toSrv.blocked || !toSrv.txEnabled) return showAlert("প্রাপকের ব্যাংক/সার্ভিসটি ব্লক করা আছে বা লেনদেন বন্ধ!", true);
+                if(toCust.blocked || !toCust.txEnabled) return showAlert("প্রাপকের একাউন্ট ব্লক বা লেনদেন বন্ধ!", true);
+
+                isPartner = fromSrv.partners.includes(toSrv.id);
+                if(isPartner) feePercent = feePercent * 0.45; // 55% discount
+            } else {
+                // To Big Bank - usually no extra fee discount, standard service fee applies
+            }
+
+            const actualFee = (amount * feePercent) / 100;
+            const totalDeduction = amount + actualFee;
+
+            if(fromAcc.balance < totalDeduction) {
+                return showAlert(`আপনার ব্যালেন্স কম। ট্রান্সফার এ্যামাউন্ট $${amount} + ফি $${actualFee.toFixed(2)} = মোট $${totalDeduction.toFixed(2)} প্রয়োজন।`, true);
+            }
+
+            // Deduct
+            fromAcc.balance -= totalDeduction;
+            if(fromSrv.profit === undefined) fromSrv.profit = 0;
+            fromSrv.profit += actualFee; 
+
+            // Add to Target
+            if(targetVal.startsWith('acc_')) {
+                const toAccId = targetVal.split('_')[1];
+                const toAcc = state.accounts.find(a => a.id === toAccId);
+                toAcc.balance += amount;
+            } else if(targetVal === 'bb_main') {
+                state.bigBank.main += amount;
+            } else if(targetVal === 'bb_profit') {
+                state.bigBank.profit += amount;
+            }
+
+            showAlert(`$${amount} ট্রান্সফার সফল! ফি কাটা হয়েছে $${actualFee.toFixed(2)}${isPartner?' (পার্টনারশিপ ছাড়) ':''}`);
+            saveState(); 
+            bootstrap.Modal.getInstance(document.getElementById('transferModal')).hide();
+            renderAll();
+        }
+
+        function showCustomerLoanUI(accId) {
+            const acc = state.accounts.find(a => a.id === accId);
+            const srv = state.services.find(s => s.id === acc.serviceId);
+            
+            document.getElementById('loanAccId').value = accId;
+            document.getElementById('loanAmount').value = '';
+            document.getElementById('loanInterest').value = '10';
+            
+            const sourceSelect = document.getElementById('loanSource');
+            const balLabel = document.getElementById('loanSourceBalance');
+            
+            const updateLabel = () => {
+                const type = sourceSelect.value;
+                balLabel.innerText = `ব্যাংকের ${type === 'main' ? 'মূল' : 'মুনাফা'} একাউন্টে ব্যালেন্স আছে: $${formatMoney(srv[type])}`;
+            };
+            sourceSelect.onchange = updateLabel;
+            updateLabel();
+            
+            new bootstrap.Modal(document.getElementById('customerLoanModal')).show();
+        }
+
+        function submitCustomerLoan() {
+            const accId = document.getElementById('loanAccId').value;
+            const amount = parseFloat(document.getElementById('loanAmount').value);
+            const rate = parseFloat(document.getElementById('loanInterest').value);
+            const source = document.getElementById('loanSource').value;
+            
+            if(isNaN(amount) || amount <= 0 || isNaN(rate) || rate < 0) return showAlert("সঠিক তথ্য দিন", true);
+            
+            const acc = state.accounts.find(a => a.id === accId);
+            const srv = state.services.find(s => s.id === acc.serviceId);
+            
+            if(srv[source] < amount) return showAlert(`ব্যাংকের নির্বাচিত একাউন্টে পর্যাপ্ত ব্যালেন্স নেই!`, true);
+            
+            // Deduct from Bank, Add to User
+            srv[source] -= amount;
+            acc.balance += amount;
+            
+            // Create Record
+            state.loans.push({
+                id: generateId(),
+                type: 'SRV_TO_CUST',
+                accountId: accId,
+                serviceId: srv.id,
+                source: source,
+                principal: amount,
+                interest: amount * (rate / 100),
+                paid: 0,
+                active: true
+            });
+            
+            showAlert(`$${formatMoney(amount)} লোন সফলভাবে গ্রহণ করা হয়েছে!`);
+            saveState();
+            bootstrap.Modal.getInstance(document.getElementById('customerLoanModal')).hide();
+            renderCustomerDashboard();
+            if(document.getElementById('services-tab').classList.contains('active')) renderServices();
+        }
+
+        async function payCustomerLoan(loanId) {
+            const loan = state.loans.find(l => l.id === loanId);
+            const acc = state.accounts.find(a => a.id === loan.accountId);
+            const srv = state.services.find(s => s.id === loan.serviceId);
+            const due = loan.principal + loan.interest - loan.paid;
+            
+            const val = await showPrompt(`পরিশোধের পরিমাণ দিন (মোট বকেয়া: $${formatMoney(due)}):\nআপনার ব্যালেন্স: $${formatMoney(acc.balance)}`, due);
+            if(!val) return;
+            const amt = parseFloat(val);
+            
+            if(isNaN(amt) || amt <= 0) return showAlert("ভুল পরিমাণ", true);
+            if(amt > due + 0.01) return showAlert("বকেয়ার চেয়ে বেশি পরিশোধ করা যাবে না!", true);
+            if(amt > acc.balance) return showAlert("আপনার একাউন্টে পর্যাপ্ত ব্যালেন্স নেই!", true);
+            
+            acc.balance -= amt;
+            loan.paid += amt;
+            
+            // Distribute
+            const totalOriginal = loan.principal + loan.interest;
+            const toPrincipal = amt * (loan.principal / totalOriginal);
+            const toInterest = amt - toPrincipal;
+            
+            srv[loan.source] += toPrincipal; // return principal to source
+            srv.profit += toInterest;        // interest to profit
+            
+            if(Math.abs(totalOriginal - loan.paid) < 0.01) {
+                loan.active = false;
+            }
+            
+            showAlert("লোন পরিশোধ সফল হয়েছে!");
+            saveState(); renderAll();
+        }
+
+        async function showFDRUI(accId) {
+            const acc = state.accounts.find(a => a.id === accId);
+            
+            const p1 = await showPrompt(`FDR এ কত ডলার জমা রাখতে চান? (বর্তমান ব্যালেন্স $${formatMoney(acc.balance)})`);
+            if(!p1) return;
+            const amt = parseFloat(p1);
+            if(isNaN(amt) || amt <= 0 || amt > acc.balance) return showAlert("ভুল পরিমাণ বা পর্যাপ্ত ব্যালেন্স নেই!", true);
+
+            const p2 = await showPrompt("মুনাফার হার দিন (%) (উদাঃ 10):");
+            if(!p2) return;
+            const rate = parseFloat(p2);
+
+            const p3 = await showPrompt("কত সেকেন্ড (রিয়েল টাইম) পর পর মুনাফা যুক্ত হবে? (উদাঃ 5):");
+            if(!p3) return;
+            const interval = parseFloat(p3);
+            
+            if(isNaN(rate) || isNaN(interval) || interval < 1) return showAlert("সঠিক তথ্য দিন", true);
+
+            acc.balance -= amt;
+
+            state.fdrs.push({
+                id: generateId(),
+                accountId: accId,
+                principal: amt,
+                rate: rate,
+                intervalSec: interval * 5, 
+                lastYieldTime: state.virtualTime,
+                active: true
+            });
+
+            showAlert("FDR সফলভাবে তৈরী হয়েছে!");
+            saveState(); renderCustomerDashboard();
+        }
+
+        function showFDRList(accId) {
+            const accFDRs = state.fdrs.filter(f => f.accountId === accId && f.active);
+            const tbody = document.getElementById('fdrListBody');
+            
+            if(accFDRs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-muted py-4">কোন সক্রিয় FDR নেই।</td></tr>`;
+            } else {
+                tbody.innerHTML = accFDRs.map(f => {
+                    return `
+                        <tr>
+                            <td class="text-success">$${formatMoney(f.principal)}</td>
+                            <td>${f.rate}%</td>
+                            <td>প্রতি ${f.intervalSec / 5} সেকেন্ড</td>
+                            <td><span class="badge bg-success">সক্রিয়</span></td>
+                            <td><button class="btn btn-sm btn-danger" onclick="closeFDR('${f.id}')">ভেঙে ফেলুন</button></td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+            new bootstrap.Modal(document.getElementById('fdrListModal')).show();
+        }
+
+        async function closeFDR(fdrId) {
+            const conf = await showPrompt("আপনি কি নিশ্চিতভাবে এই FDR টি ভাঙতে চান? 'হ্যাঁ' লিখুন।\n(আসল পরিমাণ আপনার একাউন্টে ফেরত যাবে)", "");
+            if(conf !== "হ্যাঁ") return showAlert("FDR ভাঙা বাতিল করা হয়েছে।");
+
+            const fdr = state.fdrs.find(f => f.id === fdrId);
+            const acc = state.accounts.find(a => a.id === fdr.accountId);
+            
+            if(fdr && acc) {
+                acc.balance += fdr.principal;
+                fdr.active = false;
+                showAlert("FDR টি ভেঙে ফেলা হয়েছে এবং আসল টাকা একাউন্টে ফেরত এসেছে।");
+                saveState();
+                showFDRList(acc.id); // Refresh list
+                renderCustomerDashboard();
+            }
+        }
+
+        const generateCardNumber = (type) => {
+            if(type === 'DEBIT') {
+                return Array.from({length: 4}, () => Math.floor(1000 + Math.random() * 9000)).join('-');
+            } else {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                let res = '';
+                for(let i=0; i<16; i++) {
+                    if(i>0 && i%4===0) res += '-';
+                    res += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                return res;
+            }
+        };
+
+        function showCardsUI(accId) {
+            const acc = state.accounts.find(a => a.id === accId);
+            const myCards = state.cards.filter(c => c.accountId === accId);
+            
+            let dCard = myCards.find(c => c.type === 'DEBIT');
+            let cCard = myCards.find(c => c.type === 'CREDIT');
+
+            let html = `
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <h5 class="text-white">ডেবিট কার্ড</h5>
+                        ${dCard ? renderCard(dCard, acc) : `<button class="btn btn-outline-info w-100" onclick="issueCard('${accId}', 'DEBIT')">ডেবিট কার্ড ইস্যু করুন</button>`}
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="text-warning">ক্রেডিট কার্ড</h5>
+                        ${cCard ? renderCard(cCard, acc) : `<button class="btn btn-outline-warning w-100" onclick="issueCard('${accId}', 'CREDIT')">ক্রেডিট কার্ড ইস্যু করুন</button>`}
+                    </div>
+                </div>
+            `;
+            
+            let modalHtml = `
+            <div class="modal fade" id="cardsModal" tabindex="-1">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content bg-dark text-white border-secondary">
+                        <div class="modal-header border-secondary">
+                            <h5 class="modal-title">কার্ড ম্যানেজমেন্ট</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body" id="cardsModalBody">
+                            ${html}
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+            
+            let oldModal = document.getElementById('cardsModal');
+            if(oldModal) oldModal.remove();
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            new bootstrap.Modal(document.getElementById('cardsModal')).show();
+        }
+
+        function renderCard(card, acc) {
+            if(!card.active) return `<div class="alert alert-danger">কার্ডটি ব্যাংক কর্তৃক ব্লক করা হয়েছে</div>`;
+            
+            if(card.type === 'DEBIT') {
+                return `
+                    <div class="card-debit mb-2">
+                        <h5>VISA Debit</h5>
+                        <h4 class="mt-3 tracking-widest">${card.number}</h4>
+                        <div class="d-flex justify-content-between mt-3">
+                            <span>EXP: ${card.exp}</span>
+                            <span>CVV: ${card.cvv}</span>
+                        </div>
+                    </div>
+                    <div class="bg-secondary bg-opacity-25 p-2 rounded">
+                        <small>লিংকড একাউন্ট ব্যালেন্স:</small>
+                        <h5 class="text-success m-0">$${formatMoney(acc.balance)}</h5>
+                    </div>
+                `;
+            } else {
+                const available = card.limit - card.spent;
+                const fine = card.fines || 0;
+                return `
+                    <div class="card-credit mb-2">
+                        <h5>MasterCard Credit</h5>
+                        <h4 class="mt-3 tracking-widest">${card.number}</h4>
+                        <div class="d-flex justify-content-between mt-3">
+                            <span>EXP: ${card.exp}</span>
+                            <span>CVV: ${card.cvv}</span>
+                        </div>
+                    </div>
+                    <div class="bg-secondary bg-opacity-25 p-2 rounded">
+                        <div class="d-flex justify-content-between">
+                            <span>লিমিট: $${formatMoney(card.limit)}</span>
+                            <span>ব্যবহার: <span class="text-danger">$${formatMoney(card.spent)}</span></span>
+                        </div>
+                        <div class="d-flex justify-content-between mt-1 border-top border-secondary pt-1">
+                            <span>ফাইন: <span class="text-danger">$${formatMoney(fine)}</span></span>
+                            <span>এভেইলেবল: <span class="text-success">$${formatMoney(available)}</span></span>
+                        </div>
+                        <div class="mt-2 d-flex gap-2">
+                            <button class="btn btn-sm btn-primary flex-grow-1" onclick="useCreditCard('${card.id}')">খরচ</button>
+                            <button class="btn btn-sm btn-success flex-grow-1" onclick="payCreditCardBill('${card.id}')">বিল দিন</button>
+                            <button class="btn btn-sm btn-danger flex-grow-1" onclick="closeCard('${card.id}')">বন্ধ করুন</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        async function issueCard(accId, type) {
+            const acc = state.accounts.find(a => a.id === accId);
+            let limit = 0;
+            if(type === 'CREDIT') {
+                const val = await showPrompt("ক্রেডিট লিমিট কত দিতে চান? (এই পরিমাণ অর্থ ব্যাংকের মূল একাউন্ট থেকে কাটা হবে)");
+                if(!val) return;
+                limit = parseFloat(val);
+                if(isNaN(limit) || limit <= 0) return showAlert("ভুল পরিমাণ", true);
+                
+                // Deduct from bank balance
+                const srv = state.services.find(s => s.id === acc.serviceId);
+                if(srv.main < limit) {
+                    return showAlert("ব্যাংকের মূল একাউন্টে ক্রেডিট লিমিট ইস্যু করার মত পর্যাপ্ত ফান্ড নেই!", true);
+                }
+                srv.main -= limit;
+            }
+
+            const expYear = new Date().getFullYear() + 5;
+            const expMonth = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
+
+            state.cards.push({
+                id: generateId(),
+                accountId: accId,
+                serviceId: acc.serviceId,
+                type: type,
+                number: generateCardNumber(type),
+                exp: `${expMonth}/${String(expYear).substr(2,2)}`,
+                cvv: Math.floor(100 + Math.random() * 900),
+                limit: limit,
+                spent: 0,
+                fines: 0,
+                active: true,
+                lastBillingDate: state.virtualTime
+            });
+
+            showAlert(`${type} কার্ড ইস্যু করা হয়েছে!`);
+            saveState();
+            
+            const myCards = state.cards.filter(c => c.accountId === accId);
+            let dCard = myCards.find(c => c.type === 'DEBIT');
+            let cCard = myCards.find(c => c.type === 'CREDIT');
+            let html = `
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <h5 class="text-white">ডেবিট কার্ড</h5>
+                        ${dCard ? renderCard(dCard, acc) : `<button class="btn btn-outline-info w-100" onclick="issueCard('${accId}', 'DEBIT')">ডেবিট কার্ড ইস্যু করুন</button>`}
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="text-warning">ক্রেডিট কার্ড</h5>
+                        ${cCard ? renderCard(cCard, acc) : `<button class="btn btn-outline-warning w-100" onclick="issueCard('${accId}', 'CREDIT')">ক্রেডিট কার্ড ইস্যু করুন</button>`}
+                    </div>
+                </div>
+            `;
+            document.getElementById('cardsModalBody').innerHTML = html;
+        }
+
+        async function closeCard(cardId) {
+            const card = state.cards.find(c => c.id === cardId);
+            
+            if(card.spent > 0 || (card.fines && card.fines > 0)) {
+                return showAlert("কার্ড বন্ধ করার পূর্বে সমস্ত বকেয়া বিল এবং ফাইন পরিশোধ করুন!", true);
+            }
+            
+            const conf = await showPrompt(`আপনি কি সত্যিই কার্ডটি বন্ধ করতে চান? 'হ্যাঁ' লিখে নিশ্চিত করুন।\n( ${formatMoney(card.limit)} ডলার ব্যাংকে ফেরত যাবে )`, "");
+            if(conf !== "হ্যাঁ") return showAlert("কার্ড বন্ধ করার প্রক্রিয়া বাতিল করা হয়েছে।");
+            
+            if(card.type === 'CREDIT') {
+                const srv = state.services.find(s => s.id === card.serviceId);
+                if(srv) srv.main += card.limit;
+            }
+            
+            state.cards = state.cards.filter(c => c.id !== cardId);
+            
+            showAlert("কার্ডটি সফলভাবে বন্ধ করা হয়েছে এবং ফান্ড ব্যাংকে ফেরত পাঠানো হয়েছে।");
+            saveState();
+            
+            bootstrap.Modal.getInstance(document.getElementById('cardsModal')).hide();
+            showCardsUI(card.accountId);
+        }
+
+        async function useCreditCard(cardId) {
+            const card = state.cards.find(c => c.id === cardId);
+            const available = card.limit - card.spent;
+            const val = await showPrompt(`কত খরচ করতে চান? (এভেইলেবল: $${formatMoney(available)})`);
+            if(!val) return;
+            const amt = parseFloat(val);
+            
+            if(isNaN(amt) || amt <= 0 || amt > available) return showAlert("ভুল পরিমাণ বা লিমিট অতিক্রম করছে!", true);
+            
+            if(card.spent === 0) {
+                card.lastBillingDate = state.virtualTime;
+            }
+            
+            card.spent += amt;
+            saveState();
+            
+            bootstrap.Modal.getInstance(document.getElementById('cardsModal')).hide();
+            showCardsUI(card.accountId);
+            showAlert("কার্ড থেকে খরচ সফল হয়েছে!");
+        }
+
+        async function payCreditCardBill(cardId) {
+            const card = state.cards.find(c => c.id === cardId);
+            const acc = state.accounts.find(a => a.id === card.accountId);
+            const srv = state.services.find(s => s.id === card.serviceId);
+            const due = card.spent + (card.fines || 0);
+            
+            const val = await showPrompt(`কত বিল পরিশোধ করবেন? (মোট বকেয়া+ফাইন: $${formatMoney(due)})\nআপনার মূল ব্যালেন্স: $${formatMoney(acc.balance)}`, due);
+            if(!val) return;
+            const amt = parseFloat(val);
+            
+            if(isNaN(amt) || amt <= 0) return showAlert("ভুল পরিমাণ", true);
+            if(amt > acc.balance) return showAlert("একাউন্টে পর্যাপ্ত টাকা নেই!", true);
+            if(amt > due) return showAlert("বকেয়ার চেয়ে বেশি দেয়া যাবে না!", true);
+
+            acc.balance -= amt;
+            
+            let remaining = amt;
+            let finesPaid = 0;
+
+            if(card.fines && card.fines > 0) {
+                if(remaining >= card.fines) {
+                    finesPaid = card.fines;
+                    remaining -= card.fines;
+                    card.fines = 0;
+                } else {
+                    finesPaid = remaining;
+                    card.fines -= remaining;
+                    remaining = 0;
+                }
+            }
+            if(remaining > 0) {
+                card.spent -= remaining;
+            }
+
+            // Transfer fines to profit
+            if(finesPaid > 0 && srv) {
+                if(srv.profit === undefined) srv.profit = 0;
+                srv.profit += finesPaid;
+            }
+
+            if(card.spent === 0 && card.fines === 0) {
+                card.lastBillingDate = state.virtualTime; 
+            }
+
+            saveState();
+            bootstrap.Modal.getInstance(document.getElementById('cardsModal')).hide();
+            showCardsUI(card.accountId);
+            renderCustomerDashboard();
+            showAlert("বিল পরিশোধ সফল!");
+        }
+
+        function renderAll() {
+            renderAdmin();
+            renderServices();
+            populateCustomerSelect();
+            if(!document.getElementById('customerDashboard').classList.contains('d-none')) {
+                renderCustomerDashboard();
+            }
+        }
+
+        // Bootstrap App
+        window.onload = () => {
+            loadState();
+            startVirtualClock();
+            
+            document.getElementById('admin-tab').addEventListener('shown.bs.tab', renderAdmin);
+            document.getElementById('services-tab').addEventListener('shown.bs.tab', renderServices);
+            
+            renderAll();
+        };
     </script>
 </body>
 </html>
