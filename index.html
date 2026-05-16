@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="bn" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ভার্চুয়াল ব্যাংকিং ও ওয়ালেট সিস্টেম</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        primary: '#3b82f6',
+                        darkBg: '#0f172a',
+                        darkCard: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
+        .glass-panel { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        .dark .glass-panel { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255,255,255,0.05); }
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 dark:bg-darkBg dark:text-gray-100 min-h-screen flex flex-col">
+
+    <div id="app" class="flex flex-col h-screen overflow-hidden" v-cloak>
+        
+        <!-- Toast Notification -->
+        <div class="fixed top-4 right-4 z-[60] flex flex-col gap-2">
+            <transition-group name="fade">
+                <div v-for="toast in toasts" :key="toast.id" 
+                     class="px-4 py-3 rounded shadow-lg text-white font-medium flex items-center gap-2"
+                     :class="toast.type === 'error' ? 'bg-red-500' : (toast.type === 'success' ? 'bg-green-500' : 'bg-blue-500')">
+                    <i :class="toast.type === 'error' ? 'fa-solid fa-circle-exclamation' : 'fa-solid fa-circle-check'"></i>
+                    {{ toast.msg }}
+                </div>
+            </transition-group>
+        </div>
+
+        <!-- Header -->
+        <header class="bg-white dark:bg-darkCard shadow-sm z-10 flex-shrink-0">
+            <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white text-xl shadow-lg">
+                        <i class="fa-solid fa-building-columns"></i>
+                    </div>
+                    <h1 class="text-xl font-bold hidden sm:block text-gray-800 dark:text-white">ভার্চুয়াল ফাইন্যান্স</h1>
+                </div>
+                
+                <div class="flex items-center gap-4 sm:gap-6">
+                    <div class="bg-blue-100 dark:bg-blue-900/40 px-3 py-1.5 rounded-lg flex flex-col items-end">
+                        <span class="text-xs text-blue-600 dark:text-blue-400 font-semibold uppercase">ভার্চুয়াল সময় (5x)</span>
+                        <span class="text-sm font-mono font-bold">{{ formattedVirtualTime }}</span>
+                    </div>
+                    
+                    <div v-if="state.bigBank" class="flex items-center gap-2">
+                        <span class="text-xs font-semibold">গ্লোবাল লেনদেন:</span>
+                        <button @click="toggleGlobalTx" :class="state.bigBank.globalTx ? 'bg-green-500' : 'bg-red-500'" class="w-10 h-5 rounded-full relative transition-colors duration-200">
+                            <div :class="state.bigBank.globalTx ? 'translate-x-5' : 'translate-x-0'" class="w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-200 absolute top-0 left-0"></div>
+                        </button>
+                    </div>
+
+                    <button @click="toggleTheme" class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                        <i v-if="isDark" class="fa-solid fa-sun text-yellow-400"></i>
+                        <i v-else class="fa-solid fa-moon text-gray-700"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="max-w-7xl mx-auto px-4 flex overflow-x-auto hide-scrollbar border-b border-gray-200 dark:border-gray-700">
+                <button v-for="tab in tabs" :key="tab.id" @click="currentTab = tab.id"
+                    :class="['px-5 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors', 
+                             currentTab === tab.id ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200']">
+                    <i :class="tab.icon" class="mr-2"></i> {{ tab.name }}
+                </button>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-4 sm:p-6 pb-20">
+            <div class="max-w-7xl mx-auto h-full relative">
+                
+                <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-darkBg/80 z-20">
+                    <div class="text-center">
+                        <i class="fa-solid fa-circle-notch fa-spin text-4xl text-primary mb-3"></i>
+                        <p class="animate-pulse font-semibold">ডেটা সিঙ্ক হচ্ছে...</p>
+                    </div>
+                </div>
+
+                <!-- TAB 1: Admin / Big Bank -->
+                <div v-show="currentTab === 'admin' && state.bigBank" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="glass-panel rounded-2xl p-6 relative overflow-hidden">
+                            <div class="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full -mr-10 -mt-10 blur-xl"></div>
+                            <h2 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="fa-solid fa-building text-primary"></i> বিগ ব্যাংক একাউন্ট</h2>
+                            <div class="space-y-4">
+                                <div class="bg-white/50 dark:bg-black/20 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">মূল একাউন্ট ব্যালেন্স</p>
+                                    <p class="text-3xl font-bold text-gray-800 dark:text-white">${{ formatMoney(state.bigBank.mainBal) }}</p>
+                                </div>
+                                <div class="bg-green-500/10 p-4 rounded-xl border border-green-500/20">
+                                    <p class="text-sm text-green-600 dark:text-green-400 font-medium">মুনাফা একাউন্ট ব্যালেন্স</p>
+                                    <p class="text-2xl font-bold text-green-700 dark:text-green-300">${{ formatMoney(state.bigBank.profitBal) }}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6 flex flex-wrap gap-2">
+                                <input v-model.number="adminFundAmount" type="number" placeholder="পরিমাণ ($)" class="flex-1 px-4 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-primary outline-none">
+                                <button @click="modifyAdminFunds('add')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition"><i class="fa-solid fa-plus"></i> যুক্ত</button>
+                                <button @click="modifyAdminFunds('sub')" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition"><i class="fa-solid fa-minus"></i> বিয়োগ</button>
+                            </div>
+                        </div>
+
+                        <div class="glass-panel rounded-2xl p-6">
+                            <h2 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="fa-solid fa-hand-holding-dollar text-primary"></i> বিগ ব্যাংক থেকে ঋণ প্রদান (২৫% ইন্টারেস্ট)</h2>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">প্রাপক (ওয়ালেট/ব্যাংক/গ্রাহক)</label>
+                                    <select v-model="loanData.receiverId" class="w-full px-4 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 outline-none">
+                                        <option value="">নির্বাচন করুন...</option>
+                                        <optgroup label="ওয়ালেট/ব্যাংক সমূহ">
+                                            <option v-for="e in state.entities" :key="e.id" :value="'E_'+e.id">{{ e.name }} ({{ e.type }})</option>
+                                        </optgroup>
+                                        <optgroup label="গ্রাহক সমূহ">
+                                            <option v-for="u in state.users" :key="u.id" :value="'U_'+u.id">{{ u.name }}</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-1">ঋণের পরিমাণ ($)</label>
+                                    <input v-model.number="loanData.amount" type="number" class="w-full px-4 py-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 outline-none">
+                                </div>
+                                <button @click="issueBigBankLoan" class="w-full bg-primary hover:bg-blue-600 text-white py-2 rounded-lg font-semibold shadow-md transition">ঋণ প্রদান করুন</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: Entities -->
+                <div v-show="currentTab === 'entities'" class="space-y-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                        <h2 class="text-2xl font-bold">ওয়ালেট ও ব্যাংক সার্ভিস</h2>
+                        <button @click="showEntityModal = true" class="bg-primary text-white px-5 py-2 rounded-lg shadow hover:bg-blue-600 transition"><i class="fa-solid fa-plus mr-1"></i> নতুন সার্ভিস তৈরি</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div v-for="entity in state.entities" :key="entity.id" class="glass-panel rounded-xl p-5 relative">
+                            <div class="absolute top-4 right-4 flex gap-2">
+                                <button @click="toggleEntityBlock(entity)" :class="entity.isBlocked ? 'text-red-500' : 'text-green-500'" title="ব্লক/আনব্লক"><i class="fa-solid fa-shield-halved"></i></button>
+                                <button @click="toggleEntityTx(entity)" :class="entity.txEnabled ? 'text-blue-500' : 'text-gray-500'" title="লেনদেন চালু/বন্ধ"><i class="fa-solid fa-right-left"></i></button>
+                            </div>
+                            
+                            <div class="flex items-center gap-3 mb-4">
+                                <div :class="entity.type === 'bank' ? 'bg-indigo-500' : 'bg-teal-500'" class="w-12 h-12 rounded-full text-white flex items-center justify-center text-xl shadow">
+                                    <i :class="entity.type === 'bank' ? 'fa-solid fa-building-columns' : 'fa-solid fa-wallet'"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-lg leading-tight">{{ entity.name }} <span v-if="entity.isBlocked" class="text-xs text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded">Blocked</span></h3>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 capitalize">{{ entity.type }}</span>
+                                </div>
+                            </div>
+
+                            <div class="bg-white/50 dark:bg-black/20 p-3 rounded-lg mb-4 text-sm">
+                                <div class="flex justify-between mb-1"><span class="text-gray-500">মূল ব্যালেন্স:</span> <span class="font-bold">${{ formatMoney(entity.mainBal) }}</span></div>
+                                <div class="flex justify-between mb-1"><span class="text-gray-500">মুনাফা ব্যালেন্স:</span> <span class="font-bold text-green-500">${{ formatMoney(entity.profitBal) }}</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">ট্রানজেকশন ফি:</span> <span class="font-bold text-blue-500">{{ entity.txFee }}%</span></div>
+                            </div>
+                            
+                            <div class="flex gap-2">
+                                <button @click="openEntityManageModal(entity)" class="flex-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 py-1.5 rounded text-sm font-medium transition">
+                                    <i class="fa-solid fa-sliders"></i> ম্যানেজমেন্ট প্যানেল
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: Customers -->
+                <div v-show="currentTab === 'customers'" class="space-y-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                        <h2 class="text-2xl font-bold">গ্রাহক প্যানেল</h2>
+                        <button @click="showUserModal = true" class="bg-primary text-white px-5 py-2 rounded-lg shadow hover:bg-blue-600 transition"><i class="fa-solid fa-user-plus mr-1"></i> নতুন গ্রাহক</button>
+                    </div>
+
+                    <div class="flex flex-col md:flex-row gap-6">
+                        <div class="w-full md:w-1/3 glass-panel rounded-xl p-4 overflow-y-auto max-h-[70vh]">
+                            <h3 class="font-semibold mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">সকল গ্রাহক</h3>
+                            <div v-if="state.users.length === 0" class="text-sm text-gray-500 text-center py-4">কোন গ্রাহক নেই</div>
+                            <div class="space-y-2">
+                                <div v-for="user in state.users" :key="user.id" @click="selectUser(user)"
+                                     :class="['p-3 rounded-lg cursor-pointer transition flex items-center gap-3', 
+                                              selectedUser?.id === user.id ? 'bg-primary text-white shadow-md' : 'hover:bg-gray-200 dark:hover:bg-gray-700 bg-white dark:bg-gray-800']">
+                                    <div class="w-8 h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center font-bold text-gray-700 dark:text-gray-200">
+                                        {{ user.name.charAt(0) }}
+                                    </div>
+                                    <div class="flex-1 overflow-hidden">
+                                        <p class="font-medium truncate">{{ user.name }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="w-full md:w-2/3" v-if="selectedUser">
+                            <div class="glass-panel rounded-xl p-6 mb-6">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h2 class="text-2xl font-bold">{{ selectedUser.name }} এর ড্যাশবোর্ড</h2>
+                                        <p class="text-sm text-gray-500">ম্যানুয়াল আয়/ব্যয় ও একাউন্ট ম্যানেজমেন্ট</p>
+                                    </div>
+                                    <button @click="showOpenAccountModal = true" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm shadow transition">
+                                        <i class="fa-solid fa-folder-plus mr-1"></i> একাউন্ট খুলুন
+                                    </button>
+                                </div>
+                                
+                                <h3 class="font-semibold mt-6 mb-3 text-lg">এক্টিভ একাউন্ট সমূহ</h3>
+                                <div v-if="getUserAccounts.length === 0" class="text-sm text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/30 p-3 rounded">
+                                    এই গ্রাহকের কোন ব্যাংক বা ওয়ালেট একাউন্ট নেই।
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div v-for="acc in getUserAccounts" :key="acc.id" class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 relative">
+                                        <div class="absolute top-2 right-2 flex gap-1">
+                                            <span v-if="acc.isBlocked" class="text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded">Blocked</span>
+                                            <span v-if="!acc.txEnabled" class="text-[10px] bg-yellow-500 text-white px-1.5 py-0.5 rounded">Tx Off</span>
+                                        </div>
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <i :class="getEntity(acc.entityId)?.type === 'bank' ? 'fa-solid fa-building-columns text-indigo-500' : 'fa-solid fa-wallet text-teal-500'"></i>
+                                            <span class="font-semibold">{{ getEntity(acc.entityId)?.name || 'Unknown' }}</span>
+                                        </div>
+                                        <div class="text-2xl font-bold mb-1">${{ formatMoney(acc.balance) }}</div>
+                                        <p class="text-xs text-gray-500 font-mono mb-4">A/C: {{ acc.id.substring(0,8) }}...</p>
+                                        
+                                        <div class="flex flex-wrap gap-2">
+                                            <button @click="openAccountAction(acc, 'deposit')" class="text-xs bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 px-2 py-1 rounded hover:bg-green-200">আয় যুক্ত</button>
+                                            <button @click="openAccountAction(acc, 'withdraw')" class="text-xs bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 px-2 py-1 rounded hover:bg-red-200">ব্যয় (উত্তোলন)</button>
+                                            <button @click="openAccountAction(acc, 'transfer')" class="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 px-2 py-1 rounded hover:bg-blue-200">ট্রান্সফার</button>
+                                            <button @click="openCards(acc)" class="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 px-2 py-1 rounded hover:bg-purple-200">কার্ডস <i class="fa-regular fa-credit-card"></i></button>
+                                            <button @click="openFdrModal(acc)" class="text-xs bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300 px-2 py-1 rounded hover:bg-yellow-200">FDR</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        
+        <!-- Entity Creation Modal -->
+        <div v-if="showEntityModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white dark:bg-darkCard rounded-2xl p-6 w-full max-w-md shadow-2xl transform transition-all">
+                <h3 class="text-xl font-bold mb-4">নতুন সার্ভিস তৈরি করুন</h3>
+                <div class="space-y-4">
+                    <div><label class="text-sm">নাম</label><input v-model="newEntity.name" type="text" class="w-full mt-1 px-3 py-2 border rounded dark:bg-gray-800 dark:border-gray-600"></div>
+                    <div>
+                        <label class="text-sm">ধরন</label>
+                        <select v-model="newEntity.type" class="w-full mt-1 px-3 py-2 border rounded dark:bg-gray-800 dark:border-gray-600">
+                            <option value="bank">ব্যাংক (Bank)</option>
+                            <option value="wallet">ওয়ালেট (Wallet)</option>
+                        </select>
+                    </div>
+                    <div><label class="text-sm">ট্রানজেকশন ফি (%)</label><input v-model.number="newEntity.txFee" type="number" step="0.1" class="w-full mt-1 px-3 py-2 border rounded dark:bg-gray-800 dark:border-gray-600"></div>
+                    <div class="flex gap-3 mt-6">
+                        <button @click="showEntityModal = false" class="flex-1 bg-gray-300 dark:bg-gray-700 py-2 rounded font-medium">বাতিল</button>
+                        <button @click="createEntity" class="flex-1 bg-primary text-white py-2 rounded font-medium">তৈরি করুন</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Entity Management Modal (Panel) -->
+        <div v-if="entityManageModal.show" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white dark:bg-darkCard rounded-2xl p-6 w-full max-w-3xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col">
+                <div class="flex justify-between items-center mb-6 border-b border-gray-200 dark:border-gray-700 pb-3">
+                    <h3 class="text-xl font-bold text-primary"><i class="fa-solid fa-sliders mr-2"></i> {{ entityManageModal.entity.name }} - ম্যানেজমেন্ট প্যানেল</h3>
+                    <button @click="entityManageModal.show = false" class="text-gray-500 hover:text-red-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+
+                <div class="flex gap-2 mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">
+                    <button @click="entityManageModal.tab = 'settings'" :class="entityManageModal.tab === 'settings' ? 'text-primary font-bold border-b-2 border-primary' : 'text-gray-500'" class="px-4 py-1">সার্ভিস সেটিংস</button>
+                    <button @click="entityManageModal.tab = 'accounts'" :class="entityManageModal.tab === 'accounts' ? 'text-primary font-bold border-b-2 border-primary' : 'text-gray-500'" class="px-4 py-1">গ্রাহক একাউন্ট ম্যানেজ</button>
+                </div>
+
+                <div class="overflow-y-auto flex-1 pr-2">
+                    <!-- Settings Tab -->
+                    <div v-if="entityManageModal.tab === 'settings'" class="space-y-4">
+                        <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border dark:border-gray-700">
+                            <h4 class="font-bold mb-3"><i class="fa-solid fa-chart-line text-yellow-500"></i> FDR সেটিংস</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-sm block mb-1">মুনাফার হার (%)</label>
+                                    <input v-model.number="entityManageModal.entity.fdrRate" type="number" step="0.1" class="w-full px-3 py-2 border rounded dark:bg-gray-900 dark:border-gray-600">
+                                </div>
+                                <div>
+                                    <label class="text-sm block mb-1">মুনাফা প্রদানের সময়কাল (Interval)</label>
+                                    <div class="flex gap-2">
+                                        <input v-model.number="entityManageModal.entity.fdrIntervalVal" type="number" class="w-1/2 px-3 py-2 border rounded dark:bg-gray-900 dark:border-gray-600">
+                                        <select v-model="entityManageModal.entity.fdrIntervalUnit" class="w-1/2 px-3 py-2 border rounded dark:bg-gray-900 dark:border-gray-600">
+                                            <option value="minute">মিনিট</option>
+                                            <option value="hour">ঘন্টা</option>
+                                            <option value="day">দিন</option>
+                                            <option value="month">মাস</option>
+                                        </select>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">* ভার্চুয়াল সময়ের উপর ভিত্তি করে</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <button @click="saveState(); showToast('সেটিংস সেভ হয়েছে', 'success')" class="bg-primary text-white px-6 py-2 rounded shadow hover:bg-blue-600">আপডেট করুন</button>
+                        </div>
+                    </div>
+
+                    <!-- Accounts Tab -->
+                    <div v-if="entityManageModal.tab === 'accounts'" class="space-y-3">
+                        <div v-if="getAccountsForEntity(entityManageModal.entity.id).length === 0" class="text-center py-6 text-gray-500">কোন একাউন্ট নেই</div>
+                        
+                        <div v-for="acc in getAccountsForEntity(entityManageModal.entity.id)" :key="acc.id" class="flex flex-col sm:flex-row justify-between items-center p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-sm gap-3">
+                            <div>
+                                <p class="font-bold text-sm">{{ getUserName(acc.userId) }} <span class="font-mono text-gray-500 text-xs ml-2">({{acc.id}})</span></p>
+                                <p class="text-xs text-gray-500">ব্যালেন্স: <span class="font-bold text-gray-800 dark:text-gray-200">${{formatMoney(acc.balance)}}</span></p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button @click="acc.txEnabled = !acc.txEnabled; saveState()" :class="acc.txEnabled ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'" class="px-3 py-1.5 rounded text-xs font-semibold transition">
+                                    <i class="fa-solid fa-right-left"></i> {{ acc.txEnabled ? 'Tx On' : 'Tx Off' }}
+                                </button>
+                                <button @click="acc.isBlocked = !acc.isBlocked; saveState()" :class="acc.isBlocked ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-red-100 text-red-700 hover:bg-red-200'" class="px-3 py-1.5 rounded text-xs font-semibold transition">
+                                    <i class="fa-solid fa-lock"></i> {{ acc.isBlocked ? 'Unblock' : 'Block' }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FDR Modal -->
+        <div v-if="fdrModal.show" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[55] flex items-center justify-center p-4">
+            <div class="bg-white dark:bg-darkCard rounded-2xl p-6 w-full max-w-lg shadow-2xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-yellow-600 dark:text-yellow-400"><i class="fa-solid fa-piggy-bank mr-2"></i> ফিক্সড ডিপোজিট (FDR)</h3>
+                    <button @click="fdrModal.show = false" class="text-gray-500 hover:text-red-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                
+                <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700/50 p-4 rounded-xl mb-6">
+                    <p class="text-sm font-semibold text-yellow-800 dark:text-yellow-300">ব্যাংকের বর্তমান অফার:</p>
+                    <p class="text-xl font-bold my-1 text-gray-800 dark:text-white">{{ getEntity(fdrModal.account.entityId)?.fdrRate }}% <span class="text-sm font-normal text-gray-500">মুনাফা</span></p>
+                    <p class="text-xs text-gray-600 dark:text-gray-400">প্রতি {{ getEntity(fdrModal.account.entityId)?.fdrIntervalVal }} {{ translateUnit(getEntity(fdrModal.account.entityId)?.fdrIntervalUnit) }} অন্তর অন্তর মুনাফা প্রদান করা হবে।</p>
+                </div>
+
+                <div class="mb-6 border-b dark:border-gray-700 pb-6">
+                    <h4 class="font-bold text-sm mb-2">নতুন FDR খুলুন</h4>
+                    <p class="text-xs text-gray-500 mb-2">আপনার ব্যালেন্স: ${{ formatMoney(fdrModal.account.balance) }}</p>
+                    <div class="flex gap-2">
+                        <input v-model.number="fdrAmount" type="number" placeholder="ডিপোজিটের পরিমাণ ($)" class="flex-1 px-3 py-2 border rounded dark:bg-gray-800 dark:border-gray-600 text-sm">
+                        <button @click="createFdr" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded text-sm font-bold shadow">জমা করুন</button>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-sm mb-3">আপনার এক্টিভ FDR সমূহ</h4>
+                    <div v-if="getActiveFdrs(fdrModal.account.id).length === 0" class="text-xs text-gray-500">কোন এক্টিভ FDR নেই।</div>
+                    <div class="space-y-3 max-h-48 overflow-y-auto pr-1">
+                        <div v-for="fdr in getActiveFdrs(fdrModal.account.id)" :key="fdr.id" class="bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 p-3 rounded-lg flex justify-between items-center">
+                            <div>
+                                <p class="font-bold text-sm">ডিপোজিট: ${{ formatMoney(fdr.amount) }}</p>
+                                <p class="text-xs text-green-600 dark:text-green-400">অর্জিত মুনাফা: +${{ formatMoney(fdr.totalProfit || 0) }}</p>
+                            </div>
+                            <button @click="closeFdr(fdr)" class="text-xs bg-red-100 text-red-600 hover:bg-red-200 px-2 py-1.5 rounded font-semibold">FDR ভাঙুন</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create User Modal -->
+        <div v-if="showUserModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white dark:bg-darkCard rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+                <h3 class="text-xl font-bold mb-4">নতুন গ্রাহক</h3>
+                <input v-model="newUserName" type="text" placeholder="গ্রাহকের নাম" class="w-full px-3 py-2 border rounded dark:bg-gray-800 dark:border-gray-600 mb-4">
+                <div class="flex gap-3">
+                    <button @click="showUserModal = false" class="flex-1 bg-gray-300 dark:bg-gray-700 py-2 rounded">বাতিল</button>
+                    <button @click="createUser" class="flex-1 bg-primary text-white py-2 rounded">যুক্ত করুন</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Open Account Modal -->
+        <div v-if="showOpenAccountModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white dark:bg-darkCard rounded-2xl p-6 w-full max-w-md shadow-2xl">
+                <h3 class="text-xl font-bold mb-4">নতুন একাউন্ট খুলুন</h3>
+                <label class="block text-sm mb-2">সার্ভিস নির্বাচন করুন</label>
+                <select v-model="selectedEntityForAccount" class="w-full px-3 py-2 border rounded dark:bg-gray-800 dark:border-gray-600 mb-6">
+                    <option value="">নির্বাচন করুন...</option>
+                    <option v-for="e in state.entities" :key="e.id" :value="e.id">{{ e.name }} ({{ e.type }})</option>
+                </select>
+                <div class="flex gap-3">
+                    <button @click="showOpenAccountModal = false" class="flex-1 bg-gray-300 dark:bg-gray-700 py-2 rounded">বাতিল</button>
+                    <button @click="openAccount" class="flex-1 bg-green-600 text-white py-2 rounded">একাউন্ট খুলুন</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Actions Modal (Deposit/Withdraw/Transfer) -->
+        <div v-if="actionModal.show" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white dark:bg-darkCard rounded-2xl p-6 w-full max-w-md shadow-2xl">
+                <h3 class="text-xl font-bold mb-4 capitalize text-blue-500 border-b border-gray-200 dark:border-gray-700 pb-2">
+                    {{ actionModal.type === 'deposit' ? 'ম্যানুয়াল আয় যুক্ত' : (actionModal.type === 'withdraw' ? 'ম্যানুয়াল ব্যয়' : 'ফান্ড ট্রান্সফার') }}
+                </h3>
+                
+                <div class="space-y-4">
+                    <p class="text-sm font-medium text-gray-500">বর্তমান ব্যালেন্স: <span class="font-bold text-gray-800 dark:text-white">${{ formatMoney(actionModal.account.balance) }}</span></p>
+                    
+                    <div v-if="actionModal.type === 'transfer'">
+                        <label class="block text-sm mb-1">প্রাপক একাউন্ট আইডি</label>
+                        <input v-model="actionModal.targetAccountId" type="text" placeholder="প্রাপকের A/C ID" class="w-full px-3 py-2 border rounded dark:bg-gray-800 dark:border-gray-600 font-mono text-sm">
+                        
+                        <div class="mt-2 text-xs text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 p-2 rounded">
+                            * সেন্ডার সার্ভিসের ট্রানজেকশন ফি: <b>{{ getEntity(actionModal.account.entityId)?.txFee }}%</b><br>
+                            * পার্টনারশিপ থাকলে ৫৫% ফি ছাড় পাওয়া যাবে।
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm mb-1">পরিমাণ ($)</label>
+                        <input v-model.number="actionModal.amount" type="number" class="w-full px-3 py-2 border rounded dark:bg-gray-800 dark:border-gray-600">
+                    </div>
+                </div>
+
+                <div class="flex gap-3 mt-6">
+                    <button @click="actionModal.show = false" class="flex-1 bg-gray-300 dark:bg-gray-700 py-2 rounded">বাতিল</button>
+                    <button @click="executeAccountAction" class="flex-1 bg-primary text-white py-2 rounded">নিশ্চিত করুন</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cards Modal -->
+        <div v-if="cardsModal.show" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white dark:bg-darkCard rounded-2xl p-6 w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold"><i class="fa-regular fa-credit-card text-primary mr-2"></i> ভার্চুয়াল কার্ডস</h3>
+                    <button @click="cardsModal.show = false" class="text-gray-500 hover:text-red-500"><i class="fa-solid fa-xmark text-xl"></i></button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Debit Card -->
+                    <div class="border dark:border-gray-700 rounded-xl p-4">
+                        <h4 class="font-bold mb-3 text-center">ডেবিট কার্ড</h4>
+                        <div v-if="!getDebitCard(cardsModal.account.id)" class="text-center py-4">
+                            <button @click="issueCard(cardsModal.account, 'debit')" class="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-200">কার্ড ইস্যু করুন</button>
+                        </div>
+                        <div v-else class="bg-gradient-to-br from-gray-700 to-gray-900 text-white p-5 rounded-xl shadow-lg relative overflow-hidden">
+                            <div class="absolute right-[-20px] top-[-20px] text-white/10 text-8xl"><i class="fa-brands fa-cc-visa"></i></div>
+                            <p class="text-xs text-gray-300 mb-1">ডেবিট ব্যালেন্স</p>
+                            <h2 class="text-2xl font-bold mb-4">${{ formatMoney(cardsModal.account.balance) }}</h2>
+                            <p class="font-mono tracking-widest mb-2">{{ formatCardNumber(getDebitCard(cardsModal.account.id).number) }}</p>
+                            <div class="flex justify-between text-xs text-gray-300">
+                                <span>EXP: {{ getDebitCard(cardsModal.account.id).exp }}</span>
+                                <span>CVV: ***</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Credit Card -->
+                    <div class="border dark:border-gray-700 rounded-xl p-4">
+                        <h4 class="font-bold mb-3 text-center text-purple-600 dark:text-purple-400">ক্রেডিট কার্ড (লোন)</h4>
+                        <div v-if="!getCreditCard(cardsModal.account.id)" class="text-center py-4 space-y-3">
+                            <input v-model.number="tempCreditLimit" type="number" placeholder="ক্রেডিট লিমিট ($)" class="w-full px-3 py-2 border rounded text-sm dark:bg-gray-800 dark:border-gray-600">
+                            <button @click="issueCard(cardsModal.account, 'credit', tempCreditLimit)" class="w-full bg-purple-100 text-purple-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-200">ক্রেডিট কার্ড আবেদন</button>
+                        </div>
+                        <div v-else class="bg-gradient-to-br from-purple-700 to-indigo-900 text-white p-5 rounded-xl shadow-lg relative">
+                            <div class="absolute right-4 top-4">
+                                <button @click="closeCreditCard(getCreditCard(cardsModal.account.id))" title="কার্ড বন্ধ করুন" class="text-red-300 hover:text-red-100"><i class="fa-solid fa-power-off"></i></button>
+                            </div>
+                            <div class="mb-4">
+                                <span class="text-xs text-gray-300">লিমিট: ${{ getCreditCard(cardsModal.account.id).limit }}</span>
+                                <div class="flex justify-between items-baseline">
+                                    <span class="text-xs text-gray-300">ব্যবহৃত:</span>
+                                    <h2 class="text-xl font-bold text-red-300">${{ getCreditCard(cardsModal.account.id).spent }}</h2>
+                                </div>
+                                <p v-if="getCreditCard(cardsModal.account.id).fine > 0" class="text-xs text-red-400 mt-1"><i class="fa-solid fa-triangle-exclamation"></i> ফাইন: ${{ getCreditCard(cardsModal.account.id).fine }}</p>
+                            </div>
+                            <p class="font-mono tracking-widest text-sm mb-2">{{ getCreditCard(cardsModal.account.id).number }}</p>
+                            
+                            <div class="mt-4 pt-3 border-t border-white/20 flex gap-2">
+                                <button @click="spendCreditModal = true" class="flex-1 bg-white/20 hover:bg-white/30 py-1 text-xs rounded transition">খরচ করুন</button>
+                                <button @click="payCreditBill(getCreditCard(cardsModal.account.id))" class="flex-1 bg-green-500/80 hover:bg-green-500 py-1 text-xs rounded transition">বিল দিন</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="spendCreditModal && getCreditCard(cardsModal.account.id)" class="mt-4 p-4 border rounded-xl dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                    <h5 class="text-sm font-bold mb-2">ক্রেডিট কার্ড থেকে খরচ</h5>
+                    <div class="flex gap-2">
+                        <input v-model.number="ccSpendAmount" type="number" placeholder="পরিমাণ" class="flex-1 px-3 py-1.5 border rounded text-sm dark:bg-gray-900 dark:border-gray-600">
+                        <button @click="spendCreditCard(getCreditCard(cardsModal.account.id))" class="bg-primary text-white px-4 py-1.5 rounded text-sm">নিশ্চিত</button>
+                        <button @click="spendCreditModal = false" class="bg-gray-300 text-gray-800 px-3 py-1.5 rounded text-sm">বাতিল</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const { createApp, ref, computed, onMounted, onUnmounted, reactive } = Vue;
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'virtual-bank-demo';
+        const fbConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        let db, auth, stateDocRef;
+
+        const app = createApp({
+            setup() {
+                const isDark = ref(true);
+                const currentTab = ref('admin');
+                const isLoading = ref(true);
+                const toasts = ref([]);
+                let toastId = 0;
+
+                const tabs = [
+                    { id: 'admin', name: 'বিগ ব্যাংক (Admin)', icon: 'fa-solid fa-landmark' },
+                    { id: 'entities', name: 'সার্ভিস ম্যানেজমেন্ট', icon: 'fa-solid fa-server' },
+                    { id: 'customers', name: 'গ্রাহক প্যানেল', icon: 'fa-solid fa-users' }
+                ];
+
+                const state = reactive({
+                    system: { startRealTime: Date.now(), startVirtualTime: Date.now() },
+                    bigBank: { mainBal: 10000000, profitBal: 0, globalTx: true },
+                    entities: [], 
+                    users: [],    
+                    accounts: [], 
+                    cards: [],    
+                    fdrs: []      
+                });
+
+                const currentVirtualTime = ref(Date.now());
+                const VIRTUAL_SPEED = 5;
+                let clockInterval;
+
+                const adminFundAmount = ref(0);
+                const showEntityModal = ref(false);
+                const newEntity = reactive({ name: '', type: 'wallet', txFee: 2.5 });
+                const showUserModal = ref(false);
+                const newUserName = ref('');
+                const selectedUser = ref(null);
+                
+                const showOpenAccountModal = ref(false);
+                const selectedEntityForAccount = ref('');
+
+                const actionModal = reactive({ show: false, type: '', account: null, amount: 0, targetAccountId: '' });
+                const cardsModal = reactive({ show: false, account: null });
+                const spendCreditModal = ref(false);
+                const tempCreditLimit = ref('');
+                const ccSpendAmount = ref(0);
+                const loanData = reactive({ receiverId: '', amount: 0 });
+
+                // New Modals State
+                const entityManageModal = reactive({ show: false, entity: null, tab: 'settings' });
+                const fdrModal = reactive({ show: false, account: null });
+                const fdrAmount = ref(0);
+
+                onMounted(async () => {
+                    if (document.documentElement.classList.contains('dark')) isDark.value = true;
+                    
+                    if (fbConfig) {
+                        try {
+                            const fbApp = initializeApp(fbConfig);
+                            auth = getAuth(fbApp);
+                            db = getFirestore(fbApp);
+
+                            // Strict Auth Sequence to prevent data wiping
+                            const initialToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                            if (initialToken) {
+                                await signInWithCustomToken(auth, initialToken);
+                            } else {
+                                await signInAnonymously(auth);
+                            }
+
+                            onAuthStateChanged(auth, (user) => {
+                                if (!user) return;
+                                stateDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'core_banking_state', 'main_system');
+
+                                onSnapshot(stateDocRef, (docSnap) => {
+                                    if (docSnap.exists()) {
+                                        const data = docSnap.data();
+                                        // Safely merge to preserve reactivity
+                                        if(data.system) state.system = data.system;
+                                        if(data.bigBank) state.bigBank = data.bigBank;
+                                        if(data.entities) state.entities = data.entities;
+                                        if(data.users) state.users = data.users;
+                                        if(data.accounts) state.accounts = data.accounts;
+                                        if(data.cards) state.cards = data.cards;
+                                        if(data.fdrs) state.fdrs = data.fdrs;
+
+                                        // Ensure Defaults for new updates
+                                        state.entities.forEach(e => {
+                                            if(e.fdrRate === undefined) e.fdrRate = 5.0;
+                                            if(e.fdrIntervalVal === undefined) e.fdrIntervalVal = 1;
+                                            if(e.fdrIntervalUnit === undefined) e.fdrIntervalUnit = 'month';
+                                        });
+                                        state.accounts.forEach(a => {
+                                            if(a.txEnabled === undefined) a.txEnabled = true;
+                                        });
+                                    } else {
+                                        saveState(true); // Force Initial Save
+                                    }
+                                    isLoading.value = false;
+                                }, (error) => {
+                                    showToast('ডাটা কানেকশন এরর!', 'error');
+                                    console.error(error);
+                                });
+                            });
+                        } catch (err) {
+                            console.error("Firebase init failed:", err);
+                            isLoading.value = false;
+                            showToast('সিস্টেম ইনিশিয়ালাইজেশন ব্যর্থ হয়েছে!', 'error');
+                        }
+                    } else {
+                        isLoading.value = false;
+                        showToast('Firebase Config Not Found. Running locally.', 'error');
+                    }
+
+                    // Start Clock only if safely loaded to avoid overwrite
+                    clockInterval = setInterval(() => {
+                        if(isLoading.value) return; 
+                        
+                        const realElapsed = Date.now() - state.system.startRealTime;
+                        currentVirtualTime.value = state.system.startVirtualTime + (realElapsed * VIRTUAL_SPEED);
+                        
+                        processBackgroundTasks();
+                    }, 1000);
+                });
+
+                onUnmounted(() => clearInterval(clockInterval));
+
+                const saveState = async (force = false) => {
+                    // Prevent saving before initial data load finishes (Stops Refresh Wipe Bug)
+                    if ((isLoading.value && !force) || !stateDocRef || !auth?.currentUser) return;
+                    try {
+                        const rawData = JSON.parse(JSON.stringify(state));
+                        await setDoc(stateDocRef, rawData);
+                    } catch (err) { console.error("Save Error:", err); }
+                };
+
+                const showToast = (msg, type = 'info') => {
+                    const id = toastId++;
+                    toasts.value.push({ id, msg, type });
+                    setTimeout(() => { toasts.value = toasts.value.filter(t => t.id !== id); }, 3000);
+                };
+
+                const formatMoney = (val) => Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                const generateId = () => Math.random().toString(36).substr(2, 9);
+                
+                const toggleTheme = () => { isDark.value = !isDark.value; document.documentElement.classList.toggle('dark'); };
+
+                const formattedVirtualTime = computed(() => {
+                    const d = new Date(currentVirtualTime.value);
+                    return d.toLocaleString('bn-BD', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' });
+                });
+
+                const checkTxPossible = (entityId = null, accountId = null) => {
+                    if (!state.bigBank.globalTx) { showToast('গ্লোবাল লেনদেন সাময়িক বন্ধ আছে।', 'error'); return false; }
+                    if (entityId) {
+                        const e = state.entities.find(x => x.id === entityId);
+                        if (!e || e.isBlocked || !e.txEnabled) { showToast('সার্ভিসটি ব্লক করা বা লেনদেন বন্ধ।', 'error'); return false; }
+                    }
+                    if (accountId) {
+                        const a = state.accounts.find(x => x.id === accountId);
+                        if (!a || a.isBlocked) { showToast('একাউন্টটি ব্লক করা আছে।', 'error'); return false; }
+                        if (a.txEnabled === false) { showToast('এই একাউন্টের ট্রানজেকশন বন্ধ করা হয়েছে।', 'error'); return false; }
+                    }
+                    return true;
+                };
+
+                const toggleGlobalTx = () => { state.bigBank.globalTx = !state.bigBank.globalTx; saveState(); showToast(state.bigBank.globalTx ? 'গ্লোবাল লেনদেন চালু' : 'গ্লোবাল লেনদেন বন্ধ', state.bigBank.globalTx ? 'success' : 'error'); };
+
+                const modifyAdminFunds = (type) => {
+                    if (adminFundAmount.value <= 0) return;
+                    if (type === 'add') state.bigBank.mainBal += adminFundAmount.value;
+                    if (type === 'sub' && state.bigBank.mainBal >= adminFundAmount.value) state.bigBank.mainBal -= adminFundAmount.value;
+                    else if (type === 'sub') { showToast('পর্যাপ্ত ব্যালেন্স নেই', 'error'); return; }
+                    adminFundAmount.value = 0; saveState(); showToast('ফান্ড আপডেট সফল', 'success');
+                };
+
+                const issueBigBankLoan = () => {
+                    if (!loanData.receiverId || loanData.amount <= 0) { showToast('সঠিক তথ্য দিন', 'error'); return; }
+                    if (state.bigBank.mainBal < loanData.amount) { showToast('বিগ ব্যাংকে পর্যাপ্ত ফান্ড নেই', 'error'); return; }
+                    const [type, id] = loanData.receiverId.split('_');
+                    state.bigBank.mainBal -= loanData.amount;
+                    if (type === 'E') { const e = state.entities.find(x => x.id === id); if(e) e.mainBal += loanData.amount; } 
+                    else if (type === 'U') {
+                        const acc = state.accounts.find(a => a.userId === id);
+                        if(acc) acc.balance += loanData.amount; else { showToast('গ্রাহকের কোন একাউন্ট নেই', 'error'); return; }
+                    }
+                    loanData.amount = 0; loanData.receiverId = ''; saveState(); showToast('ঋণ প্রদান সফল হয়েছে', 'success');
+                };
+
+                const createEntity = () => {
+                    if (!newEntity.name.trim()) return;
+                    state.entities.push({
+                        id: generateId(), name: newEntity.name, type: newEntity.type, txFee: newEntity.txFee,
+                        mainBal: 0, profitBal: 0, partners: [], isBlocked: false, txEnabled: true,
+                        fdrRate: 5, fdrIntervalVal: 1, fdrIntervalUnit: 'month'
+                    });
+                    showEntityModal.value = false; newEntity.name = ''; saveState(); showToast('সার্ভিস তৈরি হয়েছে', 'success');
+                };
+
+                const toggleEntityBlock = (e) => { e.isBlocked = !e.isBlocked; saveState(); };
+                const toggleEntityTx = (e) => { e.txEnabled = !e.txEnabled; saveState(); };
+                const getEntity = (id) => state.entities.find(e => e.id === id);
+                const getUserName = (id) => state.users.find(u => u.id === id)?.name || 'Unknown';
+
+                const openEntityManageModal = (entity) => {
+                    entityManageModal.entity = entity;
+                    entityManageModal.tab = 'settings';
+                    entityManageModal.show = true;
+                };
+                const getAccountsForEntity = (entityId) => state.accounts.filter(a => a.entityId === entityId);
+
+                const createUser = () => {
+                    if (!newUserName.value.trim()) return;
+                    state.users.push({ id: generateId(), name: newUserName.value });
+                    newUserName.value = ''; showUserModal.value = false; saveState();
+                };
+
+                const selectUser = (u) => { selectedUser.value = u; };
+                const getUserAccounts = computed(() => state.accounts.filter(a => a.userId === selectedUser.value?.id));
+
+                const openAccount = () => {
+                    if (!selectedEntityForAccount.value || !selectedUser.value) return;
+                    state.accounts.push({
+                        id: 'AC' + Math.floor(Math.random()*1000000000),
+                        userId: selectedUser.value.id, entityId: selectedEntityForAccount.value,
+                        balance: 0, isBlocked: false, txEnabled: true
+                    });
+                    showOpenAccountModal.value = false; saveState(); showToast('একাউন্ট খোলা সফল', 'success');
+                };
+
+                const openAccountAction = (acc, type) => {
+                    actionModal.type = type; actionModal.account = acc; actionModal.amount = 0; actionModal.targetAccountId = ''; actionModal.show = true;
+                };
+
+                const executeAccountAction = () => {
+                    const amt = actionModal.amount;
+                    if (amt <= 0) { showToast('সঠিক পরিমাণ দিন', 'error'); return; }
+                    const acc = actionModal.account;
+                    if (!checkTxPossible(acc.entityId, acc.id)) return;
+
+                    if (actionModal.type === 'deposit') { acc.balance += amt; } 
+                    else if (actionModal.type === 'withdraw') {
+                        if (acc.balance < amt) { showToast('অপ্রতুল ব্যালেন্স', 'error'); return; }
+                        acc.balance -= amt;
+                    } 
+                    else if (actionModal.type === 'transfer') {
+                        if (acc.balance < amt) { showToast('অপ্রতুল ব্যালেন্স', 'error'); return; }
+                        const targetAcc = state.accounts.find(a => a.id === actionModal.targetAccountId);
+                        if (!targetAcc) { showToast('প্রাপক একাউন্ট পাওয়া যায়নি', 'error'); return; }
+                        if (!checkTxPossible(targetAcc.entityId, targetAcc.id)) return;
+
+                        const senderEntity = getEntity(acc.entityId);
+                        let feePct = senderEntity.txFee || 0;
+                        if (senderEntity.partners?.includes(targetAcc.entityId)) feePct = feePct * 0.45;
+
+                        const feeAmount = (amt * feePct) / 100;
+                        const totalDeduction = amt + feeAmount;
+
+                        if (acc.balance < totalDeduction) { showToast('ফি সহ ট্রানজেকশনের জন্য ব্যালেন্স নেই', 'error'); return; }
+
+                        acc.balance -= totalDeduction;
+                        senderEntity.profitBal += feeAmount; 
+                        targetAcc.balance += amt;
+                        showToast(`ট্রান্সফার সফল। ফি কাটা হয়েছে: $${feeAmount.toFixed(2)}`, 'success');
+                    }
+                    actionModal.show = false; saveState();
+                };
+
+                // FDR Functions
+                const translateUnit = (u) => { const dict = {minute:'মিনিট', hour:'ঘন্টা', day:'দিন', month:'মাস'}; return dict[u] || u; };
+                const openFdrModal = (acc) => { fdrModal.account = acc; fdrAmount.value = 0; fdrModal.show = true; };
+                const getActiveFdrs = (accId) => state.fdrs.filter(f => f.accountId === accId && f.active);
+                
+                const createFdr = () => {
+                    if(fdrAmount.value <= 0) return;
+                    if(fdrModal.account.balance < fdrAmount.value) { showToast('অপ্রতুল ব্যালেন্স', 'error'); return; }
+                    
+                    fdrModal.account.balance -= fdrAmount.value;
+                    state.fdrs.push({
+                        id: generateId(), accountId: fdrModal.account.id, entityId: fdrModal.account.entityId,
+                        amount: fdrAmount.value, lastProfitTime: currentVirtualTime.value, totalProfit: 0, active: true
+                    });
+                    fdrAmount.value = 0; saveState(); showToast('FDR খোলা সম্পন্ন হয়েছে', 'success');
+                };
+
+                const closeFdr = (fdr) => {
+                    const acc = state.accounts.find(a => a.id === fdr.accountId);
+                    if(acc) { acc.balance += fdr.amount; }
+                    fdr.active = false;
+                    saveState(); showToast('FDR বাতিল করা হয়েছে এবং আসল টাকা ফেরত দেওয়া হয়েছে', 'success');
+                };
+
+                const openCards = (acc) => { cardsModal.account = acc; cardsModal.show = true; };
+                const getDebitCard = (accId) => state.cards.find(c => c.accountId === accId && c.type === 'debit');
+                const getCreditCard = (accId) => state.cards.find(c => c.accountId === accId && c.type === 'credit');
+                const formatCardNumber = (num) => num.match(/.{1,4}/g)?.join(' ') || num;
+
+                const issueCard = (acc, type, limit = 0) => {
+                    let numPattern = type === 'debit' ? '4000' : '5ABC';
+                    for(let i=0; i<12; i++) numPattern += Math.floor(Math.random()*10);
+                    const expMs = currentVirtualTime.value + (3 * 365 * 24 * 60 * 60 * 1000);
+                    const expDate = new Date(expMs);
+                    const expStr = `${String(expDate.getMonth()+1).padStart(2,'0')}/${String(expDate.getFullYear()).slice(-2)}`;
+
+                    state.cards.push({
+                        id: generateId(), accountId: acc.id, type, number: numPattern, cvv: Math.floor(100 + Math.random()*900).toString(),
+                        exp: expStr, limit: type === 'credit' ? limit : 0, spent: 0, dueDate: null, fine: 0, active: true
+                    });
+                    tempCreditLimit.value = ''; saveState(); showToast(`${type} কার্ড ইস্যু সম্পন্ন`, 'success');
+                };
+
+                const spendCreditCard = (cc) => {
+                    if (ccSpendAmount.value <= 0) return;
+                    if (cc.spent + ccSpendAmount.value > cc.limit) { showToast('ক্রেডিট লিমিট অতিক্রম করবে!', 'error'); return; }
+                    cc.spent += ccSpendAmount.value;
+                    if (!cc.dueDate) cc.dueDate = currentVirtualTime.value + (45 * 24 * 60 * 60 * 1000);
+                    ccSpendAmount.value = 0; spendCreditModal.value = false; saveState(); showToast('পেমেন্ট সফল', 'success');
+                };
+
+                const payCreditBill = (cc) => {
+                    const totalBill = cc.spent + cc.fine;
+                    if (totalBill === 0) { showToast('কোন বকেয়া নেই', 'info'); return; }
+                    const acc = state.accounts.find(a => a.id === cc.accountId);
+                    if (acc.balance < totalBill) { showToast('একাউন্টে পর্যাপ্ত ব্যালেন্স নেই', 'error'); return; }
+                    
+                    acc.balance -= totalBill;
+                    const entity = getEntity(acc.entityId);
+                    if(entity) entity.profitBal += cc.fine;
+
+                    cc.spent = 0; cc.fine = 0; cc.dueDate = null; saveState(); showToast('ক্রেডিট বিল পরিশোধিত', 'success');
+                };
+
+                const closeCreditCard = (cc) => {
+                    if (cc.spent > 0) { showToast('আগে বিল পরিশোধ করুন', 'error'); return; }
+                    state.cards = state.cards.filter(c => c.id !== cc.id); saveState(); showToast('ক্রেডিট কার্ড বাতিল করা হয়েছে', 'success');
+                };
+
+                const processBackgroundTasks = () => {
+                    let needsSave = false;
+                    const vTime = currentVirtualTime.value;
+
+                    // 1. Credit Card Fines
+                    state.cards.forEach(cc => {
+                        if (cc.type === 'credit' && cc.spent > 0 && cc.dueDate && vTime > cc.dueDate) {
+                            const virtualDayMs = 24 * 60 * 60 * 1000;
+                            const overdueDays = Math.floor((vTime - cc.dueDate) / virtualDayMs);
+                            if (overdueDays > cc.fine) { cc.fine = overdueDays; needsSave = true; }
+                        }
+                    });
+
+                    // 2. FDR Profit Calculation
+                    state.fdrs.forEach(fdr => {
+                        if(!fdr.active) return;
+                        const entity = getEntity(fdr.entityId);
+                        if(!entity) return;
+
+                        let intervalMs = 0;
+                        if(entity.fdrIntervalUnit === 'minute') intervalMs = entity.fdrIntervalVal * 60000;
+                        else if(entity.fdrIntervalUnit === 'hour') intervalMs = entity.fdrIntervalVal * 3600000;
+                        else if(entity.fdrIntervalUnit === 'day') intervalMs = entity.fdrIntervalVal * 86400000;
+                        else if(entity.fdrIntervalUnit === 'month') intervalMs = entity.fdrIntervalVal * 2592000000; // 30 days
+
+                        if(intervalMs > 0 && (vTime - fdr.lastProfitTime) >= intervalMs) {
+                            const intervalsPassed = Math.floor((vTime - fdr.lastProfitTime) / intervalMs);
+                            const profit = (fdr.amount * (entity.fdrRate / 100)) * intervalsPassed;
+                            
+                            const acc = state.accounts.find(a => a.id === fdr.accountId);
+                            if(acc) {
+                                acc.balance += profit;
+                                entity.profitBal -= profit; // Deduct from Bank's profit balance
+                                fdr.lastProfitTime += intervalsPassed * intervalMs;
+                                fdr.totalProfit = (fdr.totalProfit || 0) + profit;
+                                needsSave = true;
+                            }
+                        }
+                    });
+
+                    if (needsSave && Math.random() < 0.1) { saveState(); } // Throttle auto saves
+                };
+
+                return {
+                    isDark, tabs, currentTab, isLoading, toasts, state, formatMoney, toggleTheme,
+                    formattedVirtualTime, toggleGlobalTx, adminFundAmount, modifyAdminFunds, issueBigBankLoan, loanData,
+                    showEntityModal, newEntity, createEntity, toggleEntityBlock, toggleEntityTx, getEntity, getUserName,
+                    entityManageModal, openEntityManageModal, getAccountsForEntity, saveState, showToast,
+                    showUserModal, newUserName, createUser, selectedUser, selectUser, getUserAccounts,
+                    showOpenAccountModal, selectedEntityForAccount, openAccount,
+                    actionModal, openAccountAction, executeAccountAction,
+                    fdrModal, fdrAmount, translateUnit, openFdrModal, getActiveFdrs, createFdr, closeFdr,
+                    cardsModal, openCards, getDebitCard, getCreditCard, formatCardNumber, issueCard, tempCreditLimit,
+                    spendCreditModal, ccSpendAmount, spendCreditCard, payCreditBill, closeCreditCard
+                };
+            }
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>
