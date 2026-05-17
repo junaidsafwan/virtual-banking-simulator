@@ -8,6 +8,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- Chart.js for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Noto+Sans+Bengali:wght@400;600;700&display=swap" rel="stylesheet">
     
@@ -50,10 +52,25 @@
         }
         .card-glass:hover { transform: translateY(-3px); }
 
-        /* Compact Layouts */
+        /* Compact Layouts & Visuals */
         .compact-card { padding: 1.25rem !important; }
         .compact-card h5 { font-size: 1.1rem; }
         .compact-card .badge { font-size: 0.75rem; padding: 0.35em 0.65em; }
+
+        .bankrupt-overlay {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(220, 53, 69, 0.15); z-index: 10; pointer-events: none;
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid rgba(220, 53, 69, 0.5); border-radius: 1.25rem;
+        }
+        .bankrupt-overlay span {
+            transform: rotate(-30deg); font-size: 2.5rem; font-weight: 900;
+            color: rgba(220, 53, 69, 0.4); text-transform: uppercase; border: 4px solid; padding: 5px 15px;
+        }
+
+        /* Score Progress */
+        .score-progress { height: 12px; border-radius: 6px; background: rgba(255,255,255,0.1); overflow: hidden; }
+        .score-bar { height: 100%; transition: width 0.5s ease; }
 
         /* Liquid Mesh Background */
         #liquid-bg {
@@ -71,10 +88,10 @@
         .blob-3 { top: 20%; left: 40%; width: 50vw; height: 50vw; background: #00c3ff; animation: morphBlob3 24s infinite alternate ease-in-out; }
         .blob-4 { bottom: 20%; left: 10%; width: 45vw; height: 45vw; background: #ffb100; animation: morphBlob4 30s infinite alternate ease-in-out; }
 
-        @keyframes morphBlob1 { 0% { transform: translate(0, 0) scale(1) rotate(0deg); border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; } 100% { transform: translate(25vw, 15vh) scale(1.15) rotate(45deg); border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; } }
-        @keyframes morphBlob2 { 0% { transform: translate(0, 0) scale(1) rotate(0deg); border-radius: 50% 50% 40% 60% / 60% 40% 50% 50%; } 100% { transform: translate(-20vw, -25vh) scale(1.2) rotate(-30deg); border-radius: 30% 70% 60% 40% / 40% 60% 30% 70%; } }
-        @keyframes morphBlob3 { 0% { transform: translate(0, 0) scale(1) rotate(0deg); border-radius: 60% 40% 50% 50% / 50% 50% 40% 60%; } 100% { transform: translate(-15vw, 25vh) scale(1.1) rotate(60deg); border-radius: 40% 60% 40% 60% / 60% 40% 60% 40%; } }
-        @keyframes morphBlob4 { 0% { transform: translate(0, 0) scale(1) rotate(0deg); border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; } 100% { transform: translate(20vw, -15vh) scale(1.25) rotate(-45deg); border-radius: 70% 30% 30% 70% / 70% 70% 30% 30%; } }
+        @keyframes morphBlob1 { 0% { transform: translate(0, 0) scale(1); border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; } 100% { transform: translate(25vw, 15vh) scale(1.15); border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; } }
+        @keyframes morphBlob2 { 0% { transform: translate(0, 0) scale(1); border-radius: 50% 50% 40% 60% / 60% 40% 50% 50%; } 100% { transform: translate(-20vw, -25vh) scale(1.2); border-radius: 30% 70% 60% 40% / 40% 60% 30% 70%; } }
+        @keyframes morphBlob3 { 0% { transform: translate(0, 0) scale(1); border-radius: 60% 40% 50% 50% / 50% 50% 40% 60%; } 100% { transform: translate(-15vw, 25vh) scale(1.1); border-radius: 40% 60% 40% 60% / 60% 40% 60% 40%; } }
+        @keyframes morphBlob4 { 0% { transform: translate(0, 0) scale(1); border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; } 100% { transform: translate(20vw, -15vh) scale(1.25); border-radius: 70% 30% 30% 70% / 70% 70% 30% 30%; } }
 
         .navbar-frosted {
             background: rgba(20, 20, 25, 0.65) !important;
@@ -99,24 +116,22 @@
         [data-bs-theme="light"] .nav-tabs .nav-link { background: rgba(0,0,0,0.03); }
         .nav-tabs .nav-link.active { background: var(--bs-primary); color: white; box-shadow: 0 -4px 20px rgba(13, 110, 253, 0.4); transform: translateY(-2px); }
 
+        .card-credit, .card-bond { position: relative; overflow: hidden; transition: transform 0.3s; }
         .card-credit {
-            background: linear-gradient(135deg, #2b2b2b, #444, #1a1a1a); /* Premium Dark CC */
-            color: #d4af37; border-radius: 1rem; padding: 20px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5); text-shadow: 0px 1px 1px rgba(0,0,0,0.8);
-            font-family: monospace; position: relative; overflow: hidden; transition: transform 0.3s;
-            border: 1px solid rgba(212, 175, 55, 0.3);
-        }
-        .card-credit::before {
-            content: "REWARDS"; position: absolute; right: 20px; top: 20px; font-weight: bold; opacity: 0.5; color: #fff;
+            background: linear-gradient(135deg, #2b2b2b, #444, #1a1a1a); color: #d4af37; border-radius: 1rem; padding: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5); border: 1px solid rgba(212, 175, 55, 0.3); font-family: monospace;
         }
         
         .card-debit {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: #fff; border-radius: 1rem; padding: 20px;
-            box-shadow: 0 8px 25px rgba(30, 60, 114, 0.4); text-shadow: 0px 1px 2px rgba(0,0,0,0.5);
-            font-family: monospace; position: relative; transition: transform 0.3s;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: #fff; border-radius: 1rem; padding: 20px;
+            box-shadow: 0 8px 25px rgba(30, 60, 114, 0.4); font-family: monospace; position: relative; transition: transform 0.3s;
         }
-        .card-debit::after { content: "DEBIT"; position: absolute; right: 20px; top: 20px; font-weight: bold; opacity: 0.5; }
+
+        .bond-item {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 193, 7, 0.02));
+            border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 1rem; transition: transform 0.3s;
+        }
+        .bond-item:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(255, 193, 7, 0.2); }
 
         .form-switch .form-check-input { width: 2.5em; height: 1.25em; cursor: pointer; }
         ::-webkit-scrollbar { width: 8px; }
@@ -130,10 +145,10 @@
         [data-bs-theme="light"] .notification-item { border-bottom: 1px solid rgba(0,0,0,0.1); }
         .notification-item:hover { background: rgba(255,255,255,0.05); }
         .notification-unread { border-left: 4px solid var(--bs-primary); background: rgba(13, 110, 253, 0.05); }
-        
-        /* Electric Bill Animation */
-        @keyframes pulseAlert { 0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); } }
-        .electric-alert { animation: pulseAlert 2s infinite; }
+        .tx-log-item { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
+        .tx-in { border-left: 4px solid #198754; background: rgba(25, 135, 84, 0.05); }
+        .tx-out { border-left: 4px solid #dc3545; background: rgba(220, 53, 69, 0.05); }
+        .chart-container { position: relative; height: 300px; width: 100%; }
     </style>
 </head>
 <body class="liquid-active">
@@ -146,7 +161,7 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark navbar-frosted shadow-sm sticky-top">
         <div class="container-fluid">
-            <a class="navbar-brand fw-bold" href="#"><i class="fa-solid fa-building-columns text-info"></i> ভি-ব্যাংকিং প্রো</a>
+            <a class="navbar-brand fw-bold" href="#"><i class="fa-solid fa-building-columns text-info"></i> ভি-ব্যাংকিং <span class="text-warning">আল্টিমেট</span></a>
             <div class="d-flex align-items-center ms-auto gap-3">
                 <div class="clock-display" id="virtualClock" title="ভার্চুয়াল সময়"><i class="fa-regular fa-clock"></i> 00:00:00</div>
                 <button class="btn btn-outline-warning btn-sm rounded-circle shadow-sm position-relative" type="button" data-bs-toggle="offcanvas" data-bs-target="#notificationCenter">
@@ -182,6 +197,7 @@
             <li class="nav-item"><button class="nav-link" id="customers-tab" data-bs-toggle="tab" data-bs-target="#customers" type="button"><i class="fa-solid fa-users"></i> গ্রাহক</button></li>
             <li class="nav-item"><button class="nav-link text-warning" id="loans-tab" data-bs-toggle="tab" data-bs-target="#loans" type="button"><i class="fa-solid fa-hand-holding-dollar"></i> লোন সমূহ</button></li>
             <li class="nav-item"><button class="nav-link text-info" id="crypto-tab" data-bs-toggle="tab" data-bs-target="#crypto" type="button"><i class="fa-brands fa-bitcoin"></i> ক্রিপ্টো</button></li>
+            <li class="nav-item"><button class="nav-link text-success" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics" type="button"><i class="fa-solid fa-chart-line"></i> এনালিটিক্স</button></li>
         </ul>
 
         <div class="tab-content" id="mainTabsContent">
@@ -204,25 +220,45 @@
                     </div>
                     <div class="col-md-6">
                         <div class="card card-glass p-4 h-100">
-                            <h4 class="text-warning"><i class="fa-solid fa-gears"></i> সিস্টেম কন্ট্রোল</h4>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h4 class="text-warning m-0"><i class="fa-solid fa-gears"></i> সিস্টেম কন্ট্রোল</h4>
+                                <button class="btn btn-sm btn-outline-info rounded-pill px-3" onclick="showLogsModal(null, 'গ্লোবাল অ্যাক্টিভিটি লগ')"><i class="fa-solid fa-list"></i> গ্লোবাল লগ</button>
+                            </div>
                             <hr class="border-secondary opacity-25">
                             <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded bg-secondary bg-opacity-10 shadow-sm">
                                 <span class="fw-bold">গ্লোবাল ট্রানজেকশন</span>
                                 <button id="globalTxBtn" class="btn btn-sm btn-success px-4 rounded-pill" onclick="toggleGlobalTx()">চালু আছে</button>
                             </div>
                             <div class="d-flex justify-content-between align-items-center p-3 rounded bg-secondary bg-opacity-10 border border-info border-opacity-50 shadow-sm">
-                                <span class="fw-bold text-info"><i class="fa-solid fa-forward-fast"></i> টাইম স্কিপ (টেস্টিং)</span>
+                                <div><span class="fw-bold text-info d-block"><i class="fa-solid fa-forward-fast"></i> টাইম স্কিপ</span><small class="text-muted" style="font-size: 0.7rem;">অটো-ডেবিট ও লোন চেক করতে</small></div>
                                 <button class="btn btn-sm btn-info fw-bold text-dark px-3 rounded-pill" onclick="skipTime(30)">+৩০ দিন</button>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Treasury Bonds Section in Big Bank -->
+                <div class="card card-glass mt-4 p-4 border-warning border-opacity-50 shadow-lg">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h4 class="text-warning fw-bold m-0"><i class="fa-solid fa-file-invoice-dollar"></i> বিগ-ব্যাংক ট্রেজারি বন্ড</h4>
+                            <small class="text-muted">প্রতি বন্ড ইস্যু করতে $1,000,000 মূল একাউন্ট থেকে কাটা হবে। প্রতি ২০ সেকেন্ডে দাম বাড়বে।</small>
+                        </div>
+                        <button class="btn btn-warning fw-bold rounded-pill text-dark shadow-sm px-4" onclick="showIssueBondModal()">
+                            <i class="fa-solid fa-plus"></i> বন্ড ইস্যু করুন ($1M)
+                        </button>
+                    </div>
+                    <hr class="border-secondary opacity-25 mb-4">
+                    <div class="row g-3" id="adminBondsContainer">
+                        <!-- Admin Bonds Rendered Here -->
+                    </div>
+                </div>
             </div>
 
-            <!-- SERVICES TAB (COMPACT) -->
+            <!-- SERVICES TAB -->
             <div class="tab-pane fade" id="services" role="tabpanel">
-                <div class="d-flex justify-content-between align-items-center mb-4 card-glass p-3 px-4">
-                    <h4 class="mb-0 fw-bold">ওয়ালেট এবং ব্যাংক সার্ভিস</h4>
+                <div class="d-flex justify-content-between align-items-center mb-4 card-glass p-3 px-4 border-success border-opacity-50">
+                    <h4 class="mb-0 fw-bold">ওয়ালেট এবং ব্যাংক সার্ভিস</h4>
                     <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#createServiceModal"><i class="fa-solid fa-plus"></i> নতুন সার্ভিস</button>
                 </div>
                 <div id="servicesContainer" class="row g-3"></div>
@@ -230,7 +266,7 @@
 
             <!-- CUSTOMERS TAB -->
             <div class="tab-pane fade" id="customers" role="tabpanel">
-                <div class="d-flex justify-content-between align-items-center mb-4 card-glass p-3 px-4">
+                <div class="d-flex justify-content-between align-items-center mb-4 card-glass p-3 px-4 border-info border-opacity-50">
                     <h4 class="mb-0 fw-bold">গ্রাহক ম্যানেজমেন্ট</h4>
                     <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#createCustomerModal"><i class="fa-solid fa-user-plus"></i> নতুন গ্রাহক</button>
                 </div>
@@ -253,8 +289,9 @@
                     <div class="table-responsive"><table class="table table-hover align-middle"><thead class="table-dark bg-opacity-50"><tr><th>সার্ভিস নাম</th><th>আসল</th><th>উৎস</th><th>ইন্টারেস্ট</th><th>পরিশোধিত</th><th>বকেয়া</th><th>স্ট্যাটাস</th><th>অ্যাকশন</th></tr></thead><tbody id="loansBbToSrvBody"></tbody></table></div>
                 </div>
                 <div class="card card-glass p-4 border-info border-opacity-50">
-                    <h4 class="fw-bold text-info mb-3"><i class="fa-solid fa-users"></i> গ্রাহক লোন (ব্যাংক থেকে)</h4>
-                    <div class="table-responsive"><table class="table table-hover align-middle"><thead class="table-dark bg-opacity-50"><tr><th>গ্রাহক ও ব্যাংক</th><th>আসল</th><th>উৎস</th><th>ইন্টারেস্ট</th><th>পরিশোধিত</th><th>বকেয়া</th><th>স্ট্যাটাস</th></tr></thead><tbody id="loansSrvToCustBody"></tbody></table></div>
+                    <h4 class="fw-bold text-info mb-3"><i class="fa-solid fa-users"></i> গ্রাহক লোন ও বন্ড লোন</h4>
+                    <small class="d-block mb-3 text-muted">গ্রাহক লোনগুলো অটো-ডেবিটের মাধ্যমে প্রতি ৩০ দিনে স্বয়ংক্রিয়ভাবে কাটা হয়। বন্ড লোন ম্যানুয়ালি বা অটো-ডেবিট মাধ্যমে পরিশোধ করা যায়। বন্ড লোন পরিশোধ হলে মূল অর্থ সার্ভিসের মূলে এবং মুনাফা মুনাফায় যায়।</small>
+                    <div class="table-responsive"><table class="table table-hover align-middle"><thead class="table-dark bg-opacity-50"><tr><th>গ্রাহক ও ব্যাংক</th><th>আসল</th><th>টাইপ</th><th>মোট ফেরত</th><th>পরিশোধিত</th><th>বকেয়া</th><th>কিস্তি/মাস</th><th>স্ট্যাটাস</th><th>অ্যাকশন</th></tr></thead><tbody id="loansSrvToCustBody"></tbody></table></div>
                 </div>
             </div>
 
@@ -271,11 +308,48 @@
                     <div class="col-md-6"><div class="card card-glass p-4 h-100"><h5 class="border-bottom border-secondary pb-3 mb-4 fw-bold"><i class="fa-solid fa-users text-success"></i> গ্রাহক পোর্টফোলিও</h5><div id="customersCryptoList" class="d-flex flex-column gap-3"></div></div></div>
                 </div>
             </div>
+
+            <!-- ANALYTICS TAB -->
+            <div class="tab-pane fade" id="analytics" role="tabpanel">
+                <div class="row g-4">
+                    <div class="col-lg-8">
+                        <div class="card card-glass p-4 h-100">
+                            <h4 class="fw-bold mb-4 text-success"><i class="fa-solid fa-chart-area"></i> সিস্টেম ক্যাশ ফ্লো (বিগ ব্যাংক রিজার্ভ)</h4>
+                            <div class="chart-container"><canvas id="cashflowChart"></canvas></div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card card-glass p-4 h-100">
+                            <h4 class="fw-bold mb-4 text-warning"><i class="fa-solid fa-chart-pie"></i> লোন ডিস্ট্রিবিউশন</h4>
+                            <div class="chart-container" style="height: 250px;"><canvas id="loanPieChart"></canvas></div>
+                            <div class="mt-4 pt-3 border-top border-secondary border-opacity-25">
+                                <div class="d-flex justify-content-between mb-2"><small class="text-muted">মোট মার্কেট সাপ্লাই</small><strong id="stat-total-supply">$0.00</strong></div>
+                                <div class="d-flex justify-content-between mb-2"><small class="text-muted">সার্ভিসগুলোর মোট বকেয়া লোন</small><strong class="text-danger" id="stat-bb-loans">$0.00</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Modals -->
-    <!-- CC Pay Bill Modal (Updated) -->
+    <!-- Logs Modal -->
+    <div class="modal fade" id="logsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content card-glass">
+                <div class="modal-header border-secondary border-opacity-25">
+                    <h5 class="modal-title fw-bold" id="logsModalTitle"><i class="fa-solid fa-list-check text-info"></i> অ্যাক্টিভিটি লগ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div id="logsModalBody" class="p-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CC Pay Bill Modal -->
     <div class="modal fade" id="ccPayModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content card-glass border-warning border-opacity-50">
@@ -288,35 +362,23 @@
                     <div class="mb-3">
                         <label class="form-label text-muted fw-bold">ক্যাটাগরি</label>
                         <select id="ccPayCategory" class="form-select bg-transparent border-secondary text-light shadow-none">
-                            <option class="text-dark" value="ইলেকট্রিক বিল">ইলেকট্রিক বিল (Electric)</option>
-                            <option class="text-dark" value="শপিং">শপিং (Shopping)</option>
-                            <option class="text-dark" value="রেস্টুরেন্ট">রেস্টুরেন্ট (Restaurant)</option>
-                            <option class="text-dark" value="ট্যাক্স">ট্যাক্স (Tax)</option>
-                            <option class="text-dark" value="অন্যান্য">অন্যান্য (Other)</option>
+                            <option class="text-dark" value="ইলেকট্রিক বিল">ইলেকট্রিক বিল</option><option class="text-dark" value="শপিং">শপিং</option><option class="text-dark" value="রেস্টুরেন্ট">রেস্টুরেন্ট</option><option class="text-dark" value="ট্যাক্স">ট্যাক্স</option><option class="text-dark" value="অন্যান্য">অন্যান্য</option>
                         </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label text-muted fw-bold">পরিমাণ ($)</label>
                         <input type="number" id="ccPayAmount" class="form-control form-control-lg bg-transparent border-warning text-light shadow-none fw-bold" placeholder="0.00" oninput="calculateEMI()">
                     </div>
-                    <div class="form-check form-switch mb-3">
-                        <input class="form-check-input bg-secondary border-secondary" type="checkbox" id="ccEmiToggle" onchange="calculateEMI()">
-                        <label class="form-check-label fw-bold text-info" for="ccEmiToggle">এই বিলটি EMI তে রূপান্তর করুন</label>
-                    </div>
+                    <div class="form-check form-switch mb-3"><input class="form-check-input bg-secondary border-secondary" type="checkbox" id="ccEmiToggle" onchange="calculateEMI()"><label class="form-check-label fw-bold text-info" for="ccEmiToggle">এই বিলটি EMI তে রূপান্তর করুন</label></div>
                     <div id="ccEmiOptions" class="d-none bg-secondary bg-opacity-10 p-3 rounded border border-info border-opacity-25 mb-3">
                         <label class="form-label fw-bold">EMI মেয়াদ</label>
                         <select id="ccEmiMonths" class="form-select bg-transparent border-secondary text-light shadow-none mb-2" onchange="calculateEMI()">
-                            <option class="text-dark" value="3">৩ মাস (৫% ইন্টারেস্ট)</option>
-                            <option class="text-dark" value="6">৬ মাস (৮% ইন্টারেস্ট)</option>
-                            <option class="text-dark" value="12">১২ মাস (১৫% ইন্টারেস্ট)</option>
+                            <option class="text-dark" value="3">৩ মাস (৫% ইন্টারেস্ট)</option><option class="text-dark" value="6">৬ মাস (৮% ইন্টারেস্ট)</option><option class="text-dark" value="12">১২ মাস (১৫% ইন্টারেস্ট)</option>
                         </select>
                         <div class="text-warning fw-bold mt-2" id="ccEmiCalcResult">মাসিক কিস্তি: $0.00</div>
                     </div>
                 </div>
-                <div class="modal-footer border-secondary border-opacity-25">
-                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">বাতিল</button>
-                    <button type="button" class="btn btn-warning fw-bold rounded-pill px-4 text-dark" onclick="submitCCPayment()">পেমেন্ট করুন</button>
-                </div>
+                <div class="modal-footer border-secondary border-opacity-25"><button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">বাতিল</button><button type="button" class="btn btn-warning fw-bold rounded-pill px-4 text-dark" onclick="submitCCPayment()">পেমেন্ট করুন</button></div>
             </div>
         </div>
     </div>
@@ -326,10 +388,22 @@
     <div class="modal fade" id="createCustomerModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content card-glass"><div class="modal-header"><h5 class="modal-title fw-bold">নতুন গ্রাহক তৈরী</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="text" id="newCustomerName" class="form-control bg-transparent text-light" placeholder="গ্রাহকের নাম"></div><div class="modal-footer"><button class="btn btn-primary rounded-pill px-4" onclick="createCustomer()">তৈরী করুন</button></div></div></div></div>
     <div class="modal fade" id="takeServiceLoanModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content card-glass"><div class="modal-header"><h5 class="modal-title fw-bold">লোন গ্রহণ</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="takeSrvLoanSrvId"><input type="number" id="takeSrvLoanAmount" class="form-control bg-transparent text-light mb-3" placeholder="পরিমাণ ($)"><select id="takeSrvLoanSource" class="form-select bg-transparent text-light mb-3"><option class="text-dark" value="main">মূল</option><option class="text-dark" value="profit">মুনাফা</option></select><input type="number" id="takeSrvLoanInterest" class="form-control bg-transparent text-light" value="25" placeholder="ইন্টারেস্ট %"></div><div class="modal-footer"><button class="btn btn-primary rounded-pill px-4" onclick="submitTakeServiceLoan()">নিন</button></div></div></div></div>
     <div class="modal fade" id="payServiceLoanModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content card-glass"><div class="modal-header"><h5 class="modal-title fw-bold">লোন পরিশোধ</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="paySrvLoanId"><div class="alert alert-warning py-2 mb-3 fw-bold text-center">বকেয়া: <span id="paySrvTotalDue"></span></div><input type="number" id="paySrvAmount" class="form-control bg-transparent text-light mb-3" placeholder="পরিমাণ ($)"><select id="paySrvSource" class="form-select bg-transparent text-light"><option class="text-dark" value="main">মূল</option><option class="text-dark" value="profit">মুনাফা</option></select><small class="text-info mt-2 d-block fw-bold" id="paySrvSourceBalance"></small></div><div class="modal-footer"><button class="btn btn-success rounded-pill px-4" onclick="submitPayServiceLoan()">পরিশোধ</button></div></div></div></div>
-    <div class="modal fade" id="customerLoanModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content card-glass"><div class="modal-header"><h5 class="modal-title fw-bold">ব্যাংক লোন</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="loanAccId"><input type="number" id="loanAmount" class="form-control bg-transparent text-light mb-3" placeholder="পরিমাণ ($)"><input type="number" id="loanInterest" class="form-control bg-transparent text-light mb-3" value="10" placeholder="ইন্টারেস্ট %"><select id="loanSource" class="form-select bg-transparent text-light"><option class="text-dark" value="main">মূল</option><option class="text-dark" value="profit">মুনাফা</option></select><small class="text-info mt-2 d-block fw-bold" id="loanSourceBalance"></small></div><div class="modal-footer"><button class="btn btn-primary rounded-pill px-4" onclick="submitCustomerLoan()">লোন নিন</button></div></div></div></div>
+    <div class="modal fade" id="customerLoanModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content card-glass"><div class="modal-header"><h5 class="modal-title fw-bold">ব্যাংক লোন (অটো-ডেবিট)</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="loanAccId"><div class="alert alert-info py-2 mb-3 small fw-bold">আপনার স্কোর অনুযায়ী সর্বোচ্চ লোন: <span id="maxLoanAmountInfo" class="text-warning"></span></div><input type="number" id="loanAmount" class="form-control bg-transparent text-light mb-3" placeholder="পরিমাণ ($)"><select id="loanMonths" class="form-select bg-transparent text-light mb-3"><option class="text-dark" value="3">৩ মাস</option><option class="text-dark" value="6">৬ মাস</option><option class="text-dark" value="12">১২ মাস</option></select><input type="number" id="loanInterest" class="form-control bg-transparent text-light mb-3" value="10" placeholder="ইন্টারেস্ট %"><select id="loanSource" class="form-select bg-transparent text-light"><option class="text-dark" value="main">মূল</option><option class="text-dark" value="profit">মুনাফা</option></select><small class="text-info mt-2 d-block fw-bold" id="loanSourceBalance"></small></div><div class="modal-footer"><button class="btn btn-primary rounded-pill px-4" onclick="submitCustomerLoan()">লোন নিন</button></div></div></div></div>
     <div class="modal fade" id="transferModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content card-glass"><div class="modal-header"><h5 class="modal-title fw-bold">মানি ট্রান্সফার</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="transferFromAccId"><select id="transferTargetSelect" class="form-select bg-transparent text-light mb-3"></select><input type="number" id="transferAmount" class="form-control bg-transparent text-light" placeholder="পরিমাণ ($)"></div><div class="modal-footer"><button class="btn btn-primary rounded-pill px-4" onclick="submitTransfer()">ট্রান্সফার</button></div></div></div></div>
+    
+    <!-- Bond Interaction Modals -->
+    <div class="modal fade" id="issueBondModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content card-glass border-warning border-opacity-50"><div class="modal-header"><h5 class="modal-title fw-bold text-warning"><i class="fa-solid fa-file-contract"></i> বন্ড ইস্যু করুন</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="alert alert-info py-2 small fw-bold">প্রতি বন্ড ইস্যু করতে মূল একাউন্ট থেকে $1,000,000 কাটা হবে।</div><label class="form-label text-muted fw-bold">বন্ডের প্রাথমিক মূল্য ($)</label><input type="number" id="bondInitialPrice" class="form-control bg-transparent text-light form-control-lg fw-bold" placeholder="যেমন: 1500000"></div><div class="modal-footer"><button class="btn btn-warning rounded-pill px-4 fw-bold text-dark" onclick="submitIssueBond()">ইস্যু নিশ্চিত করুন</button></div></div></div></div>
+    
+    <!-- Service Bond Management Modal -->
+    <div class="modal fade" id="serviceBondsModal" tabindex="-1"><div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable"><div class="modal-content card-glass"><div class="modal-header border-secondary border-opacity-25"><h5 class="modal-title fw-bold text-success" id="serviceBondTitle"><i class="fa-solid fa-file-invoice-dollar"></i> বন্ড ম্যানেজমেন্ট</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-0"><div class="row m-0 h-100"><div class="col-md-6 p-4 border-end border-secondary border-opacity-25"><h5 class="fw-bold mb-3 border-bottom border-secondary pb-2"><i class="fa-solid fa-store"></i> বিগ-ব্যাংক বন্ড মার্কেট</h5><div id="bbAvailableBonds" class="d-flex flex-column gap-3"></div></div><div class="col-md-6 p-4"><h5 class="fw-bold mb-3 border-bottom border-secondary pb-2"><i class="fa-solid fa-vault"></i> আমার কেনা বন্ড</h5><div id="myServiceBonds" class="d-flex flex-column gap-3"></div></div></div></div></div></div></div>
+
+    <!-- Customer Bond Loan Modal -->
+    <div class="modal fade" id="customerBondMarketModal" tabindex="-1"><div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"><div class="modal-content card-glass"><div class="modal-header border-secondary border-opacity-25"><h5 class="modal-title fw-bold text-warning"><i class="fa-solid fa-hand-holding-dollar"></i> বন্ড লোন অফার</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="alert alert-info py-2 small fw-bold">আপনার ব্যাংক থেকে অফারকৃত বন্ড লোনগুলো নিচে দেয়া হলো।</div><div id="customerBondsContainer" class="d-flex flex-column gap-3 mt-3"></div></div></div></div></div>
+
+    <!-- Crypto Modals -->
     <div class="modal fade" id="cryptoTradeModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content card-glass"><div class="modal-header"><h5 class="modal-title fw-bold"><i class="fa-brands fa-bitcoin text-warning"></i> ক্রিপ্টো ট্রেডিং</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="ctEntityId"><input type="hidden" id="ctEntityType"><input type="hidden" id="ctActionType"><div class="d-flex justify-content-between mb-3"><span id="ctActionLabel" class="fw-bold fs-5"></span><span class="badge bg-warning text-dark fs-6 rounded-pill px-3 py-2" id="ctCurrentPriceDisplay"></span></div><div id="ctSourceSelectorDiv" class="mb-3 d-none"><select id="ctSourceSelect" class="form-select bg-transparent text-light"><option class="text-dark" value="main">মূল</option><option class="text-dark" value="profit">মুনাফা</option></select></div><div class="mb-4"><label class="form-label fw-bold" id="ctAmountLabel">পরিমাণ</label><input type="number" id="ctAmount" class="form-control form-control-lg bg-transparent text-light text-center" oninput="calculateCryptoTrade()"><small class="text-info mt-2 d-block text-center fw-bold" id="ctAvailableBal"></small></div><div class="alert alert-info py-3 fw-bold text-center fs-5" id="ctCalculationResult">মোট: $0.00</div></div><div class="modal-footer"><button class="btn btn-primary rounded-pill px-4 fw-bold" onclick="submitCryptoTrade()">নিশ্চিত</button></div></div></div></div>
     <div class="modal fade" id="cryptoTransferModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content card-glass"><div class="modal-header"><h5 class="modal-title fw-bold">V-Coin সেন্ড</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="cxFromId"><input type="hidden" id="cxFromType"><input type="text" class="form-control bg-transparent text-light fw-bold mb-3" id="cxAvailable" readonly><select id="cxTargetSelect" class="form-select bg-transparent text-light mb-3"></select><input type="number" id="cxAmount" class="form-control bg-transparent text-light" placeholder="পরিমাণ (VCN)"></div><div class="modal-footer"><button class="btn btn-primary rounded-pill px-4" onclick="submitCryptoTransfer()">সেন্ড</button></div></div></div></div>
+    
     <div class="modal fade" id="fdrListModal" tabindex="-1"><div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content card-glass"><div class="modal-header"><h5 class="modal-title fw-bold">FDR তালিকা</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-0"><div class="table-responsive m-3"><table class="table table-hover align-middle text-center mb-0"><thead class="table-dark bg-opacity-50"><tr><th>জমাকৃত অর্থ</th><th>মুনাফার হার</th><th>ব্যবধান</th><th>স্ট্যাটাস</th><th>অ্যাকশন</th></tr></thead><tbody id="fdrListBody"></tbody></table></div></div></div></div></div>
     <div class="modal fade" id="customPromptModal" tabindex="-1" data-bs-backdrop="static"><div class="modal-dialog modal-dialog-centered"><div class="modal-content card-glass"><div class="modal-header"><h5 class="modal-title fw-bold" id="promptTitle">তথ্য দিন</h5><button type="button" class="btn-close" data-bs-dismiss="modal" onclick="resolvePrompt(null)"></button></div><div class="modal-body p-4"><p id="promptMessage" class="mb-3 fs-5 text-center"></p><input type="text" id="promptInput" class="form-control form-control-lg bg-transparent border-primary text-light shadow-none text-center"></div><div class="modal-footer d-flex justify-content-center"><button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal" onclick="resolvePrompt(null)">বাতিল</button><button type="button" class="btn btn-primary rounded-pill px-5 fw-bold" onclick="submitPrompt()">নিশ্চিত</button></div></div></div></div>
 
@@ -350,19 +424,69 @@
             bigBank: { main: 10000000, profit: 0, txEnabled: true },
             crypto: { price: 1000.00, history: [1000.00], lastUpdate: Date.now(), trend: 'up' },
             services: [], customers: [], accounts: [], loans: [], fdrs: [], cards: [], notifications: [],
-            lastElectricTime: Date.now()
+            transactions: [], analyticsHistory: [],
+            bonds: [], lastBondUpdate: Date.now(), 
+            lastElectricTime: Date.now(), lastDayCheck: Date.now()
         };
 
         const generateId = () => Math.random().toString(36).substr(2, 9);
+        const generateCardNumber = (type, network = 'Amex') => {
+            let prefix = '37'; // Amex
+            if(network === 'Visa') prefix = '4';
+            else if(network === 'MasterCard') prefix = '5';
+            
+            let num = prefix;
+            const length = network === 'Amex' ? 15 : 16;
+            for(let i = num.length; i < length; i++) num += Math.floor(Math.random() * 10).toString();
+            
+            if(network === 'Amex') return num.match(/.{1,4}/g).join(' ');
+            return num.match(/.{1,4}/g).join(' ');
+        };
         const formatMoney = (amount) => parseFloat(amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         const formatCrypto = (amount) => parseFloat(amount).toLocaleString('en-US', {minimumFractionDigits: 4, maximumFractionDigits: 4});
-        const generateCardNumber = (type) => {
-            if(type === 'DEBIT') return Array.from({length: 4}, () => Math.floor(1000 + Math.random() * 9000)).join('-');
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; let res = '';
-            for(let i=0; i<16; i++) { if(i>0 && i%4===0) res += '-'; res += chars.charAt(Math.floor(Math.random() * chars.length)); } return res;
-        };
         const virtualDayMs = 86400000;
 
+        // Activity Logs function
+        function logTx(accountId, amount, type, category, description) {
+            state.transactions.unshift({
+                id: generateId(), time: state.virtualTime,
+                accountId, amount, type, category, description
+            });
+            if(state.transactions.length > 500) state.transactions.pop();
+        }
+
+        function showLogsModal(accountId = null, title = "অ্যাক্টিভিটি লগ") {
+            document.getElementById('logsModalTitle').innerHTML = `<i class="fa-solid fa-list-check text-info"></i> ${title}`;
+            let logs = state.transactions;
+            if(accountId) logs = logs.filter(t => t.accountId === accountId);
+            
+            const body = document.getElementById('logsModalBody');
+            if(logs.length === 0) {
+                body.innerHTML = `<div class="text-center text-muted py-5"><i class="fa-solid fa-clock-rotate-left fs-1 mb-3"></i><br>কোনো লেনদেনের ইতিহাস নেই।</div>`;
+            } else {
+                body.innerHTML = logs.map(t => {
+                    const isOut = t.type === 'out';
+                    const icon = isOut ? '<i class="fa-solid fa-arrow-up text-danger"></i>' : '<i class="fa-solid fa-arrow-down text-success"></i>';
+                    const d = new Date(t.time); const timeStr = d.toLocaleDateString('bn-BD') + ' ' + d.toLocaleTimeString('bn-BD', {hour:'2-digit',minute:'2-digit'});
+                    const accName = t.accountId ? (state.customers.find(c => c.id === (state.accounts.find(a=>a.id===t.accountId)||{}).customerId)?.name || t.accountId) : 'সিস্টেম';
+                    
+                    return `
+                        <div class="tx-log-item ${isOut ? 'tx-out' : 'tx-in'} rounded mb-2">
+                            <div>
+                                <strong class="d-block mb-1">${t.category}</strong>
+                                <small class="text-muted d-block">${t.description} ${accountId ? '' : `| <span class="text-info">${accName}</span>`}</small>
+                                <span class="badge bg-dark mt-1">${timeStr}</span>
+                            </div>
+                            <div class="text-end">
+                                <h5 class="${isOut ? 'text-danger' : 'text-success'} m-0 fw-bold">${icon} $${formatMoney(t.amount)}</h5>
+                            </div>
+                        </div>`;
+                }).join('');
+            }
+            new bootstrap.Modal(document.getElementById('logsModal')).show();
+        }
+
+        // Notification System
         function addNotification(title, msg, type='info') {
             state.notifications.unshift({id: generateId(), time: state.virtualTime, title, msg, type, read: false});
             if(state.notifications.length > 50) state.notifications.pop();
@@ -405,22 +529,30 @@
             if(!skipNotify) addNotification(isError ? "সতর্কতা" : "সফল", msg, isError ? 'danger' : 'success');
         }
 
-        function saveState() { localStorage.setItem('vBankingStateV3', JSON.stringify(state)); }
+        function saveState() { localStorage.setItem('vBankingStateV6', JSON.stringify(state)); }
 
         function loadState() {
-            const saved = localStorage.getItem('vBankingStateV3');
+            const saved = localStorage.getItem('vBankingStateV6') || localStorage.getItem('vBankingStateV5') || localStorage.getItem('vBankingStateV4');
             if(saved) {
                 const parsed = JSON.parse(saved); state = { ...state, ...parsed };
                 const now = Date.now(); const offlineRealMs = now - (state.lastRealTime || now); state.virtualTime += (offlineRealMs * 5); state.lastRealTime = now;
                 
+                if(!state.bonds) state.bonds = [];
+                if(!state.lastBondUpdate) state.lastBondUpdate = state.virtualTime;
+                
                 // Migrations
-                if(!state.notifications) state.notifications = [];
-                if(!state.lastElectricTime) state.lastElectricTime = state.virtualTime;
-                state.accounts.forEach(a => { if(a.electricBill === undefined) a.electricBill = 0; });
-                state.cards.forEach(c => {
-                    if(c.rewardPoints === undefined) c.rewardPoints = 0;
-                    if(c.lastFeeDate === undefined) c.lastFeeDate = state.virtualTime;
-                });
+                if(state.cards) {
+                    state.cards.forEach(c => {
+                        if(!c.network) c.network = 'Amex'; // All existing cards converted to Amex
+                    });
+                }
+                if(state.bonds) {
+                    state.bonds.forEach(b => {
+                        if(b.status === 'market' && b.availableLoanAmount === undefined) {
+                            b.availableLoanAmount = b.offeredPrice; // Track shared bond loans limit
+                        }
+                    });
+                }
             }
             applyGlassEffect(); updateNotificationUI();
         }
@@ -444,10 +576,51 @@
             document.getElementById('virtualClock').innerHTML = `<i class="fa-regular fa-clock"></i> ` + vDate.toLocaleString('bn-BD', { day: '2-digit', month: 'short', year:'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
         }
 
+        function updateCreditScore(acc, amountChange) { acc.creditScore = Math.min(1000, Math.max(0, acc.creditScore + amountChange)); }
+
         function processBackgroundTasks(force = false) {
             let stateChanged = false;
             
-            // 1. Electric Bill (Every 5 virtual mins = 300,000 ms)
+            // 0. Daily Analytics History Check
+            if (state.virtualTime - state.lastDayCheck >= virtualDayMs) {
+                const days = Math.floor((state.virtualTime - state.lastDayCheck) / virtualDayMs);
+                state.lastDayCheck += days * virtualDayMs;
+                state.analyticsHistory.push({ time: state.virtualTime, bbMain: state.bigBank.main, bbProfit: state.bigBank.profit });
+                if(state.analyticsHistory.length > 30) state.analyticsHistory.shift();
+            }
+
+            // 1. Bond Value Appreciation (Every 20 real seconds = 100,000 ms virtual)
+            if (state.virtualTime - state.lastBondUpdate >= 100000) {
+                let cycles = Math.floor((state.virtualTime - state.lastBondUpdate) / 100000);
+                state.lastBondUpdate += cycles * 100000;
+                let bondUpdated = false;
+                state.bonds.forEach(b => {
+                    if(b.owner === 'big_bank' && b.status === 'vault') {
+                        for(let i=0; i<cycles; i++) {
+                            const increase = 1 + ((Math.random() * 1 + 1) / 100); 
+                            b.currentPrice *= increase;
+                        }
+                        bondUpdated = true;
+                    }
+                });
+                if(bondUpdated) {
+                    stateChanged = true;
+                    if(document.getElementById('admin-tab').classList.contains('active')) renderAdminBonds();
+                }
+            }
+
+            // 2. Bankruptcy Check
+            state.services.forEach(srv => {
+                if (srv.main <= 0 && !srv.isBankrupt) {
+                    srv.isBankrupt = true; srv.blocked = true; stateChanged = true;
+                    addNotification("ব্যাংক দেউলিয়া!", `${srv.name} এর মূল ফান্ড $0 হয়ে গেছে। লেনদেন স্থগিত করা হলো।`, "danger");
+                } else if (srv.main > 0 && srv.isBankrupt) {
+                    srv.isBankrupt = false; srv.blocked = false; stateChanged = true;
+                    addNotification("ব্যাংক রিস্টোরড", `${srv.name} এ ফান্ড যুক্ত হওয়ায় আবার সচল হয়েছে।`, "success");
+                }
+            });
+
+            // 3. Electric Bill (Every 5 virtual mins = 300,000 ms)
             if (state.virtualTime - state.lastElectricTime >= 300000) {
                 const cycles = Math.floor((state.virtualTime - state.lastElectricTime) / 300000);
                 state.lastElectricTime += cycles * 300000;
@@ -456,7 +629,7 @@
                 if(added) { stateChanged = true; if(force) addNotification("বিদ্যুৎ বিল", `সকল একাউন্টে $${10*cycles} বিদ্যুৎ বিল যুক্ত হয়েছে।`, "warning"); }
             }
 
-            // 2. Process FDR
+            // 4. Process FDR
             state.fdrs.forEach(fdr => {
                 if(!fdr.active) return;
                 const msPassed = state.virtualTime - fdr.lastYieldTime;
@@ -465,24 +638,52 @@
                     const cycles = Math.floor(msPassed / msInterval);
                     const yieldAmount = (fdr.principal * (fdr.rate / 100)) * cycles;
                     const acc = state.accounts.find(a => a.id === fdr.accountId);
-                    if(acc) { acc.balance += yieldAmount; fdr.lastYieldTime += (cycles * msInterval); stateChanged = true; }
+                    if(acc) { 
+                        acc.balance += yieldAmount; fdr.lastYieldTime += (cycles * msInterval); stateChanged = true; 
+                        logTx(acc.id, yieldAmount, 'in', 'FDR Profit', 'FDR থেকে মুনাফা অর্জন');
+                    }
                 }
             });
 
-            // 3. Process Cards
+            // 5. Auto-Debit Customer Loans & Bond Loans
+            state.loans.filter(l => (l.type === 'SRV_TO_CUST' || l.type === 'BOND_LOAN') && l.active).forEach(l => {
+                if (state.virtualTime >= l.nextEmiDate) {
+                    const acc = state.accounts.find(a => a.id === l.accountId);
+                    const srv = state.services.find(s => s.id === l.serviceId);
+                    if (acc && srv && acc.balance >= l.emiAmount) {
+                        acc.balance -= l.emiAmount;
+                        
+                        const principalPortion = l.emiAmount * (l.principal / (l.principal+l.interest));
+                        const interestPortion = l.emiAmount - principalPortion;
+                        
+                        srv.main += principalPortion; 
+                        srv.profit += interestPortion; 
+                        
+                        l.paid += l.emiAmount;
+                        l.nextEmiDate += 30 * virtualDayMs;
+                        updateCreditScore(acc, 5); 
+                        logTx(acc.id, l.emiAmount, 'out', l.type === 'BOND_LOAN' ? 'Bond EMI' : 'Loan EMI', `লোনের কিস্তি অটো-ডেবিট করা হয়েছে।`);
+                        addNotification("অটো-ডেবিট সফল", `লোন কিস্তি $${formatMoney(l.emiAmount)} কাটা হয়েছে।`, "success");
+                        if (l.paid >= (l.principal + l.interest) - 0.1) l.active = false;
+                        stateChanged = true;
+                    } else if (acc) {
+                        updateCreditScore(acc, -15); 
+                        l.nextEmiDate += virtualDayMs; 
+                        logTx(acc.id, 0, 'out', 'EMI Failed', `লোন কিস্তি ব্যর্থ! পর্যাপ্ত ব্যালেন্স নেই।`);
+                        addNotification("অটো-ডেবিট ব্যর্থ!", `লোন কিস্তির পর্যাপ্ত ব্যালেন্স নেই। স্কোর কমেছে!`, "danger");
+                        stateChanged = true;
+                    }
+                }
+            });
+
+            // 6. Process Cards
             state.cards.forEach(card => {
                 if(card.type === 'CREDIT' && card.active) {
-                    
-                    // Monthly Fee ($15 every 30 days)
                     if (state.virtualTime - card.lastFeeDate >= 30 * virtualDayMs) {
                         const cycles = Math.floor((state.virtualTime - card.lastFeeDate) / (30 * virtualDayMs));
                         card.lastFeeDate += cycles * (30 * virtualDayMs);
-                        card.spent += (15 * cycles);
-                        stateChanged = true;
-                        addNotification("কার্ড ফি", `কার্ড ${card.number.slice(-4)} এ $${15*cycles} মাসিক ফি যুক্ত হয়েছে।`, 'warning');
+                        card.spent += (15 * cycles); stateChanged = true;
                     }
-
-                    // EMIs
                     card.emis.forEach(emi => {
                         const daysSinceEmi = Math.floor((state.virtualTime - emi.lastProcessed) / virtualDayMs);
                         if(daysSinceEmi >= 30 && emi.remainingMonths > 0) {
@@ -490,28 +691,24 @@
                             for(let i=0; i<cycles; i++) {
                                 if(emi.remainingMonths <= 0) break;
                                 card.blockedEmiLimit -= emi.installment; card.spent += emi.installment; emi.remainingMonths--; emi.lastProcessed += (30 * virtualDayMs); stateChanged = true;
-                                addNotification("EMI চার্জ", `কার্ড ${card.number.slice(-4)} এ $${formatMoney(emi.installment)} EMI কিস্তি যুক্ত হয়েছে।`, 'warning');
                             }
                         }
                     });
                     card.emis = card.emis.filter(e => e.remainingMonths > 0);
 
-                    // Billing & Auto-pay
                     if(card.spent > 0 || (card.fines && card.fines > 0)) {
-                        const msSinceBilling = state.virtualTime - card.lastBillingDate;
-                        const daysSinceBilling = Math.floor(msSinceBilling / virtualDayMs);
-
+                        const daysSinceBilling = Math.floor((state.virtualTime - card.lastBillingDate) / virtualDayMs);
                         if(daysSinceBilling >= 30 && card.autoPay) {
                             const due = card.spent + (card.fines || 0);
                             const acc = state.accounts.find(a => a.id === card.accountId);
                             if(acc && acc.balance >= due) {
-                                acc.balance -= due; card.spent = 0; card.fines = 0; card.lastBillingDate = state.virtualTime; stateChanged = true;
-                                addNotification("অটো বিল পে", `কার্ড ${card.number.slice(-4)} এর $${formatMoney(due)} অটো-পে করা হয়েছে।`, 'success');
+                                acc.balance -= due; card.spent = 0; card.fines = 0; card.lastBillingDate = state.virtualTime; 
+                                updateCreditScore(acc, 2); logTx(acc.id, due, 'out', 'CC Auto-Pay', 'ক্রেডিট কার্ড বিল অটো-পে'); stateChanged = true;
                             } else if(daysSinceBilling === 30 && !card.notifiedAutoFail) {
+                                if(acc) updateCreditScore(acc, -10);
                                 addNotification("অটো বিল পে ব্যর্থ!", `ব্যালেন্স নেই। কার্ড ${card.number.slice(-4)}`, 'danger'); card.notifiedAutoFail = true; stateChanged = true;
                             }
                         }
-
                         if(daysSinceBilling > 45) {
                             const penaltyDays = daysSinceBilling - 45; const expectedFines = penaltyDays * 100;
                             if(card.fines === undefined) card.fines = 0;
@@ -521,7 +718,7 @@
                 }
             });
 
-            // 4. Crypto Updates
+            // 7. Crypto Updates
             if(state.virtualTime - state.crypto.lastUpdate >= 10000) {
                 state.crypto.lastUpdate = state.virtualTime;
                 const changePercent = (Math.random() - 0.5) * 0.04; 
@@ -534,13 +731,31 @@
             if(stateChanged) { 
                 saveState(); 
                 if(!document.getElementById('customerDashboard').classList.contains('d-none')) renderCustomerDashboard(false); 
-                if(document.getElementById('cardsModal')) {
-                    const cId = document.getElementById('customerSelect').value;
-                    const activeAccId = state.accounts.find(a => a.customerId === cId)?.id;
-                    if(activeAccId) showCardsUI(activeAccId, true); 
-                }
                 if(document.getElementById('loans-tab').classList.contains('active')) renderLoans();
+                if(document.getElementById('analytics-tab').classList.contains('active')) renderAnalytics();
             }
+        }
+
+        // Charts Rendering
+        let cfChart, lpChart;
+        function renderAnalytics() {
+            const ctx1 = document.getElementById('cashflowChart');
+            const labels = state.analyticsHistory.map(h => new Date(h.time).toLocaleDateString('bn-BD'));
+            const data = state.analyticsHistory.map(h => h.bbMain);
+            if(cfChart) cfChart.destroy();
+            cfChart = new Chart(ctx1, { type: 'line', data: { labels: labels.length ? labels : ['কোনো ডাটা নেই'], datasets: [{ label: 'বিগ ব্যাংক রিজার্ভ (Cash Flow)', data: data.length ? data : [0], borderColor: '#198754', backgroundColor: 'rgba(25, 135, 84, 0.2)', tension: 0.4, fill: true }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#fff' } } }, scales: { x: { ticks: { color: '#aaa' } }, y: { ticks: { color: '#aaa' } } } } });
+
+            const srvLoans = state.loans.filter(l => l.type === 'BB_TO_SRV' && l.active).reduce((sum, l) => sum + (l.principal+l.interest-l.paid), 0);
+            const custLoans = state.loans.filter(l => (l.type === 'SRV_TO_CUST' || l.type === 'BOND_LOAN') && l.active).reduce((sum, l) => sum + (l.principal+l.interest-l.paid), 0);
+            const ctx2 = document.getElementById('loanPieChart');
+            if(lpChart) lpChart.destroy();
+            lpChart = new Chart(ctx2, { type: 'doughnut', data: { labels: ['সার্ভিস লোন', 'গ্রাহক লোন'], datasets: [{ data: [srvLoans, custLoans], backgroundColor: ['#ffc107', '#0dcaf0'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#fff' } } } } });
+
+            let totalSupply = state.bigBank.main + state.bigBank.profit;
+            state.services.forEach(s => totalSupply += s.main + s.profit);
+            state.accounts.forEach(a => totalSupply += a.balance);
+            document.getElementById('stat-total-supply').innerText = `$${formatMoney(totalSupply)}`;
+            document.getElementById('stat-bb-loans').innerText = `$${formatMoney(srvLoans)}`;
         }
 
         function toggleTheme() {
@@ -557,8 +772,8 @@
         async function modifyBigBankBal(type) {
             const val = await showPrompt(type === 'add' ? "কত ডলার যোগ করতে চান?" : "কত ডলার বিয়োগ করতে চান?");
             const amt = parseFloat(val); if(isNaN(amt) || amt <= 0) return showAlert("সঠিক পরিমাণ দিন", true);
-            if(type === 'add') state.bigBank.main += amt;
-            else { if(state.bigBank.main < amt) return showAlert("পর্যাপ্ত ব্যালেন্স নেই!", true); state.bigBank.main -= amt; }
+            if(type === 'add') { state.bigBank.main += amt; logTx(null, amt, 'in', 'Bank Funding', 'বিগ ব্যাংকে ফান্ড যুক্ত'); }
+            else { if(state.bigBank.main < amt) return showAlert("পর্যাপ্ত ব্যালেন্স নেই!", true); state.bigBank.main -= amt; logTx(null, amt, 'out', 'Bank Withdraw', 'বিগ ব্যাংক থেকে ফান্ড প্রত্যাহার'); }
             saveState(); renderAdmin(); showAlert('ব্যালেন্স আপডেট সফল হয়েছে');
         }
 
@@ -567,66 +782,280 @@
             showAlert(state.bigBank.txEnabled ? 'গ্লোবাল ট্রানজেকশন চালু হয়েছে' : 'গ্লোবাল ট্রানজেকশন বন্ধ হয়েছে', !state.bigBank.txEnabled);
         }
 
+        // --- NEW BOND SYSTEM --- //
+        function showIssueBondModal() {
+            document.getElementById('bondInitialPrice').value = '';
+            new bootstrap.Modal(document.getElementById('issueBondModal')).show();
+        }
+
+        function submitIssueBond() {
+            const initPrice = parseFloat(document.getElementById('bondInitialPrice').value);
+            if(isNaN(initPrice) || initPrice < 1000000) return showAlert("বন্ডের ন্যূনতম মূল্য $1,000,000 হতে হবে!", true);
+            if(state.bigBank.main < 1000000) return showAlert("বিগ-ব্যাংকের মূল একাউন্টে পর্যাপ্ত ফান্ড (১ মিলিয়ন) নেই!", true);
+            
+            state.bigBank.main -= 1000000;
+            state.bonds.push({
+                id: generateId(), initialPrice: initPrice, currentPrice: initPrice,
+                owner: 'big_bank', status: 'vault', offeredPrice: 0, offeredInterest: 0, availableLoanAmount: 0, issueDate: state.virtualTime
+            });
+            
+            logTx(null, 1000000, 'out', 'Bond Issue', 'বিগ ব্যাংক কর্তৃক নতুন ট্রেজারি বন্ড ইস্যু');
+            showAlert("সফলভাবে নতুন বন্ড ইস্যু করা হয়েছে!");
+            saveState(); renderAdmin();
+            bootstrap.Modal.getInstance(document.getElementById('issueBondModal')).hide();
+        }
+
+        function renderAdminBonds() {
+            const container = document.getElementById('adminBondsContainer');
+            const bbBonds = state.bonds.filter(b => b.owner === 'big_bank' && b.status === 'vault');
+            
+            if(bbBonds.length === 0) {
+                container.innerHTML = `<div class="col-12 text-center text-muted py-3">ভল্টে কোনো বন্ড নেই।</div>`;
+                return;
+            }
+            
+            container.innerHTML = bbBonds.map(bond => `
+                <div class="col-md-6 col-lg-4">
+                    <div class="bond-item p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-primary bg-opacity-75 rounded-pill"><i class="fa-solid fa-certificate"></i> #${bond.id.toUpperCase()}</span>
+                            <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-2"><i class="fa-solid fa-arrow-up"></i> ভল্টে আছে</span>
+                        </div>
+                        <div class="text-center my-3">
+                            <h3 class="text-warning fw-bold m-0">$${formatMoney(bond.currentPrice)}</h3>
+                            <small class="text-muted d-block mt-1">ইস্যু মূল্য: $${formatMoney(bond.initialPrice)}</small>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openServiceBondsModal(serviceId) {
+            document.getElementById('serviceBondTitle').innerHTML = `<i class="fa-solid fa-file-invoice-dollar"></i> বন্ড ম্যানেজমেন্ট (${state.services.find(s=>s.id===serviceId).name})`;
+            renderServiceBonds(serviceId);
+            new bootstrap.Modal(document.getElementById('serviceBondsModal')).show();
+        }
+
+        function renderServiceBonds(serviceId) {
+            const bbContainer = document.getElementById('bbAvailableBonds');
+            const bbBonds = state.bonds.filter(b => b.owner === 'big_bank' && b.status === 'vault');
+            bbContainer.innerHTML = bbBonds.length ? bbBonds.map(bond => `
+                <div class="bond-item p-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong class="d-block text-warning fs-5">$${formatMoney(bond.currentPrice)}</strong>
+                        <small class="text-muted">বন্ড #${bond.id.toUpperCase()}</small>
+                    </div>
+                    <button class="btn btn-outline-success fw-bold rounded-pill px-3" onclick="buyBond('${bond.id}', '${serviceId}')">কিনুন</button>
+                </div>
+            `).join('') : `<div class="text-muted text-center mt-3">মার্কেটে কোনো বন্ড নেই।</div>`;
+
+            const myContainer = document.getElementById('myServiceBonds');
+            const myBonds = state.bonds.filter(b => b.owner === serviceId);
+            myContainer.innerHTML = myBonds.length ? myBonds.map(bond => {
+                let actionHtml = '';
+                if(bond.status === 'vault') {
+                    actionHtml = `<button class="btn btn-sm btn-info fw-bold text-dark rounded-pill px-3 mt-2 w-100" onclick="offerBondToMarket('${bond.id}', '${serviceId}')">গ্রাহকদের অফার করুন</button>`;
+                } else if(bond.status === 'market') {
+                    actionHtml = `<span class="badge bg-warning text-dark d-block mt-2">অফারকৃত: $${formatMoney(bond.offeredPrice)} | এভেইলেবল: $${formatMoney(bond.availableLoanAmount)} (${bond.offeredInterest}%)</span>`;
+                } else if(bond.status === 'used') {
+                    actionHtml = `<span class="badge bg-secondary d-block mt-2">ব্যবহৃত (লিমিট শেষ)</span>`;
+                }
+                return `
+                <div class="bond-item p-3 border-info">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong class="d-block text-info fs-5">ক্রয় মূল্য: $${formatMoney(bond.currentPrice)}</strong>
+                            <small class="text-muted">বন্ড #${bond.id.toUpperCase()}</small>
+                        </div>
+                        <span class="badge bg-primary rounded-pill">${bond.status === 'vault' ? 'স্টকে' : (bond.status === 'market' ? 'মার্কেটে' : 'ব্যবহৃত')}</span>
+                    </div>
+                    ${actionHtml}
+                </div>`;
+            }).join('') : `<div class="text-muted text-center mt-3">আপনার কোনো বন্ড নেই।</div>`;
+        }
+
+        function buyBond(bondId, serviceId) {
+            const bond = state.bonds.find(b => b.id === bondId);
+            const srv = state.services.find(s => s.id === serviceId);
+            if(srv.main < bond.currentPrice) return showAlert("আপনার মূল একাউন্টে পর্যাপ্ত ব্যালেন্স নেই!", true);
+            
+            srv.main -= bond.currentPrice;
+            
+            state.bigBank.main += 1000000;
+            if(bond.currentPrice > 1000000) {
+                state.bigBank.profit += (bond.currentPrice - 1000000);
+            }
+            
+            bond.owner = serviceId;
+            bond.status = 'vault';
+            
+            logTx(null, bond.currentPrice, 'in', 'Bond Sold', `${srv.name} এর নিকট বন্ড বিক্রয়`);
+            showAlert("বন্ড কেনা সফল হয়েছে!");
+            saveState(); renderAdmin(); renderServiceBonds(serviceId); renderServices();
+        }
+
+        async function offerBondToMarket(bondId, serviceId) {
+            const bond = state.bonds.find(b => b.id === bondId);
+            const pVal = await showPrompt(`কত ডলারে গ্রাহকদের লোন অফার করবেন?\n(আপনার ক্রয়মূল্য: $${formatMoney(bond.currentPrice)})`, bond.currentPrice);
+            if(!pVal) return; const offerPrice = parseFloat(pVal);
+            if(isNaN(offerPrice) || offerPrice <= 0) return showAlert("সঠিক মূল্য দিন", true);
+            
+            const iVal = await showPrompt("কত % ইন্টারেস্টে অফার করবেন?", 15);
+            if(!iVal) return; const offerInterest = parseFloat(iVal);
+            if(isNaN(offerInterest) || offerInterest < 0) return showAlert("সঠিক ইন্টারেস্ট দিন", true);
+            
+            bond.offeredPrice = offerPrice;
+            bond.availableLoanAmount = offerPrice; // Feature: Set shared limit
+            bond.offeredInterest = offerInterest;
+            bond.status = 'market';
+            
+            showAlert("বন্ডটি মার্কেটপ্লেসে গ্রাহকদের জন্য উন্মুক্ত করা হয়েছে!");
+            saveState(); renderServiceBonds(serviceId);
+        }
+
+        function showCustomerBondMarket(accId) {
+            const acc = state.accounts.find(a => a.id === accId);
+            const container = document.getElementById('customerBondsContainer');
+            // Show only bonds that have available limit > 0
+            const availBonds = state.bonds.filter(b => b.owner === acc.serviceId && b.status === 'market' && b.availableLoanAmount > 0);
+            
+            if(availBonds.length === 0) {
+                container.innerHTML = `<div class="text-muted text-center p-4 fw-bold">আপনার ব্যাংক বর্তমানে কোনো বন্ড লোন অফার করছে না।</div>`;
+            } else {
+                container.innerHTML = availBonds.map(bond => `
+                    <div class="card card-glass p-3 border-warning border-opacity-50">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-warning text-dark"><i class="fa-solid fa-star"></i> স্পেশাল বন্ড লোন</span>
+                            <small class="text-muted">#${bond.id.toUpperCase()}</small>
+                        </div>
+                        <h3 class="text-success fw-bold m-0">এভেইলেবল: $${formatMoney(bond.availableLoanAmount)}</h3>
+                        <small class="text-muted d-block mt-1">মোট অফার সাইজ: $${formatMoney(bond.offeredPrice)}</small>
+                        <div class="d-flex justify-content-between my-2 text-info fw-bold">
+                            <span>ইন্টারেস্ট: ${bond.offeredInterest}%</span>
+                        </div>
+                        <button class="btn btn-success fw-bold rounded-pill w-100 shadow-sm mt-2" onclick="takeBondLoan('${bond.id}', '${accId}')">লোন গ্রহণ করুন</button>
+                    </div>
+                `).join('');
+            }
+            new bootstrap.Modal(document.getElementById('customerBondMarketModal')).show();
+        }
+
+        async function takeBondLoan(bondId, accId) {
+            const bond = state.bonds.find(b => b.id === bondId);
+            
+            const aVal = await showPrompt(`কত ডলার লোন নিতে চান?\n(সর্বোচ্চ এভেইলেবল: $${formatMoney(bond.availableLoanAmount)})`, bond.availableLoanAmount);
+            if(!aVal) return; const amount = parseFloat(aVal);
+            if(isNaN(amount) || amount <= 0 || amount > bond.availableLoanAmount) return showAlert("ভুল পরিমাণ বা লিমিটের চেয়ে বেশি দিয়েছেন!", true);
+
+            const mVal = await showPrompt("কত মাসের কিস্তিতে (EMI) পরিশোধ করবেন? (উদাঃ ৩, ৬, ১২)", "6");
+            if(!mVal) return; const months = parseInt(mVal);
+            if(isNaN(months) || months <= 0) return showAlert("সঠিক সময় দিন", true);
+            
+            const acc = state.accounts.find(a => a.id === accId);
+            const srv = state.services.find(s => s.id === acc.serviceId);
+            
+            acc.balance += amount;
+            
+            bond.availableLoanAmount -= amount;
+            if(bond.availableLoanAmount <= 0.01) bond.status = 'used'; // Bond limit exhausted
+            
+            const principal = amount;
+            const interestAmount = principal * (bond.offeredInterest / 100);
+            const totalEmiAmount = (principal + interestAmount) / months;
+            
+            state.loans.push({ 
+                id: generateId(), type: 'BOND_LOAN', bondId: bond.id, accountId: accId, serviceId: srv.id,
+                source: 'main', 
+                principal: principal, interest: interestAmount, paid: 0, active: true, 
+                emiAmount: totalEmiAmount, nextEmiDate: state.virtualTime + (30 * virtualDayMs)
+            });
+            
+            logTx(accId, principal, 'in', 'Bond Loan', `${months} মাসের বন্ড লোন গ্রহণ`);
+            showAlert("বন্ড লোন সফলভাবে গ্রহণ করা হয়েছে!");
+            saveState(); renderCustomerDashboard();
+            bootstrap.Modal.getInstance(document.getElementById('customerBondMarketModal')).hide();
+        }
+
+        async function payCustomerBondLoan(loanId) {
+            const loan = state.loans.find(l => l.id === loanId);
+            const acc = state.accounts.find(a => a.id === loan.accountId);
+            const srv = state.services.find(s => s.id === loan.serviceId);
+            const due = (loan.principal + loan.interest) - loan.paid;
+
+            if(due <= 0) return showAlert("কোনো বকেয়া নেই!");
+
+            const val = await showPrompt(`ম্যানুয়াল বন্ড লোন পরিশোধ\nবকেয়া: $${formatMoney(due)}\nআপনার ব্যালেন্স: $${formatMoney(acc.balance)}\nকত পরিশোধ করবেন?`, due);
+            if(!val) return;
+            const amt = parseFloat(val);
+
+            if(isNaN(amt) || amt <= 0) return showAlert("ভুল পরিমাণ", true);
+            if(amt > due + 0.01) return showAlert("বকেয়ার চেয়ে বেশি পরিশোধ করা যাবে না!", true);
+            if(acc.balance < amt) return showAlert("একাউন্টে পর্যাপ্ত ব্যালেন্স নেই!", true);
+
+            acc.balance -= amt;
+
+            const principalRatio = loan.principal / (loan.principal + loan.interest);
+            const principalPortion = amt * principalRatio;
+            const interestPortion = amt - principalPortion;
+
+            srv.main += principalPortion;
+            srv.profit += interestPortion;
+
+            loan.paid += amt;
+            if(loan.paid >= (loan.principal + loan.interest) - 0.01) loan.active = false;
+
+            updateCreditScore(acc, 2); 
+            logTx(acc.id, amt, 'out', 'Bond Loan Pay', 'বন্ড লোনের ম্যানুয়াল পেমেন্ট');
+            showAlert("বন্ড লোন সফলভাবে পরিশোধ করা হয়েছে!");
+            saveState(); renderAll();
+        }
+
         function renderAdmin() {
             document.getElementById('bbMainBal').innerText = '$' + formatMoney(state.bigBank.main);
             document.getElementById('bbProfitBal').innerText = '$' + formatMoney(state.bigBank.profit);
             const gBtn = document.getElementById('globalTxBtn'); const gAlert = document.getElementById('globalLockAlert');
             if(state.bigBank.txEnabled) { gBtn.className = "btn btn-sm btn-success px-4 rounded-pill shadow-sm"; gBtn.innerText = "চালু আছে"; gAlert.classList.add('d-none'); } 
             else { gBtn.className = "btn btn-sm btn-danger px-4 rounded-pill shadow-sm"; gBtn.innerText = "বন্ধ আছে"; gAlert.classList.remove('d-none'); }
+            renderAdminBonds(); 
         }
 
-        // COMPACT SERVICES RENDER
         function renderServices() {
             const container = document.getElementById('servicesContainer');
             if(state.services.length === 0) return container.innerHTML = `<div class="col-12 text-center text-muted py-5 fs-5 card-glass">কোন সার্ভিস তৈরী করা হয়নি।</div>`;
             container.innerHTML = state.services.map(srv => {
                 const partnersHtml = state.services.filter(s => s.id !== srv.id).map(os => {
                     const isPartner = srv.partners.includes(os.id);
-                    return `<span class="badge ${isPartner ? 'bg-success' : 'bg-secondary bg-opacity-50'} cursor-pointer" onclick="togglePartner('${srv.id}', '${os.id}')" style="cursor:pointer;" title="পার্টনারশিপ টগল করুন">${os.name} ${isPartner ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-solid fa-plus"></i>'}</span>`;
+                    return `<span class="badge ${isPartner ? 'bg-success' : 'bg-secondary bg-opacity-50'} cursor-pointer" onclick="togglePartner('${srv.id}', '${os.id}')" style="cursor:pointer;" title="পার্টনারশিপ টগল">${os.name} ${isPartner ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-solid fa-plus"></i>'}</span>`;
                 }).join('');
 
-                const srvLoans = state.loans.filter(l => l.serviceId === srv.id && l.type === 'BB_TO_SRV' && l.active);
-                const dueLoansAmount = srvLoans.reduce((sum, l) => sum + (l.principal + l.interest - l.paid), 0);
-                const loanBadge = dueLoansAmount > 0 ? `<span class="badge bg-danger">বকেয়া: $${formatMoney(dueLoansAmount)}</span>` : '';
+                const bankruptOverlay = srv.isBankrupt ? `<div class="bankrupt-overlay"><span>দেউলিয়া</span></div>` : '';
 
                 return `
                     <div class="col-md-4 col-lg-3">
-                        <div class="card card-glass compact-card border-${srv.blocked ? 'danger' : 'secondary'} h-100 d-flex flex-column">
+                        <div class="card card-glass compact-card border-${srv.isBankrupt ? 'danger' : (srv.blocked ? 'warning' : 'secondary')} h-100 d-flex flex-column position-relative">
+                            ${bankruptOverlay}
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <h5 class="fw-bold m-0 text-truncate" title="${srv.name}"><i class="fa-solid ${srv.type==='Bank'?'fa-building-columns text-primary':'fa-wallet text-success'}"></i> ${srv.name}</h5>
                                 <div>
-                                    <button class="btn btn-sm text-light p-1" onclick="renameService('${srv.id}')"><i class="fa-solid fa-pen"></i></button>
+                                    <button class="btn btn-sm text-light p-1" onclick="renameService('${srv.id}')" ${srv.isBankrupt?'disabled':''}><i class="fa-solid fa-pen"></i></button>
                                     <button class="btn btn-sm text-danger p-1" onclick="deleteService('${srv.id}')"><i class="fa-solid fa-trash"></i></button>
                                 </div>
                             </div>
                             <div class="row text-center mb-3 bg-secondary bg-opacity-10 rounded mx-0 py-2">
-                                <div class="col-6 border-end border-secondary border-opacity-25 px-1"><small class="text-muted d-block" style="font-size:0.7rem;">মূল (Main)</small><strong class="text-success" style="font-size:0.9rem;">$${formatMoney(srv.main)}</strong></div>
+                                <div class="col-6 border-end border-secondary border-opacity-25 px-1"><small class="text-muted d-block" style="font-size:0.7rem;">মূল (Main)</small><strong class="${srv.isBankrupt?'text-danger':'text-success'}" style="font-size:0.9rem;">$${formatMoney(srv.main)}</strong></div>
                                 <div class="col-6 px-1"><small class="text-muted d-block" style="font-size:0.7rem;">মুনাফা (Profit)</small><strong class="text-info" style="font-size:0.9rem;">$${formatMoney(srv.profit)}</strong></div>
                             </div>
-                            <div class="d-flex flex-wrap gap-1 mb-3">
-                                <span class="badge bg-primary bg-opacity-50">ফি: ${srv.fee}%</span>
-                                <span class="badge ${srv.txEnabled ? 'bg-success' : 'bg-danger'} bg-opacity-50">${srv.txEnabled ? 'TX On' : 'TX Off'}</span>
-                                ${srv.blocked ? '<span class="badge bg-danger bg-opacity-75">Blocked</span>' : ''}
+                            <div class="mb-3">
+                                <button class="btn btn-sm btn-outline-warning w-100 fw-bold rounded-pill" onclick="openServiceBondsModal('${srv.id}')" ${srv.isBankrupt?'disabled':''}><i class="fa-solid fa-file-invoice-dollar"></i> বন্ড মার্কেট</button>
                             </div>
-                            
                             <div class="mb-3 p-2 rounded bg-secondary bg-opacity-10 border border-secondary border-opacity-25">
-                                <div class="mb-2">
-                                    <small class="text-info fw-bold d-block mb-1"><i class="fa-solid fa-handshake"></i> পার্টনারশিপ</small>
-                                    <div class="d-flex flex-wrap gap-1">${partnersHtml || '<small class="text-muted" style="font-size:0.7rem;">অন্য সার্ভিস নেই</small>'}</div>
-                                </div>
-                                <div class="border-top border-secondary border-opacity-25 pt-2 mt-2">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <small class="text-warning fw-bold"><i class="fa-solid fa-building-columns"></i> বিগ ব্যাংক লোন</small>
-                                        <button class="btn btn-sm btn-primary py-0 px-2" style="font-size:0.7rem;" onclick="showTakeServiceLoanModal('${srv.id}')">গ্রহণ করুন</button>
-                                    </div>
-                                    ${dueLoansAmount > 0 ? `<div class="mt-1 text-end">${loanBadge}</div>` : ''}
-                                </div>
+                                <div class="mb-2"><small class="text-info fw-bold d-block mb-1"><i class="fa-solid fa-handshake"></i> পার্টনারশিপ</small><div class="d-flex flex-wrap gap-1">${partnersHtml || '<small class="text-muted" style="font-size:0.7rem;">অন্য সার্ভিস নেই</small>'}</div></div>
+                                <div class="border-top border-secondary border-opacity-25 pt-2 mt-2"><div class="d-flex justify-content-between align-items-center"><small class="text-warning fw-bold"><i class="fa-solid fa-building-columns"></i> সাধারণ ব্যাংক লোন</small><button class="btn btn-sm btn-primary py-0 px-2" style="font-size:0.7rem;" onclick="showTakeServiceLoanModal('${srv.id}')" ${srv.isBankrupt?'disabled':''}>গ্রহণ</button></div></div>
                             </div>
-
                             <div class="mt-auto d-flex gap-1">
-                                <button class="btn btn-sm btn-outline-info flex-grow-1 p-1" style="font-size:0.8rem;" onclick="promptChangeFee('${srv.id}')">ফি সেট</button>
-                                <button class="btn btn-sm ${srv.txEnabled?'btn-outline-warning':'btn-warning text-dark'} flex-grow-1 p-1" style="font-size:0.8rem;" onclick="toggleServiceTx('${srv.id}')">TX</button>
-                                <button class="btn btn-sm ${srv.blocked?'btn-danger':'btn-outline-danger'} flex-grow-1 p-1" style="font-size:0.8rem;" onclick="toggleServiceBlock('${srv.id}')">ব্লক</button>
+                                <button class="btn btn-sm btn-outline-info flex-grow-1 p-1" style="font-size:0.8rem;" onclick="promptChangeFee('${srv.id}')" ${srv.isBankrupt?'disabled':''}>ফি: ${srv.fee}%</button>
+                                <button class="btn btn-sm ${srv.txEnabled?'btn-outline-warning':'btn-warning text-dark'} flex-grow-1 p-1" style="font-size:0.8rem;" onclick="toggleServiceTx('${srv.id}')" ${srv.isBankrupt?'disabled':''}>TX: ${srv.txEnabled ? 'On':'Off'}</button>
+                                <button class="btn btn-sm ${srv.blocked?'btn-danger':'btn-outline-danger'} flex-grow-1 p-1" style="font-size:0.8rem;" onclick="toggleServiceBlock('${srv.id}')" ${srv.isBankrupt?'disabled':''}>${srv.blocked ? 'আনব্লক' : 'ব্লক'}</button>
                             </div>
                         </div>
                     </div>`;
@@ -642,20 +1071,22 @@
             document.getElementById('loansBbToSrvBody').innerHTML = bbHtml || `<tr><td colspan="8" class="text-center text-muted py-4 fw-bold">কোন ব্যাংক লোন নেই</td></tr>`;
 
             let custHtml = '';
-            state.loans.filter(l => l.type === 'SRV_TO_CUST').forEach(l => {
-                const acc = state.accounts.find(a => a.id === l.accountId);
-                const cust = state.customers.find(c => c.id === (acc?acc.customerId:null));
-                const srv = state.services.find(s => s.id === l.serviceId);
+            state.loans.filter(l => l.type === 'SRV_TO_CUST' || l.type === 'BOND_LOAN').forEach(l => {
+                const acc = state.accounts.find(a => a.id === l.accountId); const cust = state.customers.find(c => c.id === (acc?acc.customerId:null)); const srv = state.services.find(s => s.id === l.serviceId);
                 const due = (l.principal + l.interest) - l.paid;
-                custHtml += `<tr><td class="fw-bold">${cust?cust.name:'Unknown'} <br><small class="text-muted">${srv?srv.name:''}</small></td><td class="text-success">$${formatMoney(l.principal)}</td><td><span class="badge bg-secondary rounded-pill">${l.source === 'profit' ? 'মুনাফা' : 'মূল'}</span></td><td class="text-info">$${formatMoney(l.interest)}</td><td>$${formatMoney(l.paid)}</td><td class="${due>0?'text-danger fw-bold':'text-success'}">$${formatMoney(due)}</td><td>${l.active ? '<span class="badge bg-warning text-dark rounded-pill">চলমান</span>' : '<span class="badge bg-success rounded-pill">পরিশোধিত</span>'}</td></tr>`;
+                const typeBadge = l.type === 'BOND_LOAN' ? '<span class="badge bg-warning text-dark">বন্ড লোন</span>' : '<span class="badge bg-info text-dark">সাধারণ</span>';
+                
+                const actionBtn = (l.active) ? `<button class="btn btn-sm btn-outline-success rounded-pill px-3 shadow-sm" onclick="payCustomerBondLoan('${l.id}')">পরিশোধ</button>` : '-';
+                
+                custHtml += `<tr><td class="fw-bold">${cust?cust.name:'Unknown'} <br><small class="text-muted">${srv?srv.name:''}</small></td><td class="text-success">$${formatMoney(l.principal)}</td><td>${typeBadge}</td><td class="text-info">$${formatMoney(l.principal+l.interest)}</td><td>$${formatMoney(l.paid)}</td><td class="${due>0?'text-danger fw-bold':'text-success'}">$${formatMoney(due)}</td><td>$${formatMoney(l.emiAmount)}</td><td>${l.active ? '<span class="badge bg-warning text-dark rounded-pill">চলমান</span>' : '<span class="badge bg-success rounded-pill">পরিশোধিত</span>'}</td><td>${actionBtn}</td></tr>`;
             });
-            document.getElementById('loansSrvToCustBody').innerHTML = custHtml || `<tr><td colspan="7" class="text-center text-muted py-4 fw-bold">কোন গ্রাহক লোন নেই</td></tr>`;
+            document.getElementById('loansSrvToCustBody').innerHTML = custHtml || `<tr><td colspan="9" class="text-center text-muted py-4 fw-bold">কোন গ্রাহক বা বন্ড লোন নেই</td></tr>`;
         }
 
         function createService() {
             const name = document.getElementById('newServiceName').value.trim(); const type = document.getElementById('newServiceType').value; const fee = parseFloat(document.getElementById('newServiceFee').value);
             if(!name || isNaN(fee) || fee < 0) return showAlert("সঠিক তথ্য দিন", true);
-            state.services.push({ id: generateId(), name, type, fee, main: 2000000, profit: 0, cryptoBalance: 0, blocked: false, txEnabled: true, partners: [] });
+            state.services.push({ id: generateId(), name, type, fee, main: 2000000, profit: 0, cryptoBalance: 0, blocked: false, txEnabled: true, isBankrupt: false, partners: [] });
             saveState(); bootstrap.Modal.getInstance(document.getElementById('createServiceModal')).hide(); document.getElementById('newServiceName').value = ''; showAlert(`নতুন সার্ভিস তৈরী হয়েছে!`); renderServices();
         }
 
@@ -684,11 +1115,8 @@
 
         function togglePartner(id1, id2) {
             const s1 = state.services.find(x => x.id === id1); const s2 = state.services.find(x => x.id === id2);
-            if(s1.partners.includes(id2)) {
-                s1.partners = s1.partners.filter(x => x !== id2); s2.partners = s2.partners.filter(x => x !== id1); showAlert("পার্টনারশিপ বাতিল হয়েছে");
-            } else {
-                s1.partners.push(id2); s2.partners.push(id1); showAlert("নতুন পার্টনারশিপ তৈরী হয়েছে (৪৫% ছাড়)");
-            }
+            if(s1.partners.includes(id2)) { s1.partners = s1.partners.filter(x => x !== id2); s2.partners = s2.partners.filter(x => x !== id1); showAlert("পার্টনারশিপ বাতিল হয়েছে"); } 
+            else { s1.partners.push(id2); s2.partners.push(id1); showAlert("নতুন পার্টনারশিপ তৈরী হয়েছে (৪৫% ছাড়)"); }
             saveState(); renderServices();
         }
 
@@ -712,7 +1140,7 @@
 
         function submitPayServiceLoan() {
             const loanId = document.getElementById('paySrvLoanId').value; const loan = state.loans.find(l => l.id === loanId); const srv = state.services.find(s => s.id === loan.serviceId); const source = document.getElementById('paySrvSource').value; const amt = parseFloat(document.getElementById('paySrvAmount').value); const due = loan.principal + loan.interest - loan.paid;
-            if(isNaN(amt) || amt <= 0) return showAlert("ভুল পরিমাণ", true); if(amt > (due + 0.01)) return showAlert("বকেয়ার চেয়ে বেশি পরিশোধ করা যাবে না!", true); if(srv[source] < amt) return showAlert("নির্বাচিত একাউন্টে পর্যাপ্ত ব্যালেন্স নেই!", true);
+            if(isNaN(amt) || amt <= 0) return showAlert("ভুল পরিমাণ", true); if(amt > (due + 0.01)) return showAlert("বকেয়ার চেয়ে বেশি পরিশোধ করা যাবে সেল!", true); if(srv[source] < amt) return showAlert("নির্বাচিত একাউন্টে পর্যাপ্ত ব্যালেন্স নেই!", true);
             srv[source] -= amt; const toPrincipal = amt * (loan.principal / (loan.principal + loan.interest)); const toInterest = amt - toPrincipal;
             state.bigBank[loan.bbSource || 'main'] += toPrincipal; state.bigBank.profit += toInterest; loan.paid += amt;
             if(Math.abs((loan.principal + loan.interest) - loan.paid) < 0.01) loan.active = false; 
@@ -734,7 +1162,7 @@
             const cId = document.getElementById('customerSelect').value; if(!cId) return; const conf = await showPrompt("ডিলিট করতে চাইলে 'হ্যাঁ' লিখুন। সকল একাউন্ট মুছে যাবে!", ""); if(conf !== "হ্যাঁ") return;
             const accsToDel = state.accounts.filter(a => a.customerId === cId).map(a => a.id);
             state.fdrs = state.fdrs.filter(f => !accsToDel.includes(f.accountId)); state.cards = state.cards.filter(c => !accsToDel.includes(c.accountId));
-            state.loans = state.loans.filter(l => !(l.type === 'SRV_TO_CUST' && accsToDel.includes(l.accountId)));
+            state.loans = state.loans.filter(l => !( (l.type === 'SRV_TO_CUST' || l.type === 'BOND_LOAN') && accsToDel.includes(l.accountId)));
             state.accounts = state.accounts.filter(a => a.customerId !== cId); state.customers = state.customers.filter(c => c.id !== cId);
             saveState(); populateCustomerSelect(); renderCustomerDashboard(); showAlert("গ্রাহক ডিলিট করা হয়েছে", true);
         }
@@ -747,36 +1175,59 @@
         }
 
         async function openAccount(customerId) {
-            const availableServices = state.services.filter(s => !s.blocked); if(availableServices.length === 0) return showAlert("কোন সক্রিয় সার্ভিস নেই!", true);
+            const availableServices = state.services.filter(s => !s.blocked && !s.isBankrupt); if(availableServices.length === 0) return showAlert("কোন সক্রিয় বা সচল সার্ভিস নেই!", true);
             let optionsStr = availableServices.map((s, i) => `${i+1}. ${s.name} (${s.type})`).join("\n");
             const val = await showPrompt(`কোন সার্ভিসে একাউন্ট খুলতে চান? নম্বর দিন:\n${optionsStr}`); if(!val) return;
             const idx = parseInt(val) - 1; if(isNaN(idx) || idx < 0 || idx >= availableServices.length) return showAlert("ভুল নির্বাচন", true); const srv = availableServices[idx];
             if(state.accounts.some(a => a.customerId === customerId && a.serviceId === srv.id)) return showAlert("এই সার্ভিসে আগেই একাউন্ট আছে!", true);
-            state.accounts.push({ id: generateId(), customerId, serviceId: srv.id, balance: 0, cryptoBalance: 0, electricBill: 0 });
+            state.accounts.push({ id: generateId(), customerId, serviceId: srv.id, balance: 0, cryptoBalance: 0, electricBill: 0, creditScore: 500 });
             saveState(); renderCustomerDashboard(); showAlert(`${srv.name} এ একাউন্ট খোলা হয়েছে!`);
         }
 
         async function manualBalChange(accId, type) {
             const val = await showPrompt(type==='add' ? "কত আয় যুক্ত করতে চান?" : "কত ব্যয় যুক্ত করতে চান?"); if(!val) return; const amt = parseFloat(val); if(isNaN(amt) || amt <= 0) return showAlert("ভুল পরিমাণ", true);
             const acc = state.accounts.find(a => a.id === accId); if(type === 'sub' && acc.balance < amt) return showAlert("পর্যাপ্ত ব্যালেন্স নেই!", true);
-            if(type==='add') acc.balance += amt; else acc.balance -= amt; saveState(); renderCustomerDashboard(); showAlert("ব্যালেন্স আপডেট হয়েছে");
+            if(type==='add') { acc.balance += amt; logTx(accId, amt, 'in', 'Deposit', 'ম্যানুয়াল জমা'); } 
+            else { acc.balance -= amt; logTx(accId, amt, 'out', 'Withdraw', 'ম্যানুয়াল উত্তোলন'); }
+            saveState(); renderCustomerDashboard(); showAlert("ব্যালেন্স আপডেট হয়েছে");
         }
 
-        function payElectricBill(accId) {
+        async function payElectricBill(accId) {
             const acc = state.accounts.find(a => a.id === accId);
             const cc = state.cards.find(c => c.accountId === accId && c.type === 'CREDIT' && c.active);
-            if(!cc) return showAlert("বিদ্যুৎ বিল শুধুমাত্র ক্রেডিট কার্ড দিয়ে পরিশোধ করা যায়। আপনার সক্রিয় ক্রেডিট কার্ড নেই!", true);
             
-            const totalUsage = cc.spent + (cc.blockedEmiLimit || 0);
-            if(totalUsage + acc.electricBill > cc.limit) return showAlert("ক্রেডিট কার্ডে পর্যাপ্ত লিমিট নেই!", true);
-            
-            cc.spent += acc.electricBill;
-            cc.rewardPoints += acc.electricBill; // Points for paying bill
-            if(cc.spent === 0 && cc.emis.length === 0) cc.lastBillingDate = state.virtualTime;
-            
-            addNotification("বিদ্যুৎ বিল পরিশোধ", `ক্রেডিট কার্ড ব্যবহার করে $${formatMoney(acc.electricBill)} বিদ্যুৎ বিল পরিশোধ করা হয়েছে।`, 'success');
+            let method = "1";
+            if(cc) {
+                const val = await showPrompt(`বিদ্যুৎ বিল: $${formatMoney(acc.electricBill)}\nমাধ্যম নির্বাচন করুন:\n1. একাউন্ট ব্যালেন্স\n2. ক্রেডিট কার্ড`, "1");
+                if(!val) return;
+                method = val.trim();
+            }
+
+            if(method === "2") {
+                if(!cc) return showAlert("সক্রিয় ক্রেডিট কার্ড নেই!", true);
+                const totalUsage = cc.spent + (cc.blockedEmiLimit || 0);
+                if(totalUsage + acc.electricBill > cc.limit) return showAlert("ক্রেডিট কার্ডে পর্যাপ্ত লিমিট নেই!", true);
+                cc.spent += acc.electricBill; cc.rewardPoints += acc.electricBill;
+                if(cc.spent === 0 && cc.emis.length === 0) cc.lastBillingDate = state.virtualTime;
+                logTx(accId, acc.electricBill, 'out', 'Electric Bill', 'ক্রেডিট কার্ডের মাধ্যমে বিদ্যুৎ বিল পরিশোধ');
+                updateCreditScore(acc, 3);
+                addNotification("বিদ্যুৎ বিল", `ক্রেডিট কার্ড ব্যবহার করে $${formatMoney(acc.electricBill)} বিদ্যুৎ বিল পরিশোধ।`, 'success');
+            } else if(method === "1") {
+                if(acc.balance < acc.electricBill) return showAlert("একাউন্টে পর্যাপ্ত ব্যালেন্স নেই!", true);
+                acc.balance -= acc.electricBill;
+                logTx(accId, acc.electricBill, 'out', 'Electric Bill', 'মূল একাউন্ট ব্যালেন্স থেকে বিদ্যুৎ বিল পরিশোধ');
+                addNotification("বিদ্যুৎ বিল", `মূল একাউন্ট থেকে $${formatMoney(acc.electricBill)} বিদ্যুৎ বিল পরিশোধ।`, 'success');
+            } else {
+                return showAlert("ভুল নির্বাচন!", true);
+            }
+
+            acc.electricBill = 0; 
+            saveState(); 
+            renderCustomerDashboard(); 
+            if (document.getElementById('cardsModal') && document.getElementById('cardsModal').classList.contains('show')) {
+                showCardsUI(accId, true);
+            }
             showAlert("বিদ্যুৎ বিল পরিশোধ সফল!");
-            acc.electricBill = 0; saveState(); renderCustomerDashboard(); showCardsUI(accId, true);
         }
 
         function renderCustomerDashboard(forceRefresh = true) {
@@ -790,38 +1241,48 @@
 
             myAccounts.forEach(acc => {
                 const srv = state.services.find(s => s.id === acc.serviceId); if(!srv) return; 
-                const isBlocked = cust.blocked || srv.blocked || !cust.txEnabled || !srv.txEnabled || !state.bigBank.txEnabled;
+                const isBlocked = cust.blocked || srv.blocked || srv.isBankrupt || !cust.txEnabled || !srv.txEnabled || !state.bigBank.txEnabled;
                 const activeFDRs = state.fdrs.filter(f => f.accountId === acc.id && f.active).length;
                 let fdrBadge = activeFDRs > 0 ? `<span class="badge bg-primary rounded-pill ms-2">${activeFDRs}</span>` : '';
                 
                 let electricBillHtml = '';
                 if(acc.electricBill > 0) {
-                    electricBillHtml = `
-                    <div class="alert alert-danger bg-opacity-10 border-danger border-opacity-50 p-3 mb-4 rounded-4 electric-alert shadow-sm">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div><small class="text-danger fw-bold d-block"><i class="fa-solid fa-bolt"></i> বিদ্যুৎ বিল ডিউ</small><h4 class="text-danger fw-bold m-0">$${formatMoney(acc.electricBill)}</h4></div>
-                            <button class="btn btn-danger fw-bold rounded-pill px-3 shadow-sm" onclick="payElectricBill('${acc.id}')">পে (CC)</button>
-                        </div>
-                    </div>`;
+                    electricBillHtml = `<div class="alert alert-danger bg-opacity-10 border-danger border-opacity-50 p-3 mb-4 rounded-4 electric-alert shadow-sm"><div class="d-flex justify-content-between align-items-center"><div><small class="text-danger fw-bold d-block"><i class="fa-solid fa-bolt"></i> বিদ্যুৎ বিল ডিউ</small><h4 class="text-danger fw-bold m-0">$${formatMoney(acc.electricBill)}</h4></div><button class="btn btn-danger fw-bold rounded-pill px-3 shadow-sm" onclick="payElectricBill('${acc.id}')">পে বিল</button></div></div>`;
                 }
+
+                const score = acc.creditScore || 500;
+                let scoreColor = score >= 700 ? 'success' : (score >= 400 ? 'warning' : 'danger');
+                const scoreHtml = `
+                    <div class="mb-3 px-2">
+                        <div class="d-flex justify-content-between mb-1"><small class="text-muted fw-bold">ক্রেডিট স্কোর</small><small class="text-${scoreColor} fw-bold">${score}/1000</small></div>
+                        <div class="score-progress"><div class="score-bar bg-${scoreColor}" style="width: ${(score/1000)*100}%"></div></div>
+                    </div>`;
 
                 html += `
                     <div class="col-md-6 col-xl-4">
-                        <div class="card card-glass h-100 border-${isBlocked ? 'danger':'secondary'} overflow-hidden">
+                        <div class="card card-glass h-100 border-${isBlocked ? 'danger':'secondary'} overflow-hidden position-relative">
+                            ${srv.isBankrupt ? `<div class="bankrupt-overlay"><span>দেউলিয়া</span></div>` : ''}
                             <div class="card-header bg-dark bg-opacity-25 border-bottom border-secondary border-opacity-25 d-flex justify-content-between align-items-center p-4">
                                 <strong class="fs-5">${srv.name} <span class="badge bg-secondary bg-opacity-50 fs-6 ms-2 rounded-pill">${srv.type}</span></strong>
                                 <span>${isBlocked ? '<i class="fa-solid fa-lock text-danger fs-4"></i>' : '<i class="fa-solid fa-lock-open text-success fs-4"></i>'}</span>
                             </div>
                             <div class="card-body p-4">
+                                ${scoreHtml}
                                 ${electricBillHtml}
                                 <h1 class="text-center text-success fw-bold display-6 mb-2">$${formatMoney(acc.balance)}</h1>
                                 ${acc.cryptoBalance > 0 ? `<div class="text-center text-warning fw-bold mb-4 fs-5"><i class="fa-brands fa-bitcoin"></i> ${formatCrypto(acc.cryptoBalance)} VCN</div>` : ''}
                                 <div class="d-flex justify-content-center gap-2 mt-4 mb-4"><button class="btn btn-outline-success rounded-pill flex-grow-1 fw-bold shadow-sm" onclick="manualBalChange('${acc.id}', 'add')">আয় যোগ</button><button class="btn btn-outline-danger rounded-pill flex-grow-1 fw-bold shadow-sm" onclick="manualBalChange('${acc.id}', 'sub')">ব্যয় বাদ</button></div>
                                 <hr class="border-secondary border-opacity-25 my-4">
-                                <button class="btn btn-primary w-100 mb-3 fw-bold shadow-sm rounded-pill py-2" onclick="showTransferUI('${acc.id}')" ${isBlocked?'disabled':''}><i class="fa-solid fa-paper-plane me-2"></i> মানি ট্রান্সফার</button>
-                                <button class="btn btn-secondary w-100 mb-3 fw-bold shadow-sm rounded-pill py-2" onclick="showCustomerLoanUI('${acc.id}')" ${isBlocked?'disabled':''}><i class="fa-solid fa-building-columns me-2"></i> ব্যাংক লোন নিন</button>
+                                <div class="d-flex gap-2 mb-3">
+                                    <button class="btn btn-primary flex-grow-1 fw-bold shadow-sm rounded-pill py-2" onclick="showTransferUI('${acc.id}')" ${isBlocked?'disabled':''}><i class="fa-solid fa-paper-plane"></i> ট্রান্সফার</button>
+                                    <button class="btn btn-outline-light rounded-circle px-3 shadow-sm" onclick="showLogsModal('${acc.id}', 'একাউন্ট লগ')" title="লেনদেনের ইতিহাস"><i class="fa-solid fa-clock-rotate-left"></i></button>
+                                </div>
+                                <div class="d-flex gap-2 mb-3">
+                                    <button class="btn btn-secondary flex-grow-1 fw-bold shadow-sm rounded-pill py-2" onclick="showCustomerLoanUI('${acc.id}')" ${isBlocked?'disabled':''}><i class="fa-solid fa-building-columns"></i> সাধারণ লোন</button>
+                                    <button class="btn btn-outline-warning fw-bold shadow-sm rounded-pill px-3" onclick="showCustomerBondMarket('${acc.id}')" ${isBlocked?'disabled':''} title="বন্ড লোন মার্কেট"><i class="fa-solid fa-hand-holding-dollar"></i> বন্ড লোন</button>
+                                </div>
                                 <div class="d-flex gap-2 mb-3"><button class="btn btn-info flex-grow-1 fw-bold text-dark shadow-sm rounded-pill py-2" onclick="showFDRUI('${acc.id}')" ${isBlocked?'disabled':''}><i class="fa-solid fa-piggy-bank me-2"></i> FDR করুন</button><button class="btn btn-outline-info fw-bold rounded-pill px-3 shadow-sm" onclick="showFDRList('${acc.id}')"><i class="fa-solid fa-list"></i> ${fdrBadge}</button></div>
-                                <button class="btn btn-warning w-100 fw-bold text-dark shadow-sm rounded-pill py-2" onclick="showCardsUI('${acc.id}')"><i class="fa-solid fa-credit-card me-2"></i> কার্ড ম্যানেজমেন্ট</button>
+                                <button class="btn btn-warning w-100 fw-bold text-dark shadow-sm rounded-pill py-2" onclick="showCardsUI('${acc.id}')" ${srv.isBankrupt?'disabled':''}><i class="fa-solid fa-credit-card me-2"></i> কার্ড ম্যানেজমেন্ট</button>
                             </div>
                         </div>
                     </div>`;
@@ -832,13 +1293,13 @@
         function showTransferUI(fromAccId) {
             if(!state.bigBank.txEnabled) return showAlert("বিগ ব্যাংক কর্তৃক গ্লোবাল ট্রানজেকশন বন্ধ!", true);
             const fromAcc = state.accounts.find(a => a.id === fromAccId); const fromSrv = state.services.find(s => s.id === fromAcc.serviceId);
-            if(fromSrv.blocked || !fromSrv.txEnabled) return showAlert("এই সার্ভিস থেকে ট্রানজেকশন বন্ধ!", true);
+            if(fromSrv.blocked || !fromSrv.txEnabled || fromSrv.isBankrupt) return showAlert("এই সার্ভিস থেকে ট্রানজেকশন বন্ধ!", true);
             document.getElementById('transferFromAccId').value = fromAccId; const select = document.getElementById('transferTargetSelect');
             let options = `<optgroup label="বিগ ব্যাংক"><option class="text-dark" value="bb_main">বিগ ব্যাংক (মূল একাউন্ট)</option><option class="text-dark" value="bb_profit">বিগ ব্যাংক (মুনাফা একাউন্ট)</option></optgroup>`;
             const otherAccs = state.accounts.filter(a => a.id !== fromAccId);
             if(otherAccs.length > 0) {
                 options += `<optgroup label="গ্রাহক একাউন্টসমূহ">`;
-                otherAccs.forEach(a => { const c = state.customers.find(c => c.id === a.customerId); const s = state.services.find(s => s.id === a.serviceId); if(c && s) options += `<option class="text-dark" value="acc_${a.id}">${c.name} - ${s.name}</option>`; });
+                otherAccs.forEach(a => { const c = state.customers.find(c => c.id === a.customerId); const s = state.services.find(s => s.id === a.serviceId); if(c && s && !s.isBankrupt) options += `<option class="text-dark" value="acc_${a.id}">${c.name} - ${s.name}</option>`; });
                 options += `</optgroup>`;
             }
             select.innerHTML = options; document.getElementById('transferAmount').value = '';
@@ -852,22 +1313,28 @@
             
             if(targetVal.startsWith('acc_')) {
                 const toAcc = state.accounts.find(a => a.id === targetVal.split('_')[1]); const toSrv = state.services.find(s => s.id === toAcc.serviceId); const toCust = state.customers.find(c => c.id === toAcc.customerId);
-                if(toSrv.blocked || !toSrv.txEnabled) return showAlert("প্রাপকের ব্যাংক ব্লক!", true); if(toCust.blocked || !toCust.txEnabled) return showAlert("প্রাপকের একাউন্ট ব্লক!", true);
-                
-                isPartner = fromSrv.partners.includes(toSrv.id); 
-                if(isPartner) feePercent = feePercent * 0.55; // 45% discount, user pays 55% of the fee
+                if(toSrv.blocked || !toSrv.txEnabled || toSrv.isBankrupt) return showAlert("প্রাপকের ব্যাংক ব্লক!", true); if(toCust.blocked || !toCust.txEnabled) return showAlert("প্রাপকের একাউন্ট ব্লক!", true);
+                isPartner = fromSrv.partners.includes(toSrv.id); if(isPartner) feePercent = feePercent * 0.55; 
             }
             
             const actualFee = (amount * feePercent) / 100; const totalDeduction = amount + actualFee;
             if(fromAcc.balance < totalDeduction) return showAlert(`ব্যালেন্স কম। $${totalDeduction.toFixed(2)} প্রয়োজন।`, true);
             fromAcc.balance -= totalDeduction; fromSrv.profit += actualFee; 
             
-            if(targetVal.startsWith('acc_')) state.accounts.find(a => a.id === targetVal.split('_')[1]).balance += amount; else if(targetVal === 'bb_main') state.bigBank.main += amount; else state.bigBank.profit += amount;
+            if(targetVal.startsWith('acc_')) {
+                const tAccId = targetVal.split('_')[1];
+                state.accounts.find(a => a.id === tAccId).balance += amount;
+                logTx(tAccId, amount, 'in', 'Transfer Receive', `একাউন্ট ট্রান্সফার রিসিভ`);
+            } else if(targetVal === 'bb_main') { state.bigBank.main += amount; logTx(null, amount, 'in', 'Deposit', 'বিগ ব্যাংকে ট্রান্সফার'); }
+            else { state.bigBank.profit += amount; logTx(null, amount, 'in', 'Deposit', 'বিগ ব্যাংক মুনাফায় ট্রান্সফার'); }
+            
+            logTx(fromAccId, totalDeduction, 'out', 'Transfer Sent', `মানি ট্রান্সফার (ফি সহ)`);
+            updateCreditScore(fromAcc, 1);
             
             showAlert(`$${amount} ট্রান্সফার সফল!${isPartner ? ' (পার্টনারশিপের কারণে ৪৫% ফি ছাড় দেওয়া হয়েছে)' : ''}`); saveState(); renderAll(); bootstrap.Modal.getInstance(document.getElementById('transferModal')).hide();
         }
 
-        // CC Payment & Reward Points Logic
+        // CC Payment Logic
         function openCCPayModal(cardId) {
             document.getElementById('ccPayCardId').value = cardId; document.getElementById('ccPayAmount').value = ''; document.getElementById('ccEmiToggle').checked = false;
             calculateEMI(); new bootstrap.Modal(document.getElementById('ccPayModal')).show();
@@ -887,30 +1354,34 @@
             const cardId = document.getElementById('ccPayCardId').value; const amt = parseFloat(document.getElementById('ccPayAmount').value); const cat = document.getElementById('ccPayCategory').value; const isEmi = document.getElementById('ccEmiToggle').checked;
             if(isNaN(amt) || amt <= 0) return showAlert("সঠিক পরিমাণ দিন", true);
             const card = state.cards.find(c => c.id === cardId); const totalUsage = card.spent + (card.blockedEmiLimit||0);
+            const acc = state.accounts.find(a => a.id === card.accountId);
 
             if(!isEmi) {
                 if(totalUsage + amt > card.limit) return showAlert("ক্রেডিট লিমিট অতিক্রম করবে!", true);
                 if(card.spent === 0 && card.emis.length === 0) card.lastBillingDate = state.virtualTime;
-                card.spent += amt; card.rewardPoints += amt; // Points added
+                card.spent += amt; card.rewardPoints += amt; 
+                logTx(acc.id, amt, 'out', 'CC Payment', `ক্রেডিট কার্ড দিয়ে ${cat} পেমেন্ট`);
                 addNotification("মার্চেন্ট পেমেন্ট", `${cat} এর জন্য ক্রেডিট কার্ড থেকে $${formatMoney(amt)} পে করা হয়েছে।`, 'success');
             } else {
                 const months = document.getElementById('ccEmiMonths').value; const rates = { '3': 5, '6': 8, '12': 15 }; const totalWithInterest = amt + ((amt * rates[months]) / 100);
                 if(totalUsage + totalWithInterest > card.limit) return showAlert("ক্রেডিট লিমিট অতিক্রম করবে!", true);
                 if(card.spent === 0 && card.emis.length === 0) card.lastBillingDate = state.virtualTime;
-                card.blockedEmiLimit += totalWithInterest; card.rewardPoints += amt; // Points for base amount
+                card.blockedEmiLimit += totalWithInterest; card.rewardPoints += amt; 
                 card.emis.push({ id: generateId(), category: cat, totalAmount: totalWithInterest, installment: totalWithInterest / parseInt(months), remainingMonths: parseInt(months), lastProcessed: state.virtualTime });
+                logTx(acc.id, totalWithInterest, 'out', 'CC EMI', `ক্রেডিট কার্ড দিয়ে ${cat} (EMI)`);
                 addNotification("EMI কনভার্সন", `${cat} এর $${formatMoney(amt)} বিলটি ${months} মাসের EMI করা হয়েছে।`, 'success');
             }
+            updateCreditScore(acc, 2);
             showAlert("পেমেন্ট সফল হয়েছে!"); saveState(); bootstrap.Modal.getInstance(document.getElementById('ccPayModal')).hide(); showCardsUI(card.accountId, true);
         }
 
         function toggleAutoPay(cardId) {
             const card = state.cards.find(c => c.id === cardId); card.autoPay = !card.autoPay; saveState();
-            addNotification("অটো পে সেটিং", `অটো-পে ${card.autoPay ? 'চালু' : 'বন্ধ'} করা হয়েছে।`, 'info'); showAlert(`Auto Pay ${card.autoPay ? 'চালু' : 'বন্ধ'}!`); showCardsUI(card.accountId, true);
+            addNotification("অটো পে সেটিং", `অটো-পে ${card.autoPay ? 'চালু' : 'বন্ধ'} করা হয়েছে।`, 'info'); showCardsUI(card.accountId, true);
         }
 
         async function redeemPoints(cardId) {
-            const card = state.cards.find(c => c.id === cardId);
+            const card = state.cards.find(c => c.id === cardId); const acc = state.accounts.find(a => a.id === card.accountId);
             if(card.rewardPoints < 100) return showAlert("ন্যূনতম ১০০ পয়েন্ট প্রয়োজন ($১ এর জন্য)", true);
             if(card.spent <= 0) return showAlert("আপনার ক্রেডিট কার্ডে কোনো বকেয়া নেই!", true);
             
@@ -920,10 +1391,45 @@
             if(isNaN(pts) || pts <= 0 || pts > card.rewardPoints) return showAlert("ভুল পরিমাণ!", true);
             if(pts > maxPointsToUse) return showAlert("বকেয়ার চেয়ে বেশি ক্লেইম করা যাবে না!", true);
             
-            const cash = pts / 100;
-            card.rewardPoints -= pts; card.spent -= cash;
+            const cash = pts / 100; card.rewardPoints -= pts; card.spent -= cash;
+            logTx(acc.id, cash, 'in', 'CC Reward', 'পয়েন্ট রিডিম করে বিল পরিশোধ');
             addNotification("রিওয়ার্ড ক্লেইম", `${pts} পয়েন্ট ব্যবহার করে $${formatMoney(cash)} বিল পরিশোধ করা হয়েছে।`, 'success');
             showAlert("ভাউচার ক্লেইম সফল!"); saveState(); showCardsUI(card.accountId, true); renderCustomerDashboard();
+        }
+
+        async function transferDebitToCredit(accId) {
+            const acc = state.accounts.find(a => a.id === accId);
+            const cCard = state.cards.find(c => c.accountId === accId && c.type === 'CREDIT' && c.active);
+            const srv = state.services.find(s => s.id === acc.serviceId);
+
+            if(!cCard) return showAlert("আপনার কোনো সক্রিয় ক্রেডিট কার্ড নেই!", true);
+
+            const val = await showPrompt(`কত ফান্ড ক্রেডিট কার্ডে ট্রান্সফার করবেন?\n(৯.২৫৮% ফিক্সড ফি প্রযোজ্য)\nব্যালেন্স: $${formatMoney(acc.balance)}`);
+            if(!val) return;
+            const amt = parseFloat(val);
+
+            if(isNaN(amt) || amt <= 0) return showAlert("সঠিক পরিমাণ দিন!", true);
+
+            const fee = amt * 0.09258;
+            const totalDeduction = amt + fee;
+
+            if(acc.balance < totalDeduction) return showAlert(`পর্যাপ্ত ব্যালেন্স নেই! ফি সহ মোট $${formatMoney(totalDeduction)} প্রয়োজন।`, true);
+
+            acc.balance -= totalDeduction;
+            srv.profit += fee; // 9.258% fee goes to wallet/bank profit
+            cCard.spent -= amt; 
+
+            if(cCard.spent === 0 && cCard.emis.length === 0) cCard.lastBillingDate = state.virtualTime;
+
+            logTx(acc.id, totalDeduction, 'out', 'Card Transfer', `ডেবিট থেকে ক্রেডিট কার্ডে ফান্ড ট্রান্সফার (ফি: $${formatMoney(fee)})`);
+            addNotification("ফান্ড ট্রান্সফার", `ক্রেডিট কার্ডে $${formatMoney(amt)} ট্রান্সফার করা হয়েছে।`, 'success');
+            showAlert(`সফলভাবে $${formatMoney(amt)} ক্রেডিট কার্ডে ট্রান্সফার করা হয়েছে!`);
+            
+            saveState();
+            if (document.getElementById('cardsModal') && document.getElementById('cardsModal').classList.contains('show')) {
+                showCardsUI(accId, true);
+            }
+            renderCustomerDashboard(false);
         }
 
         function showCardsUI(accId, isUpdate = false) {
@@ -932,14 +1438,8 @@
 
             let html = `
                 <div class="row g-4 p-2">
-                    <div class="col-md-6">
-                        <h5 class="fw-bold mb-4 border-bottom border-secondary border-opacity-25 pb-2 text-center text-info">ডেবিট কার্ড</h5>
-                        ${dCard ? renderCard(dCard, acc) : `<div class="d-flex h-100 align-items-center"><button class="btn btn-outline-info w-100 py-4 fw-bold rounded-4 shadow-sm" onclick="issueCard('${accId}', 'DEBIT')"><i class="fa-solid fa-plus me-2"></i> ডেবিট কার্ড ইস্যু করুন</button></div>`}
-                    </div>
-                    <div class="col-md-6 border-start border-secondary border-opacity-25">
-                        <h5 class="fw-bold mb-4 border-bottom border-secondary border-opacity-25 pb-2 text-center text-warning">ক্রেডিট কার্ড</h5>
-                        ${cCard ? renderCard(cCard, acc) : `<div class="d-flex h-100 align-items-center"><button class="btn btn-outline-warning w-100 py-4 fw-bold rounded-4 shadow-sm" onclick="issueCard('${accId}', 'CREDIT')"><i class="fa-solid fa-plus me-2"></i> ক্রেডিট কার্ড ইস্যু করুন</button></div>`}
-                    </div>
+                    <div class="col-md-6"><h5 class="fw-bold mb-4 border-bottom border-secondary border-opacity-25 pb-2 text-center text-info">ডেবিট কার্ড</h5>${dCard ? renderCard(dCard, acc) : `<div class="d-flex h-100 align-items-center"><button class="btn btn-outline-info w-100 py-4 fw-bold rounded-4 shadow-sm" onclick="issueCard('${accId}', 'DEBIT')"><i class="fa-solid fa-plus me-2"></i> ডেবিট কার্ড ইস্যু করুন</button></div>`}</div>
+                    <div class="col-md-6 border-start border-secondary border-opacity-25"><h5 class="fw-bold mb-4 border-bottom border-secondary border-opacity-25 pb-2 text-center text-warning">ক্রেডিট কার্ড</h5>${cCard ? renderCard(cCard, acc) : `<div class="d-flex h-100 align-items-center"><button class="btn btn-outline-warning w-100 py-4 fw-bold rounded-4 shadow-sm" onclick="issueCard('${accId}', 'CREDIT')"><i class="fa-solid fa-plus me-2"></i> ক্রেডিট কার্ড ইস্যু করুন</button></div>`}</div>
                 </div>`;
             
             if(isUpdate && document.getElementById('cardsModalBody')) { document.getElementById('cardsModalBody').innerHTML = html; return; }
@@ -950,31 +1450,31 @@
 
         function renderCard(card, acc) {
             if(!card.active) return `<div class="alert alert-danger fw-bold rounded-4 text-center py-4 shadow-sm"><i class="fa-solid fa-ban fs-1 d-block mb-2"></i> কার্ডটি ব্লক করা হয়েছে</div>`;
+            
+            let icon = '<i class="fa-brands fa-cc-amex fs-3 align-middle me-2 text-primary"></i>';
+            if(card.network === 'Visa') icon = '<i class="fa-brands fa-cc-visa fs-3 align-middle me-2"></i>';
+            else if(card.network === 'MasterCard') icon = '<i class="fa-brands fa-cc-mastercard fs-3 align-middle me-2"></i>';
+            
+            let cardName = card.network + (card.type === 'DEBIT' ? ' Debit' : ' Credit');
+            
             if(card.type === 'DEBIT') {
                 return `
-                    <div class="card-debit mb-4 shadow-lg"><h5 class="fw-bold"><i class="fa-brands fa-cc-visa fs-3 align-middle me-2"></i> VISA Debit</h5><h3 class="mt-5 tracking-widest text-center">${card.number}</h3><div class="d-flex justify-content-between mt-5"><span>EXP: ${card.exp}</span><span>CVV: ${card.cvv}</span></div></div>
-                    <div class="bg-secondary bg-opacity-10 p-4 rounded-4 text-center border border-info border-opacity-25 shadow-sm"><small class="text-muted fw-bold d-block mb-2">লিংকড একাউন্ট ব্যালেন্স</small><h2 class="text-success fw-bold m-0">$${formatMoney(acc.balance)}</h2></div>`;
+                    <div class="card-debit mb-4 shadow-lg"><h5 class="fw-bold">${icon} ${cardName}</h5><h3 class="mt-5 tracking-widest text-center">${card.number}</h3><div class="d-flex justify-content-between mt-5"><span>EXP: ${card.exp}</span><span>CVV: ${card.cvv}</span></div></div>
+                    <div class="bg-secondary bg-opacity-10 p-4 rounded-4 text-center border border-info border-opacity-25 shadow-sm">
+                        <small class="text-muted fw-bold d-block mb-2">লিংকড একাউন্ট ব্যালেন্স</small>
+                        <h2 class="text-success fw-bold m-0">$${formatMoney(acc.balance)}</h2>
+                        <button class="btn btn-outline-info mt-3 fw-bold rounded-pill w-100 shadow-sm" onclick="transferDebitToCredit('${acc.id}')"><i class="fa-solid fa-money-bill-transfer"></i> CC তে ট্রান্সফার (৯.২৫৮% ফি)</button>
+                    </div>`;
             } else {
                 const available = card.limit - card.spent - (card.blockedEmiLimit || 0); const fine = card.fines || 0;
                 let emiBadge = card.emis && card.emis.length > 0 ? `<div class="alert alert-warning bg-opacity-10 py-2 border-warning border-opacity-25 text-center mt-3 mb-0 fw-bold small"><i class="fa-solid fa-rotate"></i> ${card.emis.length} টি অ্যাক্টিভ EMI চলছে (ব্লকড: $${formatMoney(card.blockedEmiLimit)})</div>` : '';
                 return `
-                    <div class="card-credit mb-3 shadow-lg">
-                        <div class="d-flex justify-content-between"><h5 class="fw-bold m-0"><i class="fa-brands fa-cc-mastercard fs-3 align-middle me-2"></i> MasterCard</h5></div>
-                        <h4 class="mt-5 tracking-widest text-center">${card.number}</h4>
-                        <div class="d-flex justify-content-between mt-5"><span>EXP: ${card.exp}</span><span>CVV: ${card.cvv}</span></div>
-                    </div>
+                    <div class="card-credit mb-3 shadow-lg"><div class="d-flex justify-content-between"><h5 class="fw-bold m-0">${icon} ${cardName}</h5></div><h4 class="mt-5 tracking-widest text-center">${card.number}</h4><div class="d-flex justify-content-between mt-5"><span>EXP: ${card.exp}</span><span>CVV: ${card.cvv}</span></div></div>
                     <div class="bg-secondary bg-opacity-10 p-4 rounded-4 border border-warning border-opacity-50 shadow-sm">
-                        <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom border-secondary border-opacity-25">
-                            <div class="form-check form-switch m-0"><input class="form-check-input" type="checkbox" id="autoPaySwitch" ${card.autoPay ? 'checked' : ''} onchange="toggleAutoPay('${card.id}')"><label class="form-check-label text-info fw-bold small ms-2 mt-1" for="autoPaySwitch">অটো-পে (ডেবিট)</label></div>
-                            <div class="text-end"><span class="badge bg-warning text-dark px-2 py-1"><i class="fa-solid fa-star"></i> পয়েন্ট: ${Math.floor(card.rewardPoints||0)}</span> <button class="btn btn-sm btn-outline-warning p-1 px-2" onclick="redeemPoints('${card.id}')">ক্লেইম</button></div>
-                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom border-secondary border-opacity-25"><div class="form-check form-switch m-0"><input class="form-check-input" type="checkbox" id="autoPaySwitch" ${card.autoPay ? 'checked' : ''} onchange="toggleAutoPay('${card.id}')"><label class="form-check-label text-info fw-bold small ms-2 mt-1" for="autoPaySwitch">অটো-পে (ডেবিট)</label></div><div class="text-end"><span class="badge bg-warning text-dark px-2 py-1"><i class="fa-solid fa-star"></i> পয়েন্ট: ${Math.floor(card.rewardPoints||0)}</span> <button class="btn btn-sm btn-outline-warning p-1 px-2" onclick="redeemPoints('${card.id}')">ক্লেইম</button></div></div>
                         <div class="d-flex justify-content-between fw-bold mb-2"><span>লিমিট: <span class="text-light">$${formatMoney(card.limit)}</span></span><span>ব্যবহার: <span class="text-danger">$${formatMoney(card.spent)}</span></span></div>
                         <div class="d-flex justify-content-between fw-bold mb-4"><span>ফাইন: <span class="text-danger">$${formatMoney(fine)}</span></span><span>এভেইলেবল: <span class="text-success">$${formatMoney(available)}</span></span></div>
-                        <div class="mt-2 d-flex flex-wrap gap-2">
-                            <button class="btn btn-warning fw-bold text-dark flex-grow-1 shadow-sm rounded-pill" onclick="openCCPayModal('${card.id}')"><i class="fa-solid fa-cart-shopping"></i> পে বিল</button>
-                            <button class="btn btn-success fw-bold flex-grow-1 shadow-sm rounded-pill" onclick="payCreditCardBill('${card.id}')"><i class="fa-solid fa-money-bill"></i> ডিউ পেমেন্ট</button>
-                            <button class="btn btn-outline-danger shadow-sm rounded-circle px-3" onclick="closeCard('${card.id}')" title="কার্ড বন্ধ"><i class="fa-solid fa-power-off"></i></button>
-                        </div>
+                        <div class="mt-2 d-flex flex-wrap gap-2"><button class="btn btn-warning fw-bold text-dark flex-grow-1 shadow-sm rounded-pill" onclick="openCCPayModal('${card.id}')"><i class="fa-solid fa-cart-shopping"></i> পে বিল</button><button class="btn btn-success fw-bold flex-grow-1 shadow-sm rounded-pill" onclick="payCreditCardBill('${card.id}')"><i class="fa-solid fa-money-bill"></i> ডিউ পেমেন্ট</button><button class="btn btn-outline-danger shadow-sm rounded-circle px-3" onclick="closeCard('${card.id}')" title="কার্ড বন্ধ"><i class="fa-solid fa-power-off"></i></button></div>
                         ${emiBadge}
                     </div>`;
             }
@@ -989,9 +1489,15 @@
                 if(srv.main < limit) return showAlert("ব্যাংকের মূল একাউন্টে পর্যাপ্ত ফান্ড নেই!", true);
                 srv.main -= limit;
             }
+            
+            const netVal = await showPrompt("কার্ড নেটওয়ার্ক নির্বাচন করুন (নম্বর দিন):\n1. Amex (ডিফল্ট)\n2. Visa\n3. MasterCard", "1");
+            let network = 'Amex';
+            if(netVal === "2") network = 'Visa';
+            else if(netVal === "3") network = 'MasterCard';
+
             const expYear = new Date().getFullYear() + 5; const expMonth = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
-            state.cards.push({ id: generateId(), accountId: accId, serviceId: acc.serviceId, type: type, number: generateCardNumber(type), exp: `${expMonth}/${String(expYear).substr(2,2)}`, cvv: Math.floor(100 + Math.random() * 900), limit: limit, spent: 0, fines: 0, active: true, lastBillingDate: state.virtualTime, autoPay: false, emis: [], blockedEmiLimit: 0, rewardPoints: 0, lastFeeDate: state.virtualTime });
-            showAlert(`${type} কার্ড ইস্যু করা হয়েছে!`); saveState(); showCardsUI(accId, true);
+            state.cards.push({ id: generateId(), accountId: accId, serviceId: acc.serviceId, type: type, network: network, number: generateCardNumber(type, network), exp: `${expMonth}/${String(expYear).substr(2,2)}`, cvv: Math.floor(100 + Math.random() * 900), limit: limit, spent: 0, fines: 0, active: true, lastBillingDate: state.virtualTime, autoPay: false, emis: [], blockedEmiLimit: 0, rewardPoints: 0, lastFeeDate: state.virtualTime });
+            showAlert(`${network} ${type} কার্ড ইস্যু করা হয়েছে!`); saveState(); showCardsUI(accId, true);
         }
 
         async function closeCard(cardId) {
@@ -1013,16 +1519,52 @@
             if(remaining > 0) card.spent -= remaining; if(finesPaid > 0 && srv) srv.profit += finesPaid;
             if(card.spent === 0 && card.fines === 0 && card.emis.length === 0) card.lastBillingDate = state.virtualTime; 
 
+            updateCreditScore(acc, 5); // +5 for manual payment
+            logTx(acc.id, amt, 'out', 'CC Bill Pay', 'ক্রেডিট কার্ড বিল পরিশোধ');
             addNotification("ক্রেডিট কার্ড বিল পরিশোধ", `$${formatMoney(amt)} ক্রেডিট কার্ডের বিল দেওয়া হয়েছে।`, 'success');
             saveState(); showCardsUI(card.accountId, true); renderCustomerDashboard(); showAlert("বিল পরিশোধ সফল!");
         }
 
-        function showCustomerLoanUI(accId) { const acc = state.accounts.find(a => a.id === accId); const srv = state.services.find(s => s.id === acc.serviceId); document.getElementById('loanAccId').value = accId; document.getElementById('loanAmount').value = ''; const sourceSelect = document.getElementById('loanSource'); const balLabel = document.getElementById('loanSourceBalance'); const updateLabel = () => { balLabel.innerText = `এভেইলেবল: $${formatMoney(srv[sourceSelect.value])}`; }; sourceSelect.onchange = updateLabel; updateLabel(); new bootstrap.Modal(document.getElementById('customerLoanModal')).show(); }
-        function submitCustomerLoan() { const accId = document.getElementById('loanAccId').value; const amount = parseFloat(document.getElementById('loanAmount').value); const rate = parseFloat(document.getElementById('loanInterest').value); const source = document.getElementById('loanSource').value; if(isNaN(amount) || amount <= 0 || isNaN(rate) || rate < 0) return showAlert("সঠিক তথ্য দিন", true); const acc = state.accounts.find(a => a.id === accId); const srv = state.services.find(s => s.id === acc.serviceId); if(srv[source] < amount) return showAlert(`ব্যাংকের নির্বাচিত একাউন্টে পর্যাপ্ত ব্যালেন্স নেই!`, true); srv[source] -= amount; acc.balance += amount; state.loans.push({ id: generateId(), type: 'SRV_TO_CUST', accountId: accId, serviceId: srv.id, source: source, principal: amount, interest: amount * (rate / 100), paid: 0, active: true }); showAlert(`লোন গ্রহণ সফল!`); saveState(); renderAll(); bootstrap.Modal.getInstance(document.getElementById('customerLoanModal')).hide(); }
-        async function payCustomerLoan(loanId) { const loan = state.loans.find(l => l.id === loanId); const acc = state.accounts.find(a => a.id === loan.accountId); const srv = state.services.find(s => s.id === loan.serviceId); const due = loan.principal + loan.interest - loan.paid; const val = await showPrompt(`পরিশোধের পরিমাণ দিন (মোট বকেয়া: $${formatMoney(due)}):\nআপনার ব্যালেন্স: $${formatMoney(acc.balance)}`, due); if(!val) return; const amt = parseFloat(val); if(isNaN(amt) || amt <= 0) return showAlert("ভুল পরিমাণ", true); if(amt > due + 0.01) return showAlert("বকেয়ার চেয়ে বেশি পরিশোধ করা যাবে না!", true); if(amt > acc.balance) return showAlert("পর্যাপ্ত ব্যালেন্স নেই!", true); acc.balance -= amt; loan.paid += amt; const totalOriginal = loan.principal + loan.interest; const toPrincipal = amt * (loan.principal / totalOriginal); const toInterest = amt - toPrincipal; srv[loan.source] += toPrincipal; srv.profit += toInterest; if(Math.abs(totalOriginal - loan.paid) < 0.01) loan.active = false; showAlert("লোন পরিশোধ সফল!"); saveState(); renderAll(); }
-        async function showFDRUI(accId) { const acc = state.accounts.find(a => a.id === accId); const p1 = await showPrompt(`FDR এ কত ডলার জমা রাখতে চান? (আপনার ব্যালেন্স $${formatMoney(acc.balance)})`); if(!p1) return; const amt = parseFloat(p1); if(isNaN(amt) || amt <= 0 || amt > acc.balance) return showAlert("ভুল পরিমাণ বা ব্যালেন্স নেই!", true); const p2 = await showPrompt("মুনাফার হার দিন (%) (উদাঃ 10):"); if(!p2) return; const rate = parseFloat(p2); const p3 = await showPrompt("কত সেকেন্ড (রিয়েল টাইম) পর পর মুনাফা পাবেন? (উদাঃ 5):"); if(!p3) return; const interval = parseFloat(p3); if(isNaN(rate) || isNaN(interval) || interval < 1) return showAlert("সঠিক তথ্য দিন", true); acc.balance -= amt; state.fdrs.push({ id: generateId(), accountId: accId, principal: amt, rate: rate, intervalSec: interval * 5, lastYieldTime: state.virtualTime, active: true }); addNotification("FDR তৈরি", `$${formatMoney(amt)} এর একটি নতুন FDR করা হয়েছে।`, 'success'); showAlert("FDR সফলভাবে তৈরী হয়েছে!"); saveState(); renderCustomerDashboard(); }
+        // Advanced Customer Loan with Auto Debit
+        function showCustomerLoanUI(accId) { 
+            const acc = state.accounts.find(a => a.id === accId); const srv = state.services.find(s => s.id === acc.serviceId); 
+            const maxLoan = (acc.creditScore || 500) * 20;
+            
+            document.getElementById('maxLoanAmountInfo').innerText = `$${formatMoney(maxLoan)}`;
+            document.getElementById('loanAccId').value = accId; document.getElementById('loanAmount').value = ''; 
+            const sourceSelect = document.getElementById('loanSource'); const balLabel = document.getElementById('loanSourceBalance'); 
+            const updateLabel = () => { balLabel.innerText = `এভেইলেবল: $${formatMoney(srv[sourceSelect.value])}`; }; sourceSelect.onchange = updateLabel; updateLabel(); 
+            new bootstrap.Modal(document.getElementById('customerLoanModal')).show(); 
+        }
+
+        function submitCustomerLoan() { 
+            const accId = document.getElementById('loanAccId').value; const amount = parseFloat(document.getElementById('loanAmount').value); 
+            const rate = parseFloat(document.getElementById('loanInterest').value); const source = document.getElementById('loanSource').value; 
+            const months = parseInt(document.getElementById('loanMonths').value);
+            
+            if(isNaN(amount) || amount <= 0 || isNaN(rate) || rate < 0) return showAlert("সঠিক তথ্য দিন", true); 
+            const acc = state.accounts.find(a => a.id === accId); const srv = state.services.find(s => s.id === acc.serviceId); 
+            
+            const maxLoan = (acc.creditScore || 500) * 20;
+            if(amount > maxLoan) return showAlert(`আপনার ক্রেডিট স্কোরের ভিত্তিতে সর্বোচ্চ লোন লিমিট $${formatMoney(maxLoan)}!`, true);
+            if(srv[source] < amount) return showAlert(`ব্যাংকের নির্বাচিত একাউন্টে পর্যাপ্ত ব্যালেন্স নেই!`, true); 
+            
+            srv[source] -= amount; acc.balance += amount; 
+            const totalEmiAmount = (amount + (amount * (rate / 100))) / months;
+            
+            state.loans.push({ 
+                id: generateId(), type: 'SRV_TO_CUST', accountId: accId, serviceId: srv.id, source: source, 
+                principal: amount, interest: amount * (rate / 100), paid: 0, active: true, 
+                emiAmount: totalEmiAmount, nextEmiDate: state.virtualTime + (30 * virtualDayMs)
+            }); 
+            
+            logTx(accId, amount, 'in', 'Bank Loan', `${months} মাসের অটো-ডেবিট লোন গ্রহণ`);
+            showAlert(`লোন গ্রহণ সফল!`); saveState(); renderAll(); bootstrap.Modal.getInstance(document.getElementById('customerLoanModal')).hide(); 
+        }
+
+        async function showFDRUI(accId) { const acc = state.accounts.find(a => a.id === accId); const p1 = await showPrompt(`FDR এ কত ডলার জমা রাখতে চান? (আপনার ব্যালেন্স $${formatMoney(acc.balance)})`); if(!p1) return; const amt = parseFloat(p1); if(isNaN(amt) || amt <= 0 || amt > acc.balance) return showAlert("ভুল পরিমাণ বা ব্যালেন্স নেই!", true); const p2 = await showPrompt("মুনাফার হার দিন (%) (উদাঃ 10):"); if(!p2) return; const rate = parseFloat(p2); const p3 = await showPrompt("কত সেকেন্ড (রিয়েল টাইম) পর পর মুনাফা পাবেন? (উদাঃ 5):"); if(!p3) return; const interval = parseFloat(p3); if(isNaN(rate) || isNaN(interval) || interval < 1) return showAlert("সঠিক তথ্য দিন", true); acc.balance -= amt; state.fdrs.push({ id: generateId(), accountId: accId, principal: amt, rate: rate, intervalSec: interval * 5, lastYieldTime: state.virtualTime, active: true }); logTx(accId, amt, 'out', 'FDR Deposit', 'নতুন FDR তৈরি'); addNotification("FDR তৈরি", `$${formatMoney(amt)} এর একটি নতুন FDR করা হয়েছে।`, 'success'); showAlert("FDR সফলভাবে তৈরী হয়েছে!"); saveState(); renderCustomerDashboard(); }
         function showFDRList(accId) { const accFDRs = state.fdrs.filter(f => f.accountId === accId && f.active); const tbody = document.getElementById('fdrListBody'); if(accFDRs.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="text-muted py-5 fw-bold">কোন সক্রিয় FDR নেই।</td></tr>`; } else { tbody.innerHTML = accFDRs.map(f => `<tr><td class="text-success fw-bold">$${formatMoney(f.principal)}</td><td><span class="badge bg-primary bg-opacity-50 rounded-pill text-light">${f.rate}%</span></td><td>প্রতি ${f.intervalSec / 5} সেঃ</td><td><span class="badge bg-success rounded-pill px-3 shadow-sm">সক্রিয়</span></td><td><button class="btn btn-sm btn-danger rounded-pill px-3 shadow-sm" onclick="closeFDR('${f.id}')">ভেঙে ফেলুন</button></td></tr>`).join(''); } new bootstrap.Modal(document.getElementById('fdrListModal')).show(); }
-        async function closeFDR(fdrId) { const conf = await showPrompt("FDR টি ভাঙতে চাইলে 'হ্যাঁ' লিখুন। (আসল ফেরত যাবে)", ""); if(conf !== "হ্যাঁ") return; const fdr = state.fdrs.find(f => f.id === fdrId); const acc = state.accounts.find(a => a.id === fdr.accountId); if(fdr && acc) { acc.balance += fdr.principal; fdr.active = false; addNotification("FDR ভাঙা হয়েছে", `$${formatMoney(fdr.principal)} মূল একাউন্টে ফেরত এসেছে।`, 'warning'); showAlert("FDR টি ভেঙে ফেলা হয়েছে"); saveState(); showFDRList(acc.id); renderCustomerDashboard(); } }
+        async function closeFDR(fdrId) { const conf = await showPrompt("FDR টি ভাঙতে চাইলে 'হ্যাঁ' লিখুন। (আসল ফেরত যাবে)", ""); if(conf !== "হ্যাঁ") return; const fdr = state.fdrs.find(f => f.id === fdrId); const acc = state.accounts.find(a => a.id === fdr.accountId); if(fdr && acc) { acc.balance += fdr.principal; fdr.active = false; logTx(acc.id, fdr.principal, 'in', 'FDR Close', 'FDR ভেঙে আসল ফেরত'); addNotification("FDR ভাঙা হয়েছে", `$${formatMoney(fdr.principal)} মূল একাউন্টে ফেরত এসেছে।`, 'warning'); showAlert("FDR টি ভেঙে ফেলা হয়েছে"); saveState(); showFDRList(acc.id); renderCustomerDashboard(); } }
 
         function renderCryptoTab() {
             const pDisplay = document.getElementById('cryptoCurrentPrice'); pDisplay.innerText = '$' + formatCrypto(state.crypto.price);
@@ -1066,10 +1608,12 @@
                     const totalUsage = cc.spent + (cc.blockedEmiLimit || 0);
                     if(totalUsage + amt > cc.limit) return showAlert("ক্রেডিট কার্ডে পর্যাপ্ত লিমিট নেই!", true);
                     cc.spent += amt; cc.rewardPoints += amt; acc.cryptoBalance += (amt / price); 
+                    logTx(acc.id, amt, 'out', 'Crypto Buy', 'ক্রেডিট কার্ড দিয়ে ক্রিপ্টো ক্রয়');
                     addNotification("ক্রিপ্টো ক্রয়", `ক্রেডিট কার্ড দিয়ে $${formatMoney(amt)} এর ক্রিপ্টো কেনা হয়েছে।`, 'success');
                 } else { 
                     if(acc.cryptoBalance < amt) return showAlert("পর্যাপ্ত VCN নেই!", true); 
-                    acc.cryptoBalance -= amt; acc.balance += (amt * price); // Selling adds to main balance
+                    acc.cryptoBalance -= amt; acc.balance += (amt * price); 
+                    logTx(acc.id, amt * price, 'in', 'Crypto Sell', 'ক্রিপ্টো বিক্রয় (মূল একাউন্টে)');
                     addNotification("ক্রিপ্টো বিক্রয়", `ক্রিপ্টো বিক্রি করে $${formatMoney(amt * price)} মূল একাউন্টে যুক্ত হয়েছে।`, 'success');
                 } 
             }
@@ -1098,6 +1642,7 @@
             if(!document.getElementById('customerDashboard').classList.contains('d-none')) renderCustomerDashboard();
             if(document.getElementById('crypto-tab').classList.contains('active')) renderCryptoTab();
             if(document.getElementById('loans-tab').classList.contains('active')) renderLoans();
+            if(document.getElementById('analytics-tab').classList.contains('active')) renderAnalytics();
         }
 
         window.onload = () => {
@@ -1106,6 +1651,7 @@
             document.getElementById('services-tab').addEventListener('shown.bs.tab', renderServices);
             document.getElementById('crypto-tab').addEventListener('shown.bs.tab', renderCryptoTab);
             document.getElementById('loans-tab').addEventListener('shown.bs.tab', renderLoans);
+            document.getElementById('analytics-tab').addEventListener('shown.bs.tab', renderAnalytics);
             renderAll();
         };
     </script>
