@@ -22,258 +22,169 @@
             --glass-border-light: rgba(255, 255, 255, 0.6);
             --glass-shadow-light: 0 10px 40px rgba(31, 38, 135, 0.1);
             
-            /* Apple uses high blur + saturation for vibrant glass */
             --glass-blur: blur(35px) saturate(180%);
         }
         body {
             font-family: 'Inter', 'Noto Sans Bengali', sans-serif;
             transition: background-color 0.4s, color 0.4s;
-            overflow-x: hidden;
-            min-height: 100vh;
+            overflow-x: hidden; min-height: 100vh;
         }
-        
-        /* Base Themes */
-        [data-bs-theme="dark"] body {
-            background-color: #000;
-            color: #e0e0e0;
-        }
-        [data-bs-theme="light"] body {
-            background-color: #f0f2f5;
-            color: #333;
-        }
+        [data-bs-theme="dark"] body { background-color: #000; color: #e0e0e0; }
+        [data-bs-theme="light"] body { background-color: #f0f2f5; color: #333; }
 
-        /* iOS Glass Cards */
+        /* iOS Glass Elements */
+        .card-glass, .offcanvas-glass {
+            backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+        }
         .card-glass {
-            backdrop-filter: var(--glass-blur);
-            -webkit-backdrop-filter: var(--glass-blur);
             border-radius: 1.25rem;
-            transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.4s ease, background 0.4s ease;
-            /* Inner shadow for reflection */
             box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), var(--glass-shadow-dark);
         }
-        
-        [data-bs-theme="dark"] .card-glass {
-            background: var(--glass-bg-dark);
-            border: 1px solid var(--glass-border-dark);
-            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), var(--glass-shadow-dark);
+        [data-bs-theme="dark"] .card-glass, [data-bs-theme="dark"] .offcanvas-glass {
+            background: var(--glass-bg-dark); border: 1px solid var(--glass-border-dark);
         }
-        
-        [data-bs-theme="light"] .card-glass {
-            background: var(--glass-bg-light);
-            border: 1px solid var(--glass-border-light);
+        [data-bs-theme="light"] .card-glass, [data-bs-theme="light"] .offcanvas-glass {
+            background: var(--glass-bg-light); border: 1px solid var(--glass-border-light);
             box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.6), var(--glass-shadow-light);
         }
-        
-        .card-glass:hover { transform: translateY(-4px) scale(1.01); }
+        .card-glass:hover { transform: translateY(-3px); }
 
-        /* Smooth Liquid Background Blobs (Mesh Gradient Style) */
+        /* Compact Layouts */
+        .compact-card { padding: 1.25rem !important; }
+        .compact-card h5 { font-size: 1.1rem; }
+        .compact-card .badge { font-size: 0.75rem; padding: 0.35em 0.65em; }
+
+        /* Liquid Mesh Background */
         #liquid-bg {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            overflow: hidden;
-            z-index: -1;
-            opacity: 0;
-            transition: opacity 1s ease-in-out;
-            pointer-events: none;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            overflow: hidden; z-index: -1; opacity: 0; transition: opacity 1s ease-in-out; pointer-events: none;
         }
         .liquid-active #liquid-bg { opacity: 1; }
-        
-        /* Apple style heavily blurred blobs */
         .liquid-blob {
-            position: absolute;
-            filter: blur(90px);
-            opacity: 0.75;
-            will-change: transform, border-radius;
-            mix-blend-mode: screen;
+            position: absolute; filter: blur(90px); opacity: 0.75;
+            will-change: transform, border-radius; mix-blend-mode: screen;
         }
         [data-bs-theme="light"] .liquid-blob { mix-blend-mode: multiply; opacity: 0.5; }
+        .blob-1 { top: -10%; left: -10%; width: 55vw; height: 55vw; background: #ff2a85; animation: morphBlob1 22s infinite alternate ease-in-out; }
+        .blob-2 { bottom: -10%; right: -10%; width: 65vw; height: 65vw; background: #8a2be2; animation: morphBlob2 26s infinite alternate ease-in-out; }
+        .blob-3 { top: 20%; left: 40%; width: 50vw; height: 50vw; background: #00c3ff; animation: morphBlob3 24s infinite alternate ease-in-out; }
+        .blob-4 { bottom: 20%; left: 10%; width: 45vw; height: 45vw; background: #ffb100; animation: morphBlob4 30s infinite alternate ease-in-out; }
 
-        /* 4 Blobs for richer color mixing */
-        .blob-1 { top: -10%; left: -10%; width: 55vw; height: 55vw; background: #ff2a85; animation: morphBlob1 22s infinite alternate cubic-bezier(0.4, 0, 0.2, 1); }
-        .blob-2 { bottom: -10%; right: -10%; width: 65vw; height: 65vw; background: #8a2be2; animation: morphBlob2 26s infinite alternate cubic-bezier(0.4, 0, 0.2, 1); }
-        .blob-3 { top: 20%; left: 40%; width: 50vw; height: 50vw; background: #00c3ff; animation: morphBlob3 24s infinite alternate cubic-bezier(0.4, 0, 0.2, 1); }
-        .blob-4 { bottom: 20%; left: 10%; width: 45vw; height: 45vw; background: #ffb100; animation: morphBlob4 30s infinite alternate cubic-bezier(0.4, 0, 0.2, 1); }
+        @keyframes morphBlob1 { 0% { transform: translate(0, 0) scale(1) rotate(0deg); border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; } 100% { transform: translate(25vw, 15vh) scale(1.15) rotate(45deg); border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; } }
+        @keyframes morphBlob2 { 0% { transform: translate(0, 0) scale(1) rotate(0deg); border-radius: 50% 50% 40% 60% / 60% 40% 50% 50%; } 100% { transform: translate(-20vw, -25vh) scale(1.2) rotate(-30deg); border-radius: 30% 70% 60% 40% / 40% 60% 30% 70%; } }
+        @keyframes morphBlob3 { 0% { transform: translate(0, 0) scale(1) rotate(0deg); border-radius: 60% 40% 50% 50% / 50% 50% 40% 60%; } 100% { transform: translate(-15vw, 25vh) scale(1.1) rotate(60deg); border-radius: 40% 60% 40% 60% / 60% 40% 60% 40%; } }
+        @keyframes morphBlob4 { 0% { transform: translate(0, 0) scale(1) rotate(0deg); border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; } 100% { transform: translate(20vw, -15vh) scale(1.25) rotate(-45deg); border-radius: 70% 30% 30% 70% / 70% 70% 30% 30%; } }
 
-        /* Morphing Animations (Transforms + Border Radius for organic shape) */
-        @keyframes morphBlob1 {
-            0% { transform: translate(0, 0) scale(1) rotate(0deg); border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
-            100% { transform: translate(25vw, 15vh) scale(1.15) rotate(45deg); border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
-        }
-        @keyframes morphBlob2 {
-            0% { transform: translate(0, 0) scale(1) rotate(0deg); border-radius: 50% 50% 40% 60% / 60% 40% 50% 50%; }
-            100% { transform: translate(-20vw, -25vh) scale(1.2) rotate(-30deg); border-radius: 30% 70% 60% 40% / 40% 60% 30% 70%; }
-        }
-        @keyframes morphBlob3 {
-            0% { transform: translate(0, 0) scale(1) rotate(0deg); border-radius: 60% 40% 50% 50% / 50% 50% 40% 60%; }
-            100% { transform: translate(-15vw, 25vh) scale(1.1) rotate(60deg); border-radius: 40% 60% 40% 60% / 60% 40% 60% 40%; }
-        }
-        @keyframes morphBlob4 {
-            0% { transform: translate(0, 0) scale(1) rotate(0deg); border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; }
-            100% { transform: translate(20vw, -15vh) scale(1.25) rotate(-45deg); border-radius: 70% 30% 30% 70% / 70% 70% 30% 30%; }
-        }
-
-        /* Navbar iOS Frosted Look */
         .navbar-frosted {
             background: rgba(20, 20, 25, 0.65) !important;
-            backdrop-filter: var(--glass-blur);
-            -webkit-backdrop-filter: var(--glass-blur);
+            backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
-        [data-bs-theme="light"] .navbar-frosted {
-            background: rgba(255, 255, 255, 0.65) !important;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-        }
+        [data-bs-theme="light"] .navbar-frosted { background: rgba(255, 255, 255, 0.65) !important; border-bottom: 1px solid rgba(0,0,0,0.1); }
         [data-bs-theme="light"] .navbar-brand, [data-bs-theme="light"] .fa-clock { color: #222 !important; }
 
         .clock-display {
-            font-family: monospace;
-            font-size: 1.1rem;
-            font-weight: bold;
-            letter-spacing: 1px;
-            color: #0dcaf0;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 6px 16px;
-            border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
+            font-family: monospace; font-size: 1.1rem; font-weight: bold; letter-spacing: 1px;
+            color: #0dcaf0; background: rgba(0, 0, 0, 0.3); padding: 6px 16px;
+            border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px);
         }
-        [data-bs-theme="light"] .clock-display {
-            background: rgba(255, 255, 255, 0.5);
-            color: #055160;
-            border: 1px solid rgba(0,0,0,0.1);
-        }
+        [data-bs-theme="light"] .clock-display { background: rgba(255, 255, 255, 0.5); color: #055160; border: 1px solid rgba(0,0,0,0.1); }
 
         .nav-tabs .nav-link {
-            border-radius: 0.75rem 0.75rem 0 0;
-            font-weight: 600;
-            color: inherit;
-            border: none;
-            padding: 14px 22px;
-            margin-right: 5px;
-            transition: all 0.3s ease;
+            border-radius: 0.75rem 0.75rem 0 0; font-weight: 600; color: inherit;
+            border: none; padding: 12px 20px; margin-right: 5px; transition: all 0.3s ease;
             background: rgba(255,255,255,0.05);
         }
         [data-bs-theme="light"] .nav-tabs .nav-link { background: rgba(0,0,0,0.03); }
-        
-        .nav-tabs .nav-link.active {
-            background: var(--bs-primary);
-            color: white;
-            box-shadow: 0 -4px 20px rgba(13, 110, 253, 0.4);
-            transform: translateY(-2px);
-        }
-
-        /* Cards inside modals/tabs styling */
-        .bg-secondary.bg-opacity-10 {
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-        }
+        .nav-tabs .nav-link.active { background: var(--bs-primary); color: white; box-shadow: 0 -4px 20px rgba(13, 110, 253, 0.4); transform: translateY(-2px); }
 
         .card-credit {
-            background: linear-gradient(135deg, #bf953f, #fcf6ba, #b38728, #fbf5b7);
-            color: #000;
-            border-radius: 1rem;
-            padding: 20px;
-            box-shadow: 0 8px 25px rgba(191, 149, 63, 0.3);
-            text-shadow: 0px 1px 1px rgba(255,255,255,0.6);
-            font-family: monospace;
-            position: relative;
-            overflow: hidden;
-            transition: transform 0.3s;
+            background: linear-gradient(135deg, #2b2b2b, #444, #1a1a1a); /* Premium Dark CC */
+            color: #d4af37; border-radius: 1rem; padding: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5); text-shadow: 0px 1px 1px rgba(0,0,0,0.8);
+            font-family: monospace; position: relative; overflow: hidden; transition: transform 0.3s;
+            border: 1px solid rgba(212, 175, 55, 0.3);
         }
-        .card-credit:hover { transform: translateY(-5px); }
-        .card-credit::after { content: "CREDIT"; position: absolute; right: 20px; top: 20px; font-weight: bold; opacity: 0.5; }
+        .card-credit::before {
+            content: "REWARDS"; position: absolute; right: 20px; top: 20px; font-weight: bold; opacity: 0.5; color: #fff;
+        }
         
         .card-debit {
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: #fff;
-            border-radius: 1rem;
-            padding: 20px;
-            box-shadow: 0 8px 25px rgba(30, 60, 114, 0.4);
-            text-shadow: 0px 1px 2px rgba(0,0,0,0.5);
-            font-family: monospace;
-            position: relative;
-            transition: transform 0.3s;
+            color: #fff; border-radius: 1rem; padding: 20px;
+            box-shadow: 0 8px 25px rgba(30, 60, 114, 0.4); text-shadow: 0px 1px 2px rgba(0,0,0,0.5);
+            font-family: monospace; position: relative; transition: transform 0.3s;
         }
-        .card-debit:hover { transform: translateY(-5px); }
         .card-debit::after { content: "DEBIT"; position: absolute; right: 20px; top: 20px; font-weight: bold; opacity: 0.5; }
 
-        /* Custom Scrollbar */
+        .form-switch .form-check-input { width: 2.5em; height: 1.25em; cursor: pointer; }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(150,150,150,0.5); border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(150,150,150,0.8); }
         
         .toast-container { z-index: 1060; }
-        .modal-content { border: none !important; } /* override bootstrap border for smooth glass */
+        .modal-content { border: none !important; }
+        .notification-item { border-bottom: 1px solid rgba(255,255,255,0.1); padding: 12px; transition: background 0.3s; }
+        [data-bs-theme="light"] .notification-item { border-bottom: 1px solid rgba(0,0,0,0.1); }
+        .notification-item:hover { background: rgba(255,255,255,0.05); }
+        .notification-unread { border-left: 4px solid var(--bs-primary); background: rgba(13, 110, 253, 0.05); }
+        
+        /* Electric Bill Animation */
+        @keyframes pulseAlert { 0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); } }
+        .electric-alert { animation: pulseAlert 2s infinite; }
     </style>
 </head>
 <body class="liquid-active">
 
-    <!-- Liquid Background Blobs -->
     <div id="liquid-bg">
-        <div class="liquid-blob blob-1"></div>
-        <div class="liquid-blob blob-2"></div>
-        <div class="liquid-blob blob-3"></div>
-        <div class="liquid-blob blob-4"></div>
+        <div class="liquid-blob blob-1"></div><div class="liquid-blob blob-2"></div>
+        <div class="liquid-blob blob-3"></div><div class="liquid-blob blob-4"></div>
     </div>
 
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark navbar-frosted shadow-sm sticky-top">
         <div class="container-fluid">
-            <a class="navbar-brand fw-bold" href="#"><i class="fa-solid fa-building-columns text-info"></i> ভি-ব্যাংকিং</a>
-            
+            <a class="navbar-brand fw-bold" href="#"><i class="fa-solid fa-building-columns text-info"></i> ভি-ব্যাংকিং প্রো</a>
             <div class="d-flex align-items-center ms-auto gap-3">
-                <div class="clock-display" id="virtualClock" title="ভার্চুয়াল সময় (৫ গুন দ্রুত)">
-                    <i class="fa-regular fa-clock"></i> 00:00:00
-                </div>
-                <!-- Liquid Toggle -->
-                <button class="btn btn-outline-info btn-sm rounded-circle shadow-sm" id="liquidToggleBtn" onclick="toggleLiquidGlass()" title="লিকুইড গ্লাস এফেক্ট অন/অফ">
-                    <i class="fa-solid fa-droplet"></i>
+                <div class="clock-display" id="virtualClock" title="ভার্চুয়াল সময়"><i class="fa-regular fa-clock"></i> 00:00:00</div>
+                <button class="btn btn-outline-warning btn-sm rounded-circle shadow-sm position-relative" type="button" data-bs-toggle="offcanvas" data-bs-target="#notificationCenter">
+                    <i class="fa-solid fa-bell"></i><span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationBadge" style="display:none;">0</span>
                 </button>
-                <!-- Theme Toggle -->
-                <button class="btn btn-outline-light btn-sm rounded-circle shadow-sm" id="themeToggleBtn" onclick="toggleTheme()" title="থিম পরিবর্তন করুন">
-                    <i class="fa-solid fa-moon"></i>
-                </button>
+                <button class="btn btn-outline-info btn-sm rounded-circle shadow-sm" id="liquidToggleBtn" onclick="toggleLiquidGlass()"><i class="fa-solid fa-droplet"></i></button>
+                <button class="btn btn-outline-light btn-sm rounded-circle shadow-sm" id="themeToggleBtn" onclick="toggleTheme()"><i class="fa-solid fa-moon"></i></button>
             </div>
         </div>
     </nav>
 
+    <!-- Notification Offcanvas -->
+    <div class="offcanvas offcanvas-end offcanvas-glass text-light" tabindex="-1" id="notificationCenter">
+        <div class="offcanvas-header border-bottom border-secondary border-opacity-25">
+            <h5 class="offcanvas-title fw-bold"><i class="fa-solid fa-bell text-warning"></i> নোটিফিকেশন সেন্টার</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body p-0" id="notificationList"></div>
+        <div class="offcanvas-footer p-2 text-center border-top border-secondary border-opacity-25">
+            <button class="btn btn-sm btn-outline-secondary w-100" onclick="markAllNotificationsRead()">সবগুলো রিড মার্ক করুন</button>
+        </div>
+    </div>
+
     <!-- Main Content -->
     <div class="container mt-4 mb-5">
-        
-        <!-- Global Lock Alert -->
         <div id="globalLockAlert" class="alert alert-danger d-none text-center fw-bold shadow-lg card-glass border-0" role="alert">
             <i class="fa-solid fa-triangle-exclamation"></i> বিগ ব্যাংক কর্তৃক সকল ব্যাংকিং লেনদেন সাময়িকভাবে বন্ধ রয়েছে!
         </div>
 
-        <!-- Navigation Tabs -->
         <ul class="nav nav-tabs mb-4 border-bottom-0" id="mainTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin" type="button" role="tab">
-                    <i class="fa-solid fa-user-shield"></i> এডমিন (বিগ ব্যাংক)
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="services-tab" data-bs-toggle="tab" data-bs-target="#services" type="button" role="tab">
-                    <i class="fa-solid fa-network-wired"></i> সার্ভিসেস
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="customers-tab" data-bs-toggle="tab" data-bs-target="#customers" type="button" role="tab">
-                    <i class="fa-solid fa-users"></i> গ্রাহক সমূহ
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link text-warning" id="crypto-tab" data-bs-toggle="tab" data-bs-target="#crypto" type="button" role="tab">
-                    <i class="fa-brands fa-bitcoin"></i> ক্রিপ্টো মার্কেট
-                </button>
-            </li>
+            <li class="nav-item"><button class="nav-link active" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin" type="button"><i class="fa-solid fa-user-shield"></i> বিগ ব্যাংক</button></li>
+            <li class="nav-item"><button class="nav-link" id="services-tab" data-bs-toggle="tab" data-bs-target="#services" type="button"><i class="fa-solid fa-network-wired"></i> সার্ভিস</button></li>
+            <li class="nav-item"><button class="nav-link" id="customers-tab" data-bs-toggle="tab" data-bs-target="#customers" type="button"><i class="fa-solid fa-users"></i> গ্রাহক</button></li>
+            <li class="nav-item"><button class="nav-link text-warning" id="loans-tab" data-bs-toggle="tab" data-bs-target="#loans" type="button"><i class="fa-solid fa-hand-holding-dollar"></i> লোন সমূহ</button></li>
+            <li class="nav-item"><button class="nav-link text-info" id="crypto-tab" data-bs-toggle="tab" data-bs-target="#crypto" type="button"><i class="fa-brands fa-bitcoin"></i> ক্রিপ্টো</button></li>
         </ul>
 
-        <!-- Tab Contents -->
         <div class="tab-content" id="mainTabsContent">
-            
             <!-- ADMIN TAB -->
             <div class="tab-pane fade show active" id="admin" role="tabpanel">
                 <div class="row g-4">
@@ -282,18 +193,12 @@
                             <h3 class="text-primary"><i class="fa-solid fa-building-columns"></i> বিগ ব্যাংক</h3>
                             <hr class="border-secondary opacity-25">
                             <div class="row mt-3">
-                                <div class="col-6">
-                                    <h6 class="text-muted">মূল একাউন্ট</h6>
-                                    <h4 class="text-success fw-bold" id="bbMainBal">$0.00</h4>
-                                </div>
-                                <div class="col-6 border-start border-secondary border-opacity-25">
-                                    <h6 class="text-muted">মুনাফা একাউন্ট</h6>
-                                    <h4 class="text-info fw-bold" id="bbProfitBal">$0.00</h4>
-                                </div>
+                                <div class="col-6"><h6 class="text-muted">মূল একাউন্ট</h6><h4 class="text-success fw-bold" id="bbMainBal">$0.00</h4></div>
+                                <div class="col-6 border-start border-secondary border-opacity-25"><h6 class="text-muted">মুনাফা একাউন্ট</h6><h4 class="text-info fw-bold" id="bbProfitBal">$0.00</h4></div>
                             </div>
                             <div class="mt-4 d-flex justify-content-center gap-2">
-                                <button class="btn btn-success rounded-pill px-4 shadow-sm" onclick="modifyBigBankBal('add')"><i class="fa-solid fa-plus"></i> ডলার যোগ</button>
-                                <button class="btn btn-danger rounded-pill px-4 shadow-sm" onclick="modifyBigBankBal('sub')"><i class="fa-solid fa-minus"></i> ডলার বিয়োগ</button>
+                                <button class="btn btn-success rounded-pill px-4" onclick="modifyBigBankBal('add')"><i class="fa-solid fa-plus"></i> ফান্ড যোগ</button>
+                                <button class="btn btn-danger rounded-pill px-4" onclick="modifyBigBankBal('sub')"><i class="fa-solid fa-minus"></i> ফান্ড বিয়োগ</button>
                             </div>
                         </div>
                     </div>
@@ -301,436 +206,136 @@
                         <div class="card card-glass p-4 h-100">
                             <h4 class="text-warning"><i class="fa-solid fa-gears"></i> সিস্টেম কন্ট্রোল</h4>
                             <hr class="border-secondary opacity-25">
-                            <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded bg-secondary bg-opacity-10 border border-secondary border-opacity-25 shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded bg-secondary bg-opacity-10 shadow-sm">
                                 <span class="fw-bold">গ্লোবাল ট্রানজেকশন</span>
-                                <button id="globalTxBtn" class="btn btn-sm btn-success px-4 rounded-pill shadow-sm" onclick="toggleGlobalTx()">চালু আছে</button>
+                                <button id="globalTxBtn" class="btn btn-sm btn-success px-4 rounded-pill" onclick="toggleGlobalTx()">চালু আছে</button>
                             </div>
-                            <p class="text-muted small mb-0"><i class="fa-solid fa-circle-info"></i> এখান থেকে পুরো সিস্টেমের ট্রানজেকশন একসাথে অফ/অন করা যাবে।</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row mt-4">
-                    <div class="col-12">
-                        <div class="card card-glass p-4">
-                            <h5 class="mb-3 fw-bold"><i class="fa-solid fa-list-check"></i> বিগ ব্যাংক লোন প্যানেল (সার্ভিস সমূহ)</h5>
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle">
-                                    <thead class="table-dark bg-opacity-50">
-                                        <tr>
-                                            <th>সার্ভিস নাম</th>
-                                            <th>লোন আসল</th>
-                                            <th>উৎস</th>
-                                            <th>ইন্টারেস্ট</th>
-                                            <th>পরিশোধিত</th>
-                                            <th>বকেয়া</th>
-                                            <th>স্ট্যাটাস</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="bbLoanTableBody">
-                                        <!-- Populated by JS -->
-                                    </tbody>
-                                </table>
+                            <div class="d-flex justify-content-between align-items-center p-3 rounded bg-secondary bg-opacity-10 border border-info border-opacity-50 shadow-sm">
+                                <span class="fw-bold text-info"><i class="fa-solid fa-forward-fast"></i> টাইম স্কিপ (টেস্টিং)</span>
+                                <button class="btn btn-sm btn-info fw-bold text-dark px-3 rounded-pill" onclick="skipTime(30)">+৩০ দিন</button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- SERVICES TAB -->
+            <!-- SERVICES TAB (COMPACT) -->
             <div class="tab-pane fade" id="services" role="tabpanel">
                 <div class="d-flex justify-content-between align-items-center mb-4 card-glass p-3 px-4">
-                    <h3 class="mb-0 fw-bold">ওয়ালেট এবং ব্যাংক সার্ভিস</h3>
-                    <button class="btn btn-primary rounded-pill shadow-sm px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#createServiceModal">
-                        <i class="fa-solid fa-plus"></i> নতুন সার্ভিস তৈরী
-                    </button>
+                    <h4 class="mb-0 fw-bold">ওয়ালেট এবং ব্যাংক সার্ভিস</h4>
+                    <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#createServiceModal"><i class="fa-solid fa-plus"></i> নতুন সার্ভিস</button>
                 </div>
-                <div id="servicesContainer" class="row g-4">
-                    <!-- Populated by JS -->
-                </div>
+                <div id="servicesContainer" class="row g-3"></div>
             </div>
 
             <!-- CUSTOMERS TAB -->
             <div class="tab-pane fade" id="customers" role="tabpanel">
                 <div class="d-flex justify-content-between align-items-center mb-4 card-glass p-3 px-4">
-                    <h3 class="mb-0 fw-bold">গ্রাহক সমূহ</h3>
-                    <button class="btn btn-primary rounded-pill shadow-sm px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#createCustomerModal">
-                        <i class="fa-solid fa-user-plus"></i> নতুন গ্রাহক তৈরী
-                    </button>
+                    <h4 class="mb-0 fw-bold">গ্রাহক ম্যানেজমেন্ট</h4>
+                    <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#createCustomerModal"><i class="fa-solid fa-user-plus"></i> নতুন গ্রাহক</button>
                 </div>
-
                 <div class="row mb-4">
                     <div class="col-md-8 d-flex gap-2">
                         <select id="customerSelect" class="form-select card-glass fw-bold text-light shadow-sm" onchange="renderCustomerDashboard()">
                             <option value="">-- গ্রাহক নির্বাচন করুন --</option>
                         </select>
-                        <button class="btn btn-outline-info card-glass" id="btnRenameCustomer" onclick="renameCustomer()" title="নাম পরিবর্তন" style="display:none;"><i class="fa-solid fa-pen"></i></button>
-                        <button class="btn btn-outline-danger card-glass" id="btnDeleteCustomer" onclick="deleteCustomer()" title="একাউন্ট ডিলিট" style="display:none;"><i class="fa-solid fa-trash"></i></button>
+                        <button class="btn btn-outline-info card-glass" id="btnRenameCustomer" onclick="renameCustomer()" style="display:none;"><i class="fa-solid fa-pen"></i></button>
+                        <button class="btn btn-outline-danger card-glass" id="btnDeleteCustomer" onclick="deleteCustomer()" style="display:none;"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </div>
+                <div id="customerDashboard" class="d-none"></div>
+            </div>
 
-                <div id="customerDashboard" class="d-none">
-                    <!-- Specific Customer Dashboard rendered by JS -->
+            <!-- LOANS TAB -->
+            <div class="tab-pane fade" id="loans" role="tabpanel">
+                <div class="card card-glass p-4 mb-4 border-warning border-opacity-50">
+                    <h4 class="fw-bold text-warning mb-3"><i class="fa-solid fa-building-columns"></i> বিগ ব্যাংক লোন (সার্ভিসেস)</h4>
+                    <div class="table-responsive"><table class="table table-hover align-middle"><thead class="table-dark bg-opacity-50"><tr><th>সার্ভিস নাম</th><th>আসল</th><th>উৎস</th><th>ইন্টারেস্ট</th><th>পরিশোধিত</th><th>বকেয়া</th><th>স্ট্যাটাস</th><th>অ্যাকশন</th></tr></thead><tbody id="loansBbToSrvBody"></tbody></table></div>
+                </div>
+                <div class="card card-glass p-4 border-info border-opacity-50">
+                    <h4 class="fw-bold text-info mb-3"><i class="fa-solid fa-users"></i> গ্রাহক লোন (ব্যাংক থেকে)</h4>
+                    <div class="table-responsive"><table class="table table-hover align-middle"><thead class="table-dark bg-opacity-50"><tr><th>গ্রাহক ও ব্যাংক</th><th>আসল</th><th>উৎস</th><th>ইন্টারেস্ট</th><th>পরিশোধিত</th><th>বকেয়া</th><th>স্ট্যাটাস</th></tr></thead><tbody id="loansSrvToCustBody"></tbody></table></div>
                 </div>
             </div>
 
-            <!-- CRYPTO MARKET TAB -->
+            <!-- CRYPTO TAB -->
             <div class="tab-pane fade" id="crypto" role="tabpanel">
-                <div class="card card-glass p-4 mb-4 text-center border-warning border-opacity-25 shadow-lg">
-                    <h2 class="text-warning mb-2 fw-bold"><i class="fa-brands fa-bitcoin"></i> V-Coin (VCN) মার্কেট</h2>
-                    <p class="text-muted small">প্রতি ১০ সেকেন্ডে দাম আপডেট হয়। মার্কেট ২৪/৭ খোলা।</p>
+                <div class="card card-glass p-4 mb-4 text-center border-info border-opacity-50 shadow-lg">
+                    <h2 class="text-info mb-2 fw-bold"><i class="fa-brands fa-bitcoin"></i> V-Coin (VCN) মার্কেট</h2>
+                    <p class="text-muted small">ক্রিপ্টো কেনা শুধুমাত্র ক্রেডিট কার্ড দিয়ে সম্ভব। বিক্রি করলে টাকা মূল একাউন্টে যুক্ত হবে।</p>
                     <div class="display-3 fw-bold mt-2" id="cryptoCurrentPrice">$0.00</div>
                     <div class="mt-2" id="cryptoTrend"></div>
                 </div>
-
                 <div class="row g-4">
-                    <!-- Services Crypto Portfolio -->
-                    <div class="col-md-6">
-                        <div class="card card-glass p-4 h-100">
-                            <h5 class="border-bottom border-secondary border-opacity-25 pb-3 mb-4 fw-bold"><i class="fa-solid fa-building-columns text-primary"></i> ব্যাংক/ওয়ালেট পোর্টফোলিও</h5>
-                            <div id="servicesCryptoList" class="d-flex flex-column gap-3">
-                                <!-- JS Populated -->
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Customers Crypto Portfolio -->
-                    <div class="col-md-6">
-                        <div class="card card-glass p-4 h-100">
-                            <h5 class="border-bottom border-secondary border-opacity-25 pb-3 mb-4 fw-bold"><i class="fa-solid fa-users text-success"></i> গ্রাহক ক্রিপ্টো পোর্টফোলিও</h5>
-                            <div id="customersCryptoList" class="d-flex flex-column gap-3">
-                                <!-- JS Populated -->
-                            </div>
-                        </div>
-                    </div>
+                    <div class="col-md-6"><div class="card card-glass p-4 h-100"><h5 class="border-bottom border-secondary pb-3 mb-4 fw-bold"><i class="fa-solid fa-building-columns text-primary"></i> ব্যাংক পোর্টফোলিও</h5><div id="servicesCryptoList" class="d-flex flex-column gap-3"></div></div></div>
+                    <div class="col-md-6"><div class="card card-glass p-4 h-100"><h5 class="border-bottom border-secondary pb-3 mb-4 fw-bold"><i class="fa-solid fa-users text-success"></i> গ্রাহক পোর্টফোলিও</h5><div id="customersCryptoList" class="d-flex flex-column gap-3"></div></div></div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Modals -->
-
-    <!-- Create Service Modal -->
-    <div class="modal fade" id="createServiceModal" tabindex="-1">
+    <!-- CC Pay Bill Modal (Updated) -->
+    <div class="modal fade" id="ccPayModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content card-glass">
+            <div class="modal-content card-glass border-warning border-opacity-50">
                 <div class="modal-header border-secondary border-opacity-25">
-                    <h5 class="modal-title fw-bold">নতুন সার্ভিস তৈরী</h5>
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-cart-shopping text-warning"></i> ক্রেডিট কার্ড পেমেন্ট</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    <input type="hidden" id="ccPayCardId">
                     <div class="mb-3">
-                        <label class="form-label">সার্ভিস এর নাম</label>
-                        <input type="text" id="newServiceName" class="form-control bg-transparent text-light border-secondary shadow-none" placeholder="উদাঃ Bkash / DBBL">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">সার্ভিস এর ধরণ</label>
-                        <select id="newServiceType" class="form-select bg-transparent border-secondary text-light">
-                            <option class="text-dark" value="Wallet">ওয়ালেট (Wallet)</option>
-                            <option class="text-dark" value="Bank">ব্যাংক (Bank)</option>
+                        <label class="form-label text-muted fw-bold">ক্যাটাগরি</label>
+                        <select id="ccPayCategory" class="form-select bg-transparent border-secondary text-light shadow-none">
+                            <option class="text-dark" value="ইলেকট্রিক বিল">ইলেকট্রিক বিল (Electric)</option>
+                            <option class="text-dark" value="শপিং">শপিং (Shopping)</option>
+                            <option class="text-dark" value="রেস্টুরেন্ট">রেস্টুরেন্ট (Restaurant)</option>
+                            <option class="text-dark" value="ট্যাক্স">ট্যাক্স (Tax)</option>
+                            <option class="text-dark" value="অন্যান্য">অন্যান্য (Other)</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">ট্রানজেকশন ফি (%)</label>
-                        <input type="number" id="newServiceFee" class="form-control bg-transparent border-secondary text-light shadow-none" value="1.5" step="0.1">
+                        <label class="form-label text-muted fw-bold">পরিমাণ ($)</label>
+                        <input type="number" id="ccPayAmount" class="form-control form-control-lg bg-transparent border-warning text-light shadow-none fw-bold" placeholder="0.00" oninput="calculateEMI()">
                     </div>
-                    <div class="alert alert-success bg-opacity-10 border-0 py-2 small fw-bold"><i class="fa-solid fa-gift"></i> তৈরি হলেই ২ মিলিয়ন ডলার বোনাস মূল একাউন্টে যুক্ত হবে!</div>
-                </div>
-                <div class="modal-footer border-secondary border-opacity-25">
-                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">বাতিল</button>
-                    <button type="button" class="btn btn-primary rounded-pill px-4" onclick="createService()">তৈরী করুন</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Create Customer Modal -->
-    <div class="modal fade" id="createCustomerModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content card-glass">
-                <div class="modal-header border-secondary border-opacity-25">
-                    <h5 class="modal-title fw-bold">নতুন গ্রাহক তৈরী</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">গ্রাহকের নাম</label>
-                        <input type="text" id="newCustomerName" class="form-control bg-transparent border-secondary text-light shadow-none" placeholder="পুরো নাম">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input bg-secondary border-secondary" type="checkbox" id="ccEmiToggle" onchange="calculateEMI()">
+                        <label class="form-check-label fw-bold text-info" for="ccEmiToggle">এই বিলটি EMI তে রূপান্তর করুন</label>
                     </div>
-                </div>
-                <div class="modal-footer border-secondary border-opacity-25">
-                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">বাতিল</button>
-                    <button type="button" class="btn btn-primary rounded-pill px-4" onclick="createCustomer()">তৈরী করুন</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Take Service Loan Modal (Big Bank -> Service) -->
-    <div class="modal fade" id="takeServiceLoanModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content card-glass">
-                <div class="modal-header border-secondary border-opacity-25">
-                    <h5 class="modal-title fw-bold">বিগ ব্যাংক থেকে লোন গ্রহণ</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="takeSrvLoanSrvId">
-                    <div class="mb-3">
-                        <label class="form-label">লোনের পরিমাণ ($)</label>
-                        <input type="number" id="takeSrvLoanAmount" class="form-control bg-transparent border-secondary text-light shadow-none" placeholder="কত ডলার নিতে চান?">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">কোন একাউন্ট থেকে লোন নিবেন?</label>
-                        <select id="takeSrvLoanSource" class="form-select bg-transparent border-secondary text-light shadow-none">
-                            <option class="text-dark" value="main">বিগ ব্যাংক মূল একাউন্ট (Main)</option>
-                            <option class="text-dark" value="profit">বিগ ব্যাংক মুনাফা একাউন্ট (Profit)</option>
+                    <div id="ccEmiOptions" class="d-none bg-secondary bg-opacity-10 p-3 rounded border border-info border-opacity-25 mb-3">
+                        <label class="form-label fw-bold">EMI মেয়াদ</label>
+                        <select id="ccEmiMonths" class="form-select bg-transparent border-secondary text-light shadow-none mb-2" onchange="calculateEMI()">
+                            <option class="text-dark" value="3">৩ মাস (৫% ইন্টারেস্ট)</option>
+                            <option class="text-dark" value="6">৬ মাস (৮% ইন্টারেস্ট)</option>
+                            <option class="text-dark" value="12">১২ মাস (১৫% ইন্টারেস্ট)</option>
                         </select>
+                        <div class="text-warning fw-bold mt-2" id="ccEmiCalcResult">মাসিক কিস্তি: $0.00</div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">ইন্টারেস্ট রেট (%)</label>
-                        <input type="number" id="takeSrvLoanInterest" class="form-control bg-transparent border-secondary text-light shadow-none" value="25" placeholder="ইন্টারেস্ট রেট দিন">
-                    </div>
-                </div>
-                <div class="modal-footer border-secondary border-opacity-25">
-                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">বাতিল</button>
-                    <button type="button" class="btn btn-primary rounded-pill px-4" onclick="submitTakeServiceLoan()">লোন নিন</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Service Loan Repayment Modal -->
-    <div class="modal fade" id="payServiceLoanModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content card-glass">
-                <div class="modal-header border-secondary border-opacity-25">
-                    <h5 class="modal-title fw-bold">বিগ ব্যাংকের লোন পরিশোধ</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="paySrvLoanId">
-                    <div class="mb-3">
-                        <div class="alert alert-warning bg-opacity-10 py-3 mb-3 fw-bold border-warning border-opacity-50 text-center fs-5">
-                            মোট বকেয়া: <span id="paySrvTotalDue" class="text-warning"></span>
-                        </div>
-                        <label class="form-label">পরিশোধের পরিমাণ ($)</label>
-                        <input type="number" id="paySrvAmount" class="form-control bg-transparent border-secondary text-light shadow-none" placeholder="কত ডলার পরিশোধ করবেন?">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">আপনার কোন একাউন্ট থেকে পরিশোধ করবেন?</label>
-                        <select id="paySrvSource" class="form-select bg-transparent border-secondary text-light shadow-none">
-                            <option class="text-dark" value="main">মূল একাউন্ট (Main)</option>
-                            <option class="text-dark" value="profit">মুনাফা একাউন্ট (Profit)</option>
-                        </select>
-                        <small class="text-info mt-2 d-block fw-bold" id="paySrvSourceBalance"></small>
-                    </div>
-                </div>
-                <div class="modal-footer border-secondary border-opacity-25">
-                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">বাতিল</button>
-                    <button type="button" class="btn btn-success rounded-pill px-4" onclick="submitPayServiceLoan()">পরিশোধ করুন</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Customer Loan Modal (Service -> Customer) -->
-    <div class="modal fade" id="customerLoanModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content card-glass">
-                <div class="modal-header border-secondary border-opacity-25">
-                    <h5 class="modal-title fw-bold">ব্যাংক থেকে লোন গ্রহণ</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="loanAccId">
-                    <div class="mb-3">
-                        <label class="form-label">লোনের পরিমাণ ($)</label>
-                        <input type="number" id="loanAmount" class="form-control bg-transparent border-secondary text-light shadow-none" placeholder="কত ডলার নিতে চান?">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">ইন্টারেস্ট রেট (%)</label>
-                        <input type="number" id="loanInterest" class="form-control bg-transparent border-secondary text-light shadow-none" value="10">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">কোন একাউন্ট থেকে লোন নিবেন?</label>
-                        <select id="loanSource" class="form-select bg-transparent border-secondary text-light shadow-none">
-                            <option class="text-dark" value="main">মূল একাউন্ট (Main)</option>
-                            <option class="text-dark" value="profit">মুনাফা একাউন্ট (Profit)</option>
-                        </select>
-                        <small class="text-info mt-2 d-block fw-bold" id="loanSourceBalance"></small>
-                    </div>
-                </div>
-                <div class="modal-footer border-secondary border-opacity-25">
-                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">বাতিল</button>
-                    <button type="button" class="btn btn-primary rounded-pill px-4" onclick="submitCustomerLoan()">লোন নিন</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Unified Transfer Modal -->
-    <div class="modal fade" id="transferModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content card-glass">
-                <div class="modal-header border-secondary border-opacity-25">
-                    <h5 class="modal-title fw-bold">মানি ট্রান্সফার</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="transferFromAccId">
-                    <div class="mb-3">
-                        <label class="form-label">কাকে পাঠাবেন?</label>
-                        <select id="transferTargetSelect" class="form-select bg-transparent border-secondary text-light shadow-none">
-                            <!-- Populated by JS -->
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">পরিমাণ ($)</label>
-                        <input type="number" id="transferAmount" class="form-control bg-transparent border-secondary text-light shadow-none" placeholder="কত ডলার পাঠাবেন?">
-                    </div>
-                </div>
-                <div class="modal-footer border-secondary border-opacity-25">
-                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">বাতিল</button>
-                    <button type="button" class="btn btn-primary rounded-pill px-4" onclick="submitTransfer()">ট্রান্সফার করুন</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Crypto Trade Modal (Buy/Sell) -->
-    <div class="modal fade" id="cryptoTradeModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content card-glass">
-                <div class="modal-header border-secondary border-opacity-25">
-                    <h5 class="modal-title fw-bold"><i class="fa-brands fa-bitcoin text-warning"></i> ক্রিপ্টো ট্রেডিং</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="ctEntityId">
-                    <input type="hidden" id="ctEntityType"> <!-- 'service' or 'customer' -->
-                    <input type="hidden" id="ctActionType"> <!-- 'buy' or 'sell' -->
-                    
-                    <div class="d-flex justify-content-between align-items-center mb-4 bg-secondary bg-opacity-10 p-3 rounded border border-secondary border-opacity-25">
-                        <span id="ctActionLabel" class="fw-bold fs-5"></span>
-                        <span class="badge bg-warning text-dark fs-6 rounded-pill px-3 py-2 shadow-sm" id="ctCurrentPriceDisplay"></span>
-                    </div>
-
-                    <div id="ctSourceSelectorDiv" class="mb-3 d-none">
-                        <label class="form-label">তহবিলের উৎস (USD)</label>
-                        <select id="ctSourceSelect" class="form-select bg-transparent border-secondary text-light shadow-none">
-                            <option class="text-dark" value="main">মূল একাউন্ট (Main)</option>
-                            <option class="text-dark" value="profit">মুনাফা একাউন্ট (Profit)</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label fw-bold" id="ctAmountLabel">পরিমাণ</label>
-                        <input type="number" id="ctAmount" class="form-control form-control-lg bg-transparent border-secondary text-light shadow-none text-center" placeholder="0.00" oninput="calculateCryptoTrade()">
-                        <small class="text-info mt-2 d-block text-center fw-bold" id="ctAvailableBal"></small>
-                    </div>
-                    
-                    <div class="alert alert-info bg-opacity-10 py-3 fw-bold text-center border-info border-opacity-50 fs-5" id="ctCalculationResult">মোট: $0.00</div>
                 </div>
                 <div class="modal-footer border-secondary border-opacity-25">
                     <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">বাতিল</button>
-                    <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold" id="ctSubmitBtn" onclick="submitCryptoTrade()">নিশ্চিত করুন</button>
+                    <button type="button" class="btn btn-warning fw-bold rounded-pill px-4 text-dark" onclick="submitCCPayment()">পেমেন্ট করুন</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Crypto Transfer Modal -->
-    <div class="modal fade" id="cryptoTransferModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content card-glass">
-                <div class="modal-header border-secondary border-opacity-25">
-                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-paper-plane text-info"></i> V-Coin সেন্ড করুন</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="cxFromId">
-                    <input type="hidden" id="cxFromType">
-                    
-                    <div class="mb-3">
-                        <label class="form-label">এভেইলেবল ব্যালেন্স</label>
-                        <input type="text" class="form-control bg-transparent border-secondary text-light shadow-none fw-bold" id="cxAvailable" readonly>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">প্রাপক নির্বাচন করুন</label>
-                        <select id="cxTargetSelect" class="form-select bg-transparent border-secondary text-light shadow-none">
-                            <!-- JS Populated -->
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">পরিমাণ (VCN)</label>
-                        <input type="number" id="cxAmount" class="form-control bg-transparent border-secondary text-light shadow-none" placeholder="কত V-Coin পাঠাবেন?">
-                    </div>
-                </div>
-                <div class="modal-footer border-secondary border-opacity-25">
-                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">বাতিল</button>
-                    <button type="button" class="btn btn-primary rounded-pill px-4" onclick="submitCryptoTransfer()">সেন্ড করুন</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Hidden standard modals -->
+    <div class="modal fade" id="createServiceModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content card-glass"><div class="modal-header"><h5 class="modal-title fw-bold">নতুন সার্ভিস তৈরী</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="text" id="newServiceName" class="form-control bg-transparent text-light mb-3" placeholder="সার্ভিস নাম"><select id="newServiceType" class="form-select bg-transparent text-light mb-3"><option class="text-dark" value="Wallet">ওয়ালেট</option><option class="text-dark" value="Bank">ব্যাংক</option></select><input type="number" id="newServiceFee" class="form-control bg-transparent text-light" placeholder="ফি %" value="1.5"></div><div class="modal-footer"><button class="btn btn-primary rounded-pill px-4" onclick="createService()">তৈরী করুন</button></div></div></div></div>
+    <div class="modal fade" id="createCustomerModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content card-glass"><div class="modal-header"><h5 class="modal-title fw-bold">নতুন গ্রাহক তৈরী</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="text" id="newCustomerName" class="form-control bg-transparent text-light" placeholder="গ্রাহকের নাম"></div><div class="modal-footer"><button class="btn btn-primary rounded-pill px-4" onclick="createCustomer()">তৈরী করুন</button></div></div></div></div>
+    <div class="modal fade" id="takeServiceLoanModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content card-glass"><div class="modal-header"><h5 class="modal-title fw-bold">লোন গ্রহণ</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="takeSrvLoanSrvId"><input type="number" id="takeSrvLoanAmount" class="form-control bg-transparent text-light mb-3" placeholder="পরিমাণ ($)"><select id="takeSrvLoanSource" class="form-select bg-transparent text-light mb-3"><option class="text-dark" value="main">মূল</option><option class="text-dark" value="profit">মুনাফা</option></select><input type="number" id="takeSrvLoanInterest" class="form-control bg-transparent text-light" value="25" placeholder="ইন্টারেস্ট %"></div><div class="modal-footer"><button class="btn btn-primary rounded-pill px-4" onclick="submitTakeServiceLoan()">নিন</button></div></div></div></div>
+    <div class="modal fade" id="payServiceLoanModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content card-glass"><div class="modal-header"><h5 class="modal-title fw-bold">লোন পরিশোধ</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="paySrvLoanId"><div class="alert alert-warning py-2 mb-3 fw-bold text-center">বকেয়া: <span id="paySrvTotalDue"></span></div><input type="number" id="paySrvAmount" class="form-control bg-transparent text-light mb-3" placeholder="পরিমাণ ($)"><select id="paySrvSource" class="form-select bg-transparent text-light"><option class="text-dark" value="main">মূল</option><option class="text-dark" value="profit">মুনাফা</option></select><small class="text-info mt-2 d-block fw-bold" id="paySrvSourceBalance"></small></div><div class="modal-footer"><button class="btn btn-success rounded-pill px-4" onclick="submitPayServiceLoan()">পরিশোধ</button></div></div></div></div>
+    <div class="modal fade" id="customerLoanModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content card-glass"><div class="modal-header"><h5 class="modal-title fw-bold">ব্যাংক লোন</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="loanAccId"><input type="number" id="loanAmount" class="form-control bg-transparent text-light mb-3" placeholder="পরিমাণ ($)"><input type="number" id="loanInterest" class="form-control bg-transparent text-light mb-3" value="10" placeholder="ইন্টারেস্ট %"><select id="loanSource" class="form-select bg-transparent text-light"><option class="text-dark" value="main">মূল</option><option class="text-dark" value="profit">মুনাফা</option></select><small class="text-info mt-2 d-block fw-bold" id="loanSourceBalance"></small></div><div class="modal-footer"><button class="btn btn-primary rounded-pill px-4" onclick="submitCustomerLoan()">লোন নিন</button></div></div></div></div>
+    <div class="modal fade" id="transferModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content card-glass"><div class="modal-header"><h5 class="modal-title fw-bold">মানি ট্রান্সফার</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="transferFromAccId"><select id="transferTargetSelect" class="form-select bg-transparent text-light mb-3"></select><input type="number" id="transferAmount" class="form-control bg-transparent text-light" placeholder="পরিমাণ ($)"></div><div class="modal-footer"><button class="btn btn-primary rounded-pill px-4" onclick="submitTransfer()">ট্রান্সফার</button></div></div></div></div>
+    <div class="modal fade" id="cryptoTradeModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content card-glass"><div class="modal-header"><h5 class="modal-title fw-bold"><i class="fa-brands fa-bitcoin text-warning"></i> ক্রিপ্টো ট্রেডিং</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="ctEntityId"><input type="hidden" id="ctEntityType"><input type="hidden" id="ctActionType"><div class="d-flex justify-content-between mb-3"><span id="ctActionLabel" class="fw-bold fs-5"></span><span class="badge bg-warning text-dark fs-6 rounded-pill px-3 py-2" id="ctCurrentPriceDisplay"></span></div><div id="ctSourceSelectorDiv" class="mb-3 d-none"><select id="ctSourceSelect" class="form-select bg-transparent text-light"><option class="text-dark" value="main">মূল</option><option class="text-dark" value="profit">মুনাফা</option></select></div><div class="mb-4"><label class="form-label fw-bold" id="ctAmountLabel">পরিমাণ</label><input type="number" id="ctAmount" class="form-control form-control-lg bg-transparent text-light text-center" oninput="calculateCryptoTrade()"><small class="text-info mt-2 d-block text-center fw-bold" id="ctAvailableBal"></small></div><div class="alert alert-info py-3 fw-bold text-center fs-5" id="ctCalculationResult">মোট: $0.00</div></div><div class="modal-footer"><button class="btn btn-primary rounded-pill px-4 fw-bold" onclick="submitCryptoTrade()">নিশ্চিত</button></div></div></div></div>
+    <div class="modal fade" id="cryptoTransferModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content card-glass"><div class="modal-header"><h5 class="modal-title fw-bold">V-Coin সেন্ড</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="hidden" id="cxFromId"><input type="hidden" id="cxFromType"><input type="text" class="form-control bg-transparent text-light fw-bold mb-3" id="cxAvailable" readonly><select id="cxTargetSelect" class="form-select bg-transparent text-light mb-3"></select><input type="number" id="cxAmount" class="form-control bg-transparent text-light" placeholder="পরিমাণ (VCN)"></div><div class="modal-footer"><button class="btn btn-primary rounded-pill px-4" onclick="submitCryptoTransfer()">সেন্ড</button></div></div></div></div>
+    <div class="modal fade" id="fdrListModal" tabindex="-1"><div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content card-glass"><div class="modal-header"><h5 class="modal-title fw-bold">FDR তালিকা</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-0"><div class="table-responsive m-3"><table class="table table-hover align-middle text-center mb-0"><thead class="table-dark bg-opacity-50"><tr><th>জমাকৃত অর্থ</th><th>মুনাফার হার</th><th>ব্যবধান</th><th>স্ট্যাটাস</th><th>অ্যাকশন</th></tr></thead><tbody id="fdrListBody"></tbody></table></div></div></div></div></div>
+    <div class="modal fade" id="customPromptModal" tabindex="-1" data-bs-backdrop="static"><div class="modal-dialog modal-dialog-centered"><div class="modal-content card-glass"><div class="modal-header"><h5 class="modal-title fw-bold" id="promptTitle">তথ্য দিন</h5><button type="button" class="btn-close" data-bs-dismiss="modal" onclick="resolvePrompt(null)"></button></div><div class="modal-body p-4"><p id="promptMessage" class="mb-3 fs-5 text-center"></p><input type="text" id="promptInput" class="form-control form-control-lg bg-transparent border-primary text-light shadow-none text-center"></div><div class="modal-footer d-flex justify-content-center"><button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal" onclick="resolvePrompt(null)">বাতিল</button><button type="button" class="btn btn-primary rounded-pill px-5 fw-bold" onclick="submitPrompt()">নিশ্চিত</button></div></div></div></div>
 
-    <!-- FDR List Modal -->
-    <div class="modal fade" id="fdrListModal" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content card-glass">
-                <div class="modal-header border-secondary border-opacity-25">
-                    <h5 class="modal-title fw-bold">FDR তালিকা</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body p-0">
-                    <div class="table-responsive m-3">
-                        <table class="table table-hover align-middle text-center mb-0">
-                            <thead class="table-dark bg-opacity-50">
-                                <tr>
-                                    <th>জমাকৃত অর্থ</th>
-                                    <th>মুনাফার হার</th>
-                                    <th>ব্যবধান (Interval)</th>
-                                    <th>স্ট্যাটাস</th>
-                                    <th>অ্যাকশন</th>
-                                </tr>
-                            </thead>
-                            <tbody id="fdrListBody">
-                                <!-- Populated by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Custom Prompt Modal -->
-    <div class="modal fade" id="customPromptModal" tabindex="-1" data-bs-backdrop="static">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content card-glass">
-                <div class="modal-header border-secondary border-opacity-25">
-                    <h5 class="modal-title fw-bold" id="promptTitle">তথ্য দিন</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="resolvePrompt(null)"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <p id="promptMessage" class="mb-3 fs-5 text-center"></p>
-                    <input type="text" id="promptInput" class="form-control form-control-lg bg-transparent border-primary text-light shadow-none text-center">
-                </div>
-                <div class="modal-footer border-secondary border-opacity-25 d-flex justify-content-center">
-                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal" onclick="resolvePrompt(null)">বাতিল</button>
-                    <button type="button" class="btn btn-primary rounded-pill px-5 fw-bold" onclick="submitPrompt()">নিশ্চিত</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toast Notifications -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
         <div id="liveToast" class="toast text-white border-0 card-glass" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="toast-header border-0 bg-transparent text-white">
-                <strong class="me-auto fw-bold fs-6" id="toastTitle"><i class="fa-solid fa-bell"></i> নোটিফিকেশন</strong>
-                <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="toast" aria-label="Close"></button>
-            </div>
+            <div class="toast-header border-0 bg-transparent text-white"><strong class="me-auto fw-bold fs-6" id="toastTitle"><i class="fa-solid fa-bell"></i> নোটিফিকেশন</strong><button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="toast"></button></div>
             <div class="toast-body fw-bold fs-6 pt-0" id="toastMessage"></div>
         </div>
     </div>
@@ -741,91 +346,117 @@
     <script>
         // --- Core Application State ---
         let state = {
-            virtualTime: Date.now(),
-            lastRealTime: Date.now(),
-            glassEffect: true,
+            virtualTime: Date.now(), lastRealTime: Date.now(), glassEffect: true,
             bigBank: { main: 10000000, profit: 0, txEnabled: true },
             crypto: { price: 1000.00, history: [1000.00], lastUpdate: Date.now(), trend: 'up' },
-            services: [], customers: [], accounts: [], loans: [], fdrs: [], cards: []
+            services: [], customers: [], accounts: [], loans: [], fdrs: [], cards: [], notifications: [],
+            lastElectricTime: Date.now()
         };
 
         const generateId = () => Math.random().toString(36).substr(2, 9);
         const formatMoney = (amount) => parseFloat(amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         const formatCrypto = (amount) => parseFloat(amount).toLocaleString('en-US', {minimumFractionDigits: 4, maximumFractionDigits: 4});
+        const generateCardNumber = (type) => {
+            if(type === 'DEBIT') return Array.from({length: 4}, () => Math.floor(1000 + Math.random() * 9000)).join('-');
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; let res = '';
+            for(let i=0; i<16; i++) { if(i>0 && i%4===0) res += '-'; res += chars.charAt(Math.floor(Math.random() * chars.length)); } return res;
+        };
+        const virtualDayMs = 86400000;
 
-        // Prompt / Alert Logic
+        function addNotification(title, msg, type='info') {
+            state.notifications.unshift({id: generateId(), time: state.virtualTime, title, msg, type, read: false});
+            if(state.notifications.length > 50) state.notifications.pop();
+            updateNotificationUI(); saveState();
+        }
+
+        function updateNotificationUI() {
+            const list = document.getElementById('notificationList'); const unreadCount = state.notifications.filter(n => !n.read).length;
+            const badge = document.getElementById('notificationBadge');
+            if(unreadCount > 0) { badge.style.display = 'block'; badge.innerText = unreadCount; } else badge.style.display = 'none';
+            if(state.notifications.length === 0) return list.innerHTML = `<div class="text-center text-muted p-5 mt-5"><i class="fa-solid fa-bell-slash fs-1 mb-3"></i><br>কোন নোটিফিকেশন নেই</div>`;
+
+            list.innerHTML = state.notifications.map(n => {
+                let icon = 'fa-circle-info text-info';
+                if(n.type === 'success') icon = 'fa-circle-check text-success';
+                if(n.type === 'danger') icon = 'fa-circle-xmark text-danger';
+                if(n.type === 'warning') icon = 'fa-triangle-exclamation text-warning';
+                const d = new Date(n.time); const timeStr = d.toLocaleDateString('bn-BD') + ' ' + d.toLocaleTimeString('bn-BD', {hour: '2-digit', minute:'2-digit'});
+                return `<div class="notification-item ${n.read ? '' : 'notification-unread'}"><div class="d-flex gap-3"><div class="mt-1"><i class="fa-solid ${icon} fs-4"></i></div><div><strong class="d-block mb-1">${n.title}</strong><small class="d-block mb-2 text-light text-opacity-75">${n.msg}</small><span class="badge bg-dark text-muted fw-normal">${timeStr}</span></div></div></div>`;
+            }).join('');
+        }
+
+        function markAllNotificationsRead() { state.notifications.forEach(n => n.read = true); updateNotificationUI(); saveState(); }
+
         let promptResolver = null;
         function showPrompt(message, defaultValue = "") {
             return new Promise((resolve) => {
-                document.getElementById('promptMessage').innerText = message;
-                document.getElementById('promptInput').value = defaultValue;
-                promptResolver = resolve;
-                let modal = new bootstrap.Modal(document.getElementById('customPromptModal'));
-                modal.show();
+                document.getElementById('promptMessage').innerText = message; document.getElementById('promptInput').value = defaultValue;
+                promptResolver = resolve; new bootstrap.Modal(document.getElementById('customPromptModal')).show();
                 setTimeout(() => document.getElementById('promptInput').focus(), 500);
             });
         }
-        function submitPrompt() {
-            let val = document.getElementById('promptInput').value;
-            bootstrap.Modal.getInstance(document.getElementById('customPromptModal')).hide();
-            resolvePrompt(val);
-        }
-        function resolvePrompt(val) {
-            if (promptResolver) { promptResolver(val); promptResolver = null; }
-        }
+        function submitPrompt() { let val = document.getElementById('promptInput').value; bootstrap.Modal.getInstance(document.getElementById('customPromptModal')).hide(); resolvePrompt(val); }
+        function resolvePrompt(val) { if (promptResolver) { promptResolver(val); promptResolver = null; } }
 
-        function showAlert(msg, isError = false) {
-            const toastEl = document.getElementById('liveToast');
-            const toast = bootstrap.Toast.getOrCreateInstance(toastEl, { delay: 3500 });
-            // Apply iOS style toast colors
+        function showAlert(msg, isError = false, skipNotify = false) {
+            const toastEl = document.getElementById('liveToast'); const toast = bootstrap.Toast.getOrCreateInstance(toastEl, { delay: 3500 });
             toastEl.style.background = isError ? 'rgba(220, 53, 69, 0.8)' : 'rgba(25, 135, 84, 0.8)';
-            document.getElementById('toastMessage').innerText = msg;
-            toast.show();
+            document.getElementById('toastMessage').innerText = msg; toast.show();
+            if(!skipNotify) addNotification(isError ? "সতর্কতা" : "সফল", msg, isError ? 'danger' : 'success');
         }
 
-        function saveState() { localStorage.setItem('vBankingStateV2', JSON.stringify(state)); }
+        function saveState() { localStorage.setItem('vBankingStateV3', JSON.stringify(state)); }
 
         function loadState() {
-            const saved = localStorage.getItem('vBankingStateV2');
+            const saved = localStorage.getItem('vBankingStateV3');
             if(saved) {
-                const parsed = JSON.parse(saved);
-                state = { ...state, ...parsed };
-                const now = Date.now();
-                const offlineRealMs = now - (state.lastRealTime || now);
-                state.virtualTime += (offlineRealMs * 5); 
-                state.lastRealTime = now;
+                const parsed = JSON.parse(saved); state = { ...state, ...parsed };
+                const now = Date.now(); const offlineRealMs = now - (state.lastRealTime || now); state.virtualTime += (offlineRealMs * 5); state.lastRealTime = now;
                 
-                state.services.forEach(s => {
-                    if(s.main === undefined) s.main = 2000000;
-                    if(s.profit === undefined) s.profit = 0;
-                    if(s.cryptoBalance === undefined) s.cryptoBalance = 0;
+                // Migrations
+                if(!state.notifications) state.notifications = [];
+                if(!state.lastElectricTime) state.lastElectricTime = state.virtualTime;
+                state.accounts.forEach(a => { if(a.electricBill === undefined) a.electricBill = 0; });
+                state.cards.forEach(c => {
+                    if(c.rewardPoints === undefined) c.rewardPoints = 0;
+                    if(c.lastFeeDate === undefined) c.lastFeeDate = state.virtualTime;
                 });
-                state.accounts.forEach(a => { if(a.cryptoBalance === undefined) a.cryptoBalance = 0; });
-                if(!state.crypto) state.crypto = { price: 1000, history: [1000], lastUpdate: state.virtualTime, trend: 'up' };
-                if(state.glassEffect === undefined) state.glassEffect = true;
             }
-            applyGlassEffect();
+            applyGlassEffect(); updateNotificationUI();
+        }
+
+        function skipTime(days) {
+            state.virtualTime += (days * virtualDayMs); saveState();
+            addNotification("টাইম স্কিপ", `${days} দিন স্কিপ করা হয়েছে।`, 'info');
+            processBackgroundTasks(true); renderAll(); showAlert(`${days} দিন স্কিপ করা হয়েছে!`);
         }
 
         function startVirtualClock() {
             setInterval(() => {
-                const now = Date.now();
-                const realDelta = now - state.lastRealTime;
-                state.virtualTime += (realDelta * 5); 
-                state.lastRealTime = now;
-                updateClockUI();
-                processBackgroundTasks();
+                const now = Date.now(); const realDelta = now - state.lastRealTime;
+                state.virtualTime += (realDelta * 5); state.lastRealTime = now;
+                updateClockUI(); processBackgroundTasks();
             }, 1000); 
         }
 
         function updateClockUI() {
             const vDate = new Date(state.virtualTime);
-            document.getElementById('virtualClock').innerHTML = `<i class="fa-regular fa-clock"></i> ` + 
-                vDate.toLocaleString('bn-BD', { day: '2-digit', month: 'short', year:'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('virtualClock').innerHTML = `<i class="fa-regular fa-clock"></i> ` + vDate.toLocaleString('bn-BD', { day: '2-digit', month: 'short', year:'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
         }
 
-        function processBackgroundTasks() {
+        function processBackgroundTasks(force = false) {
             let stateChanged = false;
+            
+            // 1. Electric Bill (Every 5 virtual mins = 300,000 ms)
+            if (state.virtualTime - state.lastElectricTime >= 300000) {
+                const cycles = Math.floor((state.virtualTime - state.lastElectricTime) / 300000);
+                state.lastElectricTime += cycles * 300000;
+                let added = false;
+                state.accounts.forEach(a => { a.electricBill += (10 * cycles); added = true; });
+                if(added) { stateChanged = true; if(force) addNotification("বিদ্যুৎ বিল", `সকল একাউন্টে $${10*cycles} বিদ্যুৎ বিল যুক্ত হয়েছে।`, "warning"); }
+            }
+
+            // 2. Process FDR
             state.fdrs.forEach(fdr => {
                 if(!fdr.active) return;
                 const msPassed = state.virtualTime - fdr.lastYieldTime;
@@ -838,442 +469,342 @@
                 }
             });
 
-            const virtualDayMs = 86400000;
+            // 3. Process Cards
             state.cards.forEach(card => {
-                if(card.type === 'CREDIT' && card.active && card.spent > 0) {
-                    const msSinceBilling = state.virtualTime - card.lastBillingDate;
-                    const daysSinceBilling = Math.floor(msSinceBilling / virtualDayMs);
-                    if(daysSinceBilling > 45) { 
-                        const penaltyDays = daysSinceBilling - 45;
-                        const expectedFines = penaltyDays * 100;
-                        if(card.fines === undefined) card.fines = 0;
-                        if(expectedFines > card.fines) { card.fines = expectedFines; stateChanged = true; }
+                if(card.type === 'CREDIT' && card.active) {
+                    
+                    // Monthly Fee ($15 every 30 days)
+                    if (state.virtualTime - card.lastFeeDate >= 30 * virtualDayMs) {
+                        const cycles = Math.floor((state.virtualTime - card.lastFeeDate) / (30 * virtualDayMs));
+                        card.lastFeeDate += cycles * (30 * virtualDayMs);
+                        card.spent += (15 * cycles);
+                        stateChanged = true;
+                        addNotification("কার্ড ফি", `কার্ড ${card.number.slice(-4)} এ $${15*cycles} মাসিক ফি যুক্ত হয়েছে।`, 'warning');
                     }
+
+                    // EMIs
+                    card.emis.forEach(emi => {
+                        const daysSinceEmi = Math.floor((state.virtualTime - emi.lastProcessed) / virtualDayMs);
+                        if(daysSinceEmi >= 30 && emi.remainingMonths > 0) {
+                            const cycles = Math.floor(daysSinceEmi / 30);
+                            for(let i=0; i<cycles; i++) {
+                                if(emi.remainingMonths <= 0) break;
+                                card.blockedEmiLimit -= emi.installment; card.spent += emi.installment; emi.remainingMonths--; emi.lastProcessed += (30 * virtualDayMs); stateChanged = true;
+                                addNotification("EMI চার্জ", `কার্ড ${card.number.slice(-4)} এ $${formatMoney(emi.installment)} EMI কিস্তি যুক্ত হয়েছে।`, 'warning');
+                            }
+                        }
+                    });
+                    card.emis = card.emis.filter(e => e.remainingMonths > 0);
+
+                    // Billing & Auto-pay
+                    if(card.spent > 0 || (card.fines && card.fines > 0)) {
+                        const msSinceBilling = state.virtualTime - card.lastBillingDate;
+                        const daysSinceBilling = Math.floor(msSinceBilling / virtualDayMs);
+
+                        if(daysSinceBilling >= 30 && card.autoPay) {
+                            const due = card.spent + (card.fines || 0);
+                            const acc = state.accounts.find(a => a.id === card.accountId);
+                            if(acc && acc.balance >= due) {
+                                acc.balance -= due; card.spent = 0; card.fines = 0; card.lastBillingDate = state.virtualTime; stateChanged = true;
+                                addNotification("অটো বিল পে", `কার্ড ${card.number.slice(-4)} এর $${formatMoney(due)} অটো-পে করা হয়েছে।`, 'success');
+                            } else if(daysSinceBilling === 30 && !card.notifiedAutoFail) {
+                                addNotification("অটো বিল পে ব্যর্থ!", `ব্যালেন্স নেই। কার্ড ${card.number.slice(-4)}`, 'danger'); card.notifiedAutoFail = true; stateChanged = true;
+                            }
+                        }
+
+                        if(daysSinceBilling > 45) {
+                            const penaltyDays = daysSinceBilling - 45; const expectedFines = penaltyDays * 100;
+                            if(card.fines === undefined) card.fines = 0;
+                            if(expectedFines > card.fines) { card.fines = expectedFines; stateChanged = true; }
+                        }
+                    } else card.notifiedAutoFail = false;
                 }
             });
 
+            // 4. Crypto Updates
             if(state.virtualTime - state.crypto.lastUpdate >= 10000) {
                 state.crypto.lastUpdate = state.virtualTime;
                 const changePercent = (Math.random() - 0.5) * 0.04; 
-                state.crypto.price = state.crypto.price * (1 + changePercent);
-                if(state.crypto.price < 10) state.crypto.price = 10; 
-                state.crypto.history.push(state.crypto.price);
-                if(state.crypto.history.length > 30) state.crypto.history.shift();
-                state.crypto.trend = changePercent >= 0 ? 'up' : 'down';
-                stateChanged = true;
+                state.crypto.price = Math.max(10, state.crypto.price * (1 + changePercent));
+                state.crypto.history.push(state.crypto.price); if(state.crypto.history.length > 30) state.crypto.history.shift();
+                state.crypto.trend = changePercent >= 0 ? 'up' : 'down'; stateChanged = true;
                 if(document.getElementById('crypto-tab').classList.contains('active')) renderCryptoTab();
             }
 
-            if(stateChanged) { saveState(); if(!document.getElementById('customerDashboard').classList.contains('d-none')) renderCustomerDashboard(false); }
+            if(stateChanged) { 
+                saveState(); 
+                if(!document.getElementById('customerDashboard').classList.contains('d-none')) renderCustomerDashboard(false); 
+                if(document.getElementById('cardsModal')) {
+                    const cId = document.getElementById('customerSelect').value;
+                    const activeAccId = state.accounts.find(a => a.customerId === cId)?.id;
+                    if(activeAccId) showCardsUI(activeAccId, true); 
+                }
+                if(document.getElementById('loans-tab').classList.contains('active')) renderLoans();
+            }
         }
 
         function toggleTheme() {
-            const html = document.documentElement;
-            const current = html.getAttribute('data-bs-theme');
-            const target = current === 'dark' ? 'light' : 'dark';
-            html.setAttribute('data-bs-theme', target);
-            document.getElementById('themeToggleBtn').innerHTML = target === 'dark' ? '<i class="fa-solid fa-moon"></i>' : '<i class="fa-solid fa-sun text-warning"></i>';
+            const html = document.documentElement; const target = html.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-bs-theme', target); document.getElementById('themeToggleBtn').innerHTML = target === 'dark' ? '<i class="fa-solid fa-moon"></i>' : '<i class="fa-solid fa-sun text-warning"></i>';
         }
 
-        function toggleLiquidGlass() {
-            state.glassEffect = !state.glassEffect;
-            saveState();
-            applyGlassEffect();
-        }
-
+        function toggleLiquidGlass() { state.glassEffect = !state.glassEffect; saveState(); applyGlassEffect(); }
         function applyGlassEffect() {
-            if(state.glassEffect) {
-                document.body.classList.add('liquid-active');
-                document.getElementById('liquidToggleBtn').classList.replace('btn-outline-secondary', 'btn-outline-info');
-            } else {
-                document.body.classList.remove('liquid-active');
-                document.getElementById('liquidToggleBtn').classList.replace('btn-outline-info', 'btn-outline-secondary');
-            }
+            if(state.glassEffect) { document.body.classList.add('liquid-active'); document.getElementById('liquidToggleBtn').classList.replace('btn-outline-secondary', 'btn-outline-info'); } 
+            else { document.body.classList.remove('liquid-active'); document.getElementById('liquidToggleBtn').classList.replace('btn-outline-info', 'btn-outline-secondary'); }
         }
 
         async function modifyBigBankBal(type) {
             const val = await showPrompt(type === 'add' ? "কত ডলার যোগ করতে চান?" : "কত ডলার বিয়োগ করতে চান?");
-            const amt = parseFloat(val);
-            if(isNaN(amt) || amt <= 0) return showAlert("সঠিক পরিমাণ দিন", true);
+            const amt = parseFloat(val); if(isNaN(amt) || amt <= 0) return showAlert("সঠিক পরিমাণ দিন", true);
             if(type === 'add') state.bigBank.main += amt;
-            else {
-                if(state.bigBank.main < amt) return showAlert("পর্যাপ্ত ব্যালেন্স নেই!", true);
-                state.bigBank.main -= amt;
-            }
-            saveState(); renderAdmin();
-            showAlert('ব্যালেন্স আপডেট সফল হয়েছে');
+            else { if(state.bigBank.main < amt) return showAlert("পর্যাপ্ত ব্যালেন্স নেই!", true); state.bigBank.main -= amt; }
+            saveState(); renderAdmin(); showAlert('ব্যালেন্স আপডেট সফল হয়েছে');
         }
 
         function toggleGlobalTx() {
-            state.bigBank.txEnabled = !state.bigBank.txEnabled;
-            saveState(); renderAll();
+            state.bigBank.txEnabled = !state.bigBank.txEnabled; saveState(); renderAll();
             showAlert(state.bigBank.txEnabled ? 'গ্লোবাল ট্রানজেকশন চালু হয়েছে' : 'গ্লোবাল ট্রানজেকশন বন্ধ হয়েছে', !state.bigBank.txEnabled);
         }
 
         function renderAdmin() {
             document.getElementById('bbMainBal').innerText = '$' + formatMoney(state.bigBank.main);
             document.getElementById('bbProfitBal').innerText = '$' + formatMoney(state.bigBank.profit);
-            
-            const gBtn = document.getElementById('globalTxBtn');
-            const gAlert = document.getElementById('globalLockAlert');
-            
-            if(state.bigBank.txEnabled) {
-                gBtn.className = "btn btn-sm btn-success px-4 rounded-pill shadow-sm"; gBtn.innerText = "চালু আছে";
-                gAlert.classList.add('d-none');
-            } else {
-                gBtn.className = "btn btn-sm btn-danger px-4 rounded-pill shadow-sm"; gBtn.innerText = "বন্ধ আছে";
-                gAlert.classList.remove('d-none');
-            }
+            const gBtn = document.getElementById('globalTxBtn'); const gAlert = document.getElementById('globalLockAlert');
+            if(state.bigBank.txEnabled) { gBtn.className = "btn btn-sm btn-success px-4 rounded-pill shadow-sm"; gBtn.innerText = "চালু আছে"; gAlert.classList.add('d-none'); } 
+            else { gBtn.className = "btn btn-sm btn-danger px-4 rounded-pill shadow-sm"; gBtn.innerText = "বন্ধ আছে"; gAlert.classList.remove('d-none'); }
+        }
 
-            let loanHtml = '';
+        // COMPACT SERVICES RENDER
+        function renderServices() {
+            const container = document.getElementById('servicesContainer');
+            if(state.services.length === 0) return container.innerHTML = `<div class="col-12 text-center text-muted py-5 fs-5 card-glass">কোন সার্ভিস তৈরী করা হয়নি।</div>`;
+            container.innerHTML = state.services.map(srv => {
+                const partnersHtml = state.services.filter(s => s.id !== srv.id).map(os => {
+                    const isPartner = srv.partners.includes(os.id);
+                    return `<span class="badge ${isPartner ? 'bg-success' : 'bg-secondary bg-opacity-50'} cursor-pointer" onclick="togglePartner('${srv.id}', '${os.id}')" style="cursor:pointer;" title="পার্টনারশিপ টগল করুন">${os.name} ${isPartner ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-solid fa-plus"></i>'}</span>`;
+                }).join('');
+
+                const srvLoans = state.loans.filter(l => l.serviceId === srv.id && l.type === 'BB_TO_SRV' && l.active);
+                const dueLoansAmount = srvLoans.reduce((sum, l) => sum + (l.principal + l.interest - l.paid), 0);
+                const loanBadge = dueLoansAmount > 0 ? `<span class="badge bg-danger">বকেয়া: $${formatMoney(dueLoansAmount)}</span>` : '';
+
+                return `
+                    <div class="col-md-4 col-lg-3">
+                        <div class="card card-glass compact-card border-${srv.blocked ? 'danger' : 'secondary'} h-100 d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5 class="fw-bold m-0 text-truncate" title="${srv.name}"><i class="fa-solid ${srv.type==='Bank'?'fa-building-columns text-primary':'fa-wallet text-success'}"></i> ${srv.name}</h5>
+                                <div>
+                                    <button class="btn btn-sm text-light p-1" onclick="renameService('${srv.id}')"><i class="fa-solid fa-pen"></i></button>
+                                    <button class="btn btn-sm text-danger p-1" onclick="deleteService('${srv.id}')"><i class="fa-solid fa-trash"></i></button>
+                                </div>
+                            </div>
+                            <div class="row text-center mb-3 bg-secondary bg-opacity-10 rounded mx-0 py-2">
+                                <div class="col-6 border-end border-secondary border-opacity-25 px-1"><small class="text-muted d-block" style="font-size:0.7rem;">মূল (Main)</small><strong class="text-success" style="font-size:0.9rem;">$${formatMoney(srv.main)}</strong></div>
+                                <div class="col-6 px-1"><small class="text-muted d-block" style="font-size:0.7rem;">মুনাফা (Profit)</small><strong class="text-info" style="font-size:0.9rem;">$${formatMoney(srv.profit)}</strong></div>
+                            </div>
+                            <div class="d-flex flex-wrap gap-1 mb-3">
+                                <span class="badge bg-primary bg-opacity-50">ফি: ${srv.fee}%</span>
+                                <span class="badge ${srv.txEnabled ? 'bg-success' : 'bg-danger'} bg-opacity-50">${srv.txEnabled ? 'TX On' : 'TX Off'}</span>
+                                ${srv.blocked ? '<span class="badge bg-danger bg-opacity-75">Blocked</span>' : ''}
+                            </div>
+                            
+                            <div class="mb-3 p-2 rounded bg-secondary bg-opacity-10 border border-secondary border-opacity-25">
+                                <div class="mb-2">
+                                    <small class="text-info fw-bold d-block mb-1"><i class="fa-solid fa-handshake"></i> পার্টনারশিপ</small>
+                                    <div class="d-flex flex-wrap gap-1">${partnersHtml || '<small class="text-muted" style="font-size:0.7rem;">অন্য সার্ভিস নেই</small>'}</div>
+                                </div>
+                                <div class="border-top border-secondary border-opacity-25 pt-2 mt-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-warning fw-bold"><i class="fa-solid fa-building-columns"></i> বিগ ব্যাংক লোন</small>
+                                        <button class="btn btn-sm btn-primary py-0 px-2" style="font-size:0.7rem;" onclick="showTakeServiceLoanModal('${srv.id}')">গ্রহণ করুন</button>
+                                    </div>
+                                    ${dueLoansAmount > 0 ? `<div class="mt-1 text-end">${loanBadge}</div>` : ''}
+                                </div>
+                            </div>
+
+                            <div class="mt-auto d-flex gap-1">
+                                <button class="btn btn-sm btn-outline-info flex-grow-1 p-1" style="font-size:0.8rem;" onclick="promptChangeFee('${srv.id}')">ফি সেট</button>
+                                <button class="btn btn-sm ${srv.txEnabled?'btn-outline-warning':'btn-warning text-dark'} flex-grow-1 p-1" style="font-size:0.8rem;" onclick="toggleServiceTx('${srv.id}')">TX</button>
+                                <button class="btn btn-sm ${srv.blocked?'btn-danger':'btn-outline-danger'} flex-grow-1 p-1" style="font-size:0.8rem;" onclick="toggleServiceBlock('${srv.id}')">ব্লক</button>
+                            </div>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        function renderLoans() {
+            let bbHtml = '';
             state.loans.filter(l => l.type === 'BB_TO_SRV').forEach(l => {
-                const srv = state.services.find(s => s.id === l.serviceId);
-                const srvName = srv ? srv.name : 'Unknown';
-                const due = (l.principal + l.interest) - l.paid;
-                const status = l.active ? `<span class="badge bg-warning text-dark rounded-pill">চলমান</span>` : `<span class="badge bg-success rounded-pill">পরিশোধিত</span>`;
-                const bbSrcText = l.bbSource === 'profit' ? 'মুনাফা একাউন্ট' : 'মূল একাউন্ট';
-                
-                loanHtml += `
-                    <tr>
-                        <td class="fw-bold">${srvName}</td>
-                        <td class="text-success">$${formatMoney(l.principal)}</td>
-                        <td><span class="badge bg-secondary rounded-pill bg-opacity-50">${bbSrcText}</span></td>
-                        <td class="text-info">$${formatMoney(l.interest)}</td>
-                        <td>$${formatMoney(l.paid)}</td>
-                        <td class="${due > 0 ? 'text-danger fw-bold' : 'text-success'}">$${formatMoney(due)}</td>
-                        <td>${status}</td>
-                    </tr>
-                `;
+                const srv = state.services.find(s => s.id === l.serviceId); const due = (l.principal + l.interest) - l.paid;
+                bbHtml += `<tr><td class="fw-bold">${srv ? srv.name : 'Unknown'}</td><td class="text-success">$${formatMoney(l.principal)}</td><td><span class="badge bg-secondary rounded-pill">${l.bbSource === 'profit' ? 'মুনাফা' : 'মূল'}</span></td><td class="text-info">$${formatMoney(l.interest)}</td><td>$${formatMoney(l.paid)}</td><td class="${due>0?'text-danger fw-bold':'text-success'}">$${formatMoney(due)}</td><td>${l.active ? '<span class="badge bg-warning text-dark rounded-pill">চলমান</span>' : '<span class="badge bg-success rounded-pill">পরিশোধিত</span>'}</td><td>${l.active ? `<button class="btn btn-sm btn-outline-success rounded-pill" onclick="showServiceLoanPayUI('${l.id}')">পরিশোধ</button>` : '-'}</td></tr>`;
             });
-            if(loanHtml === '') loanHtml = `<tr><td colspan="7" class="text-center text-muted py-5 fw-bold">কোন লোন রেকর্ড নেই</td></tr>`;
-            document.getElementById('bbLoanTableBody').innerHTML = loanHtml;
+            document.getElementById('loansBbToSrvBody').innerHTML = bbHtml || `<tr><td colspan="8" class="text-center text-muted py-4 fw-bold">কোন ব্যাংক লোন নেই</td></tr>`;
+
+            let custHtml = '';
+            state.loans.filter(l => l.type === 'SRV_TO_CUST').forEach(l => {
+                const acc = state.accounts.find(a => a.id === l.accountId);
+                const cust = state.customers.find(c => c.id === (acc?acc.customerId:null));
+                const srv = state.services.find(s => s.id === l.serviceId);
+                const due = (l.principal + l.interest) - l.paid;
+                custHtml += `<tr><td class="fw-bold">${cust?cust.name:'Unknown'} <br><small class="text-muted">${srv?srv.name:''}</small></td><td class="text-success">$${formatMoney(l.principal)}</td><td><span class="badge bg-secondary rounded-pill">${l.source === 'profit' ? 'মুনাফা' : 'মূল'}</span></td><td class="text-info">$${formatMoney(l.interest)}</td><td>$${formatMoney(l.paid)}</td><td class="${due>0?'text-danger fw-bold':'text-success'}">$${formatMoney(due)}</td><td>${l.active ? '<span class="badge bg-warning text-dark rounded-pill">চলমান</span>' : '<span class="badge bg-success rounded-pill">পরিশোধিত</span>'}</td></tr>`;
+            });
+            document.getElementById('loansSrvToCustBody').innerHTML = custHtml || `<tr><td colspan="7" class="text-center text-muted py-4 fw-bold">কোন গ্রাহক লোন নেই</td></tr>`;
         }
 
         function createService() {
-            const name = document.getElementById('newServiceName').value.trim();
-            const type = document.getElementById('newServiceType').value;
-            const fee = parseFloat(document.getElementById('newServiceFee').value);
-
+            const name = document.getElementById('newServiceName').value.trim(); const type = document.getElementById('newServiceType').value; const fee = parseFloat(document.getElementById('newServiceFee').value);
             if(!name || isNaN(fee) || fee < 0) return showAlert("সঠিক তথ্য দিন", true);
-
-            state.services.push({
-                id: generateId(), name, type, fee, main: 2000000, profit: 0, cryptoBalance: 0,
-                blocked: false, txEnabled: true, partners: []
-            });
-
-            saveState();
-            bootstrap.Modal.getInstance(document.getElementById('createServiceModal')).hide();
-            document.getElementById('newServiceName').value = '';
-            showAlert(`নতুন সার্ভিস তৈরী হয়েছে (২ মিলিয়ন ডলার বোনাস সহ!)`);
-            renderServices();
+            state.services.push({ id: generateId(), name, type, fee, main: 2000000, profit: 0, cryptoBalance: 0, blocked: false, txEnabled: true, partners: [] });
+            saveState(); bootstrap.Modal.getInstance(document.getElementById('createServiceModal')).hide(); document.getElementById('newServiceName').value = ''; showAlert(`নতুন সার্ভিস তৈরী হয়েছে!`); renderServices();
         }
 
         async function renameService(id) {
-            const s = state.services.find(x => x.id === id);
-            const val = await showPrompt("নতুন নাম দিন:", s.name);
+            const s = state.services.find(x => x.id === id); const val = await showPrompt("নতুন নাম দিন:", s.name);
             if(val && val.trim() !== '') { s.name = val.trim(); saveState(); renderAll(); showAlert("নাম পরিবর্তন হয়েছে"); }
         }
 
         async function deleteService(id) {
-            const conf = await showPrompt("ডিলিট করতে চাইলে 'হ্যাঁ' লিখুন। এর সকল তথ্য মুছে যাবে!", "");
-            if(conf !== "হ্যাঁ") return;
+            const conf = await showPrompt("ডিলিট করতে চাইলে 'হ্যাঁ' লিখুন। এর সকল তথ্য মুছে যাবে!", ""); if(conf !== "হ্যাঁ") return;
             const accsToDel = state.accounts.filter(a => a.serviceId === id).map(a => a.id);
             state.fdrs = state.fdrs.filter(f => !accsToDel.includes(f.accountId));
             state.cards = state.cards.filter(c => c.serviceId !== id);
             state.loans = state.loans.filter(l => l.serviceId !== id);
             state.accounts = state.accounts.filter(a => a.serviceId !== id);
-            state.services.forEach(s => s.partners = s.partners.filter(p => p !== id));
-            state.services = state.services.filter(s => s.id !== id);
+            state.services.forEach(s => s.partners = s.partners.filter(p => p !== id)); state.services = state.services.filter(s => s.id !== id);
             saveState(); renderAll(); showAlert("সার্ভিসটি ডিলিট করা হয়েছে", true);
         }
 
         function toggleServiceBlock(id) { const s = state.services.find(x => x.id === id); s.blocked = !s.blocked; saveState(); renderServices(); }
         function toggleServiceTx(id) { const s = state.services.find(x => x.id === id); s.txEnabled = !s.txEnabled; saveState(); renderServices(); }
         async function promptChangeFee(id) {
-            const s = state.services.find(x => x.id === id);
-            const val = await showPrompt(`বর্তমান ফি: ${s.fee}%\nনতুন ফি পরিমাণ দিন:`, s.fee);
-            if(val !== null) {
-                const f = parseFloat(val);
-                if(!isNaN(f) && f >= 0) { s.fee = f; saveState(); renderServices(); showAlert("ফি আপডেট হয়েছে"); }
-            }
+            const s = state.services.find(x => x.id === id); const val = await showPrompt(`বর্তমান ফি: ${s.fee}%\nনতুন ফি পরিমাণ দিন:`, s.fee);
+            if(val !== null) { const f = parseFloat(val); if(!isNaN(f) && f >= 0) { s.fee = f; saveState(); renderServices(); showAlert("ফি আপডেট হয়েছে"); } }
         }
 
         function togglePartner(id1, id2) {
-            const s1 = state.services.find(x => x.id === id1);
-            const s2 = state.services.find(x => x.id === id2);
+            const s1 = state.services.find(x => x.id === id1); const s2 = state.services.find(x => x.id === id2);
             if(s1.partners.includes(id2)) {
-                s1.partners = s1.partners.filter(x => x !== id2); s2.partners = s2.partners.filter(x => x !== id1);
-                showAlert("পার্টনারশিপ বাতিল হয়েছে");
+                s1.partners = s1.partners.filter(x => x !== id2); s2.partners = s2.partners.filter(x => x !== id1); showAlert("পার্টনারশিপ বাতিল হয়েছে");
             } else {
-                s1.partners.push(id2); s2.partners.push(id1);
-                showAlert("নতুন পার্টনারশিপ তৈরী হয়েছে (৫৫% ছাড়)");
+                s1.partners.push(id2); s2.partners.push(id1); showAlert("নতুন পার্টনারশিপ তৈরী হয়েছে (৪৫% ছাড়)");
             }
             saveState(); renderServices();
         }
 
-        function showTakeServiceLoanModal(serviceId) {
-            document.getElementById('takeSrvLoanSrvId').value = serviceId;
-            document.getElementById('takeSrvLoanAmount').value = '';
-            new bootstrap.Modal(document.getElementById('takeServiceLoanModal')).show();
-        }
-
+        function showTakeServiceLoanModal(serviceId) { document.getElementById('takeSrvLoanSrvId').value = serviceId; document.getElementById('takeSrvLoanAmount').value = ''; new bootstrap.Modal(document.getElementById('takeServiceLoanModal')).show(); }
         function submitTakeServiceLoan() {
-            const serviceId = document.getElementById('takeSrvLoanSrvId').value;
-            const amt = parseFloat(document.getElementById('takeSrvLoanAmount').value);
-            const rate = parseFloat(document.getElementById('takeSrvLoanInterest').value);
-            const source = document.getElementById('takeSrvLoanSource').value;
-
+            const serviceId = document.getElementById('takeSrvLoanSrvId').value; const amt = parseFloat(document.getElementById('takeSrvLoanAmount').value); const rate = parseFloat(document.getElementById('takeSrvLoanInterest').value); const source = document.getElementById('takeSrvLoanSource').value;
             if(isNaN(amt) || amt <= 0 || isNaN(rate) || rate < 0) return showAlert("সঠিক তথ্য দিন", true);
             if(state.bigBank[source] < amt) return showAlert(`বিগ ব্যাংকের নির্বাচিত একাউন্টে পর্যাপ্ত ফান্ড নেই!`, true);
-
-            state.bigBank[source] -= amt;
-            state.services.find(s => s.id === serviceId).main += amt; 
-            state.loans.push({
-                id: generateId(), serviceId: serviceId, type: 'BB_TO_SRV',
-                principal: amt, interest: amt * (rate/100), paid: 0, active: true, bbSource: source
-            });
-
-            showAlert(`লোন সফলভাবে গ্রহণ করা হয়েছে!`); saveState(); renderAll();
-            bootstrap.Modal.getInstance(document.getElementById('takeServiceLoanModal')).hide();
+            state.bigBank[source] -= amt; state.services.find(s => s.id === serviceId).main += amt; 
+            state.loans.push({ id: generateId(), serviceId: serviceId, type: 'BB_TO_SRV', principal: amt, interest: amt * (rate/100), paid: 0, active: true, bbSource: source });
+            showAlert(`লোন গ্রহণ সফল!`); saveState(); renderAll(); bootstrap.Modal.getInstance(document.getElementById('takeServiceLoanModal')).hide();
         }
 
         function showServiceLoanPayUI(loanId) {
-            const loan = state.loans.find(l => l.id === loanId);
-            const srv = state.services.find(s => s.id === loan.serviceId);
-            const due = loan.principal + loan.interest - loan.paid;
-            
-            document.getElementById('paySrvLoanId').value = loanId;
-            document.getElementById('paySrvTotalDue').innerText = `$${formatMoney(due)}`;
-            document.getElementById('paySrvAmount').value = due.toFixed(2);
-            
-            const sourceSelect = document.getElementById('paySrvSource');
-            const balLabel = document.getElementById('paySrvSourceBalance');
-            const updateLabel = () => { balLabel.innerText = `এভেইলেবল ব্যালেন্স: $${formatMoney(srv[sourceSelect.value])}`; };
-            sourceSelect.onchange = updateLabel; updateLabel();
-            
+            const loan = state.loans.find(l => l.id === loanId); const srv = state.services.find(s => s.id === loan.serviceId); const due = loan.principal + loan.interest - loan.paid;
+            document.getElementById('paySrvLoanId').value = loanId; document.getElementById('paySrvTotalDue').innerText = `$${formatMoney(due)}`; document.getElementById('paySrvAmount').value = due.toFixed(2);
+            const sourceSelect = document.getElementById('paySrvSource'); const balLabel = document.getElementById('paySrvSourceBalance');
+            const updateLabel = () => { balLabel.innerText = `এভেইলেবল: $${formatMoney(srv[sourceSelect.value])}`; }; sourceSelect.onchange = updateLabel; updateLabel();
             new bootstrap.Modal(document.getElementById('payServiceLoanModal')).show();
         }
 
         function submitPayServiceLoan() {
-            const loanId = document.getElementById('paySrvLoanId').value;
-            const loan = state.loans.find(l => l.id === loanId);
-            const srv = state.services.find(s => s.id === loan.serviceId);
-            const source = document.getElementById('paySrvSource').value;
-            const amt = parseFloat(document.getElementById('paySrvAmount').value);
-            const due = loan.principal + loan.interest - loan.paid;
-            
-            if(isNaN(amt) || amt <= 0) return showAlert("ভুল পরিমাণ", true);
-            if(amt > (due + 0.01)) return showAlert("বকেয়ার চেয়ে বেশি পরিশোধ করা যাবে না!", true);
-            if(srv[source] < amt) return showAlert("নির্বাচিত একাউন্টে পর্যাপ্ত ব্যালেন্স নেই!", true);
-
-            srv[source] -= amt;
-            const toPrincipal = amt * (loan.principal / (loan.principal + loan.interest));
-            const toInterest = amt - toPrincipal;
-            state.bigBank[loan.bbSource || 'main'] += toPrincipal;
-            state.bigBank.profit += toInterest; 
-            loan.paid += amt;
-
+            const loanId = document.getElementById('paySrvLoanId').value; const loan = state.loans.find(l => l.id === loanId); const srv = state.services.find(s => s.id === loan.serviceId); const source = document.getElementById('paySrvSource').value; const amt = parseFloat(document.getElementById('paySrvAmount').value); const due = loan.principal + loan.interest - loan.paid;
+            if(isNaN(amt) || amt <= 0) return showAlert("ভুল পরিমাণ", true); if(amt > (due + 0.01)) return showAlert("বকেয়ার চেয়ে বেশি পরিশোধ করা যাবে না!", true); if(srv[source] < amt) return showAlert("নির্বাচিত একাউন্টে পর্যাপ্ত ব্যালেন্স নেই!", true);
+            srv[source] -= amt; const toPrincipal = amt * (loan.principal / (loan.principal + loan.interest)); const toInterest = amt - toPrincipal;
+            state.bigBank[loan.bbSource || 'main'] += toPrincipal; state.bigBank.profit += toInterest; loan.paid += amt;
             if(Math.abs((loan.principal + loan.interest) - loan.paid) < 0.01) loan.active = false; 
-            showAlert(`লোন পরিশোধ সফল হয়েছে!`); saveState(); renderAll();
-            bootstrap.Modal.getInstance(document.getElementById('payServiceLoanModal')).hide();
-        }
-
-        function renderServices() {
-            const container = document.getElementById('servicesContainer');
-            if(state.services.length === 0) return container.innerHTML = `<div class="col-12 text-center text-muted py-5 fs-5">কোন সার্ভিস তৈরী করা হয়নি।</div>`;
-
-            container.innerHTML = state.services.map(srv => {
-                const partnersHtml = state.services.filter(s => s.id !== srv.id).map(os => {
-                    const isPartner = srv.partners.includes(os.id);
-                    return `<button class="btn btn-sm ${isPartner ? 'btn-success' : 'btn-outline-secondary'} rounded-pill m-1 px-3 shadow-sm" onclick="togglePartner('${srv.id}', '${os.id}')">${os.name} ${isPartner ? '<i class="fa-solid fa-check"></i>' : ''}</button>`;
-                }).join('');
-
-                const srvLoans = state.loans.filter(l => l.serviceId === srv.id && l.type === 'BB_TO_SRV' && l.active);
-                const loanListHtml = srvLoans.length === 0 ? '<small class="text-muted">কোন লোন নেই</small>' : srvLoans.map(l => {
-                    const due = l.principal + l.interest - l.paid;
-                    return `<div class="d-flex justify-content-between align-items-center border-top border-secondary border-opacity-25 pt-3 mt-3">
-                                <div>
-                                    <small class="text-muted fw-bold">উৎস: ${l.bbSource === 'profit' ? 'মুনাফা' : 'মূল'} | আসল: $${formatMoney(l.principal)} | মুনাফা: $${formatMoney(l.interest)}</small><br>
-                                    <strong class="text-danger fs-5">বকেয়া: $${formatMoney(due)}</strong>
-                                </div>
-                                <button class="btn btn-outline-success rounded-pill px-3 shadow-sm" onclick="showServiceLoanPayUI('${l.id}')">পরিশোধ</button>
-                            </div>`;
-                }).join('');
-
-                return `
-                    <div class="col-12 mb-3">
-                        <div class="card card-glass p-0 border-${srv.blocked ? 'danger' : 'secondary'} overflow-hidden">
-                            <div class="card-header border-bottom-0 d-flex justify-content-between align-items-center bg-opacity-25 ${srv.blocked ? 'bg-danger' : 'bg-primary'} p-4">
-                                <h4 class="mb-0 fw-bold text-white"><i class="fa-solid ${srv.type==='Bank'?'fa-building-columns':'fa-wallet'} me-2"></i> ${srv.name} <span class="badge bg-dark bg-opacity-50 fs-6 ms-2 rounded-pill">${srv.type}</span></h4>
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-light rounded-circle shadow-sm" onclick="renameService('${srv.id}')" title="নাম পরিবর্তন"><i class="fa-solid fa-pen"></i></button>
-                                    <button class="btn btn-danger rounded-circle shadow-sm" onclick="deleteService('${srv.id}')" title="ডিলিট"><i class="fa-solid fa-trash"></i></button>
-                                </div>
-                            </div>
-                            
-                            <div class="card-body row g-4 p-4">
-                                <div class="col-md-6">
-                                    <div class="p-4 bg-secondary bg-opacity-10 rounded-4 border border-secondary border-opacity-25 mb-4 shadow-sm">
-                                        <div class="row text-center">
-                                            <div class="col-6">
-                                                <small class="text-muted fw-bold">মূল একাউন্ট</small>
-                                                <h4 class="text-success fw-bold mt-2">$${formatMoney(srv.main)}</h4>
-                                            </div>
-                                            <div class="col-6 border-start border-secondary border-opacity-25">
-                                                <small class="text-muted fw-bold">মুনাফা একাউন্ট</small>
-                                                <h4 class="text-info fw-bold mt-2">$${formatMoney(srv.profit)}</h4>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex flex-wrap gap-2 mb-4">
-                                        <span class="badge bg-primary bg-opacity-50 fs-6 rounded-pill px-3 py-2">ফি: ${srv.fee}%</span>
-                                        <span class="badge ${srv.txEnabled ? 'bg-success' : 'bg-danger'} bg-opacity-50 fs-6 rounded-pill px-3 py-2">${srv.txEnabled ? 'লেনদেন চালু' : 'লেনদেন বন্ধ'}</span>
-                                        <span class="badge ${srv.blocked ? 'bg-danger' : 'bg-success'} bg-opacity-50 fs-6 rounded-pill px-3 py-2">${srv.blocked ? 'ব্লকড' : 'সক্রিয়'}</span>
-                                    </div>
-                                    <div class="d-flex flex-wrap gap-2">
-                                        <button class="btn btn-sm btn-danger rounded-pill px-3 shadow-sm" onclick="toggleServiceBlock('${srv.id}')">${srv.blocked ? 'আনব্লক করুন' : 'ব্লক করুন'}</button>
-                                        <button class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-3 shadow-sm" onclick="toggleServiceTx('${srv.id}')">${srv.txEnabled ? 'লেনদেন বন্ধ' : 'লেনদেন চালু'}</button>
-                                        <button class="btn btn-sm btn-info text-dark fw-bold rounded-pill px-3 shadow-sm" onclick="promptChangeFee('${srv.id}')">ফি পরিবর্তন</button>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="p-3 bg-secondary bg-opacity-10 rounded-4 border border-secondary border-opacity-25 mb-3 shadow-sm">
-                                        <h6 class="text-info fw-bold mb-3"><i class="fa-solid fa-handshake"></i> পার্টনারশিপ (৫৫% ফি ছাড়)</h6>
-                                        <div class="d-flex flex-wrap gap-1">${partnersHtml || '<small class="text-muted fw-bold">অন্য কোন সার্ভিস নেই</small>'}</div>
-                                    </div>
-                                    <div class="p-4 bg-secondary bg-opacity-10 rounded-4 border border-warning border-opacity-25 shadow-sm">
-                                        <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <h6 class="text-warning fw-bold mb-0"><i class="fa-solid fa-building-columns"></i> বিগ ব্যাংক লোন</h6>
-                                            <button class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm" onclick="showTakeServiceLoanModal('${srv.id}')">লোন নিন</button>
-                                        </div>
-                                        ${loanListHtml}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            showAlert(`লোন পরিশোধ সফল!`); saveState(); renderAll(); bootstrap.Modal.getInstance(document.getElementById('payServiceLoanModal')).hide();
         }
 
         function createCustomer() {
-            const name = document.getElementById('newCustomerName').value.trim();
-            if(!name) return showAlert("নাম দিন", true);
+            const name = document.getElementById('newCustomerName').value.trim(); if(!name) return showAlert("নাম দিন", true);
             state.customers.push({ id: generateId(), name, blocked: false, txEnabled: true });
-            saveState(); populateCustomerSelect();
-            bootstrap.Modal.getInstance(document.getElementById('createCustomerModal')).hide();
-            document.getElementById('newCustomerName').value = ''; showAlert("নতুন গ্রাহক তৈরী হয়েছে");
+            saveState(); populateCustomerSelect(); bootstrap.Modal.getInstance(document.getElementById('createCustomerModal')).hide(); document.getElementById('newCustomerName').value = ''; showAlert("নতুন গ্রাহক তৈরী হয়েছে");
         }
 
         async function renameCustomer() {
-            const cId = document.getElementById('customerSelect').value;
-            if(!cId) return;
-            const c = state.customers.find(x => x.id === cId);
-            const val = await showPrompt("নতুন নাম দিন:", c.name);
+            const cId = document.getElementById('customerSelect').value; if(!cId) return; const c = state.customers.find(x => x.id === cId); const val = await showPrompt("নতুন নাম দিন:", c.name);
             if(val && val.trim() !== '') { c.name = val.trim(); saveState(); populateCustomerSelect(); renderCustomerDashboard(); showAlert("নাম পরিবর্তন হয়েছে"); }
         }
 
         async function deleteCustomer() {
-            const cId = document.getElementById('customerSelect').value;
-            if(!cId) return;
-            const conf = await showPrompt("ডিলিট করতে চাইলে 'হ্যাঁ' লিখুন। সকল একাউন্ট, কার্ড মুছে যাবে!", "");
-            if(conf !== "হ্যাঁ") return;
+            const cId = document.getElementById('customerSelect').value; if(!cId) return; const conf = await showPrompt("ডিলিট করতে চাইলে 'হ্যাঁ' লিখুন। সকল একাউন্ট মুছে যাবে!", ""); if(conf !== "হ্যাঁ") return;
             const accsToDel = state.accounts.filter(a => a.customerId === cId).map(a => a.id);
-            state.fdrs = state.fdrs.filter(f => !accsToDel.includes(f.accountId));
-            state.cards = state.cards.filter(c => !accsToDel.includes(c.accountId));
+            state.fdrs = state.fdrs.filter(f => !accsToDel.includes(f.accountId)); state.cards = state.cards.filter(c => !accsToDel.includes(c.accountId));
             state.loans = state.loans.filter(l => !(l.type === 'SRV_TO_CUST' && accsToDel.includes(l.accountId)));
-            state.accounts = state.accounts.filter(a => a.customerId !== cId);
-            state.customers = state.customers.filter(c => c.id !== cId);
+            state.accounts = state.accounts.filter(a => a.customerId !== cId); state.customers = state.customers.filter(c => c.id !== cId);
             saveState(); populateCustomerSelect(); renderCustomerDashboard(); showAlert("গ্রাহক ডিলিট করা হয়েছে", true);
         }
 
         function populateCustomerSelect() {
-            const sel = document.getElementById('customerSelect');
-            const currentVal = sel.value;
+            const sel = document.getElementById('customerSelect'); const currentVal = sel.value;
             sel.innerHTML = '<option value="">-- গ্রাহক নির্বাচন করুন --</option>' + state.customers.map(c => `<option class="text-dark" value="${c.id}">${c.name}</option>`).join('');
             if(currentVal && state.customers.find(c => c.id === currentVal)) sel.value = currentVal; else sel.value = '';
-            document.getElementById('btnRenameCustomer').style.display = sel.value ? 'block' : 'none';
-            document.getElementById('btnDeleteCustomer').style.display = sel.value ? 'block' : 'none';
+            document.getElementById('btnRenameCustomer').style.display = sel.value ? 'block' : 'none'; document.getElementById('btnDeleteCustomer').style.display = sel.value ? 'block' : 'none';
         }
 
         async function openAccount(customerId) {
-            const availableServices = state.services.filter(s => !s.blocked);
-            if(availableServices.length === 0) return showAlert("কোন সক্রিয় সার্ভিস নেই!", true);
+            const availableServices = state.services.filter(s => !s.blocked); if(availableServices.length === 0) return showAlert("কোন সক্রিয় সার্ভিস নেই!", true);
             let optionsStr = availableServices.map((s, i) => `${i+1}. ${s.name} (${s.type})`).join("\n");
-            const val = await showPrompt(`কোন সার্ভিসে একাউন্ট খুলতে চান? নম্বর দিন:\n${optionsStr}`);
-            if(!val) return;
-            
-            const idx = parseInt(val) - 1;
-            if(isNaN(idx) || idx < 0 || idx >= availableServices.length) return showAlert("ভুল নির্বাচন", true);
-            const srv = availableServices[idx];
+            const val = await showPrompt(`কোন সার্ভিসে একাউন্ট খুলতে চান? নম্বর দিন:\n${optionsStr}`); if(!val) return;
+            const idx = parseInt(val) - 1; if(isNaN(idx) || idx < 0 || idx >= availableServices.length) return showAlert("ভুল নির্বাচন", true); const srv = availableServices[idx];
             if(state.accounts.some(a => a.customerId === customerId && a.serviceId === srv.id)) return showAlert("এই সার্ভিসে আগেই একাউন্ট আছে!", true);
-
-            state.accounts.push({ id: generateId(), customerId, serviceId: srv.id, balance: 0, cryptoBalance: 0 });
+            state.accounts.push({ id: generateId(), customerId, serviceId: srv.id, balance: 0, cryptoBalance: 0, electricBill: 0 });
             saveState(); renderCustomerDashboard(); showAlert(`${srv.name} এ একাউন্ট খোলা হয়েছে!`);
         }
 
         async function manualBalChange(accId, type) {
-            const val = await showPrompt(type==='add' ? "কত আয় যুক্ত করতে চান?" : "কত ব্যয় যুক্ত করতে চান?");
-            if(!val) return; const amt = parseFloat(val);
-            if(isNaN(amt) || amt <= 0) return showAlert("ভুল পরিমাণ", true);
+            const val = await showPrompt(type==='add' ? "কত আয় যুক্ত করতে চান?" : "কত ব্যয় যুক্ত করতে চান?"); if(!val) return; const amt = parseFloat(val); if(isNaN(amt) || amt <= 0) return showAlert("ভুল পরিমাণ", true);
+            const acc = state.accounts.find(a => a.id === accId); if(type === 'sub' && acc.balance < amt) return showAlert("পর্যাপ্ত ব্যালেন্স নেই!", true);
+            if(type==='add') acc.balance += amt; else acc.balance -= amt; saveState(); renderCustomerDashboard(); showAlert("ব্যালেন্স আপডেট হয়েছে");
+        }
+
+        function payElectricBill(accId) {
             const acc = state.accounts.find(a => a.id === accId);
-            if(type === 'sub' && acc.balance < amt) return showAlert("পর্যাপ্ত ব্যালেন্স নেই!", true);
+            const cc = state.cards.find(c => c.accountId === accId && c.type === 'CREDIT' && c.active);
+            if(!cc) return showAlert("বিদ্যুৎ বিল শুধুমাত্র ক্রেডিট কার্ড দিয়ে পরিশোধ করা যায়। আপনার সক্রিয় ক্রেডিট কার্ড নেই!", true);
             
-            if(type==='add') acc.balance += amt; else acc.balance -= amt;
-            saveState(); renderCustomerDashboard(); showAlert("ব্যালেন্স আপডেট হয়েছে");
+            const totalUsage = cc.spent + (cc.blockedEmiLimit || 0);
+            if(totalUsage + acc.electricBill > cc.limit) return showAlert("ক্রেডিট কার্ডে পর্যাপ্ত লিমিট নেই!", true);
+            
+            cc.spent += acc.electricBill;
+            cc.rewardPoints += acc.electricBill; // Points for paying bill
+            if(cc.spent === 0 && cc.emis.length === 0) cc.lastBillingDate = state.virtualTime;
+            
+            addNotification("বিদ্যুৎ বিল পরিশোধ", `ক্রেডিট কার্ড ব্যবহার করে $${formatMoney(acc.electricBill)} বিদ্যুৎ বিল পরিশোধ করা হয়েছে।`, 'success');
+            showAlert("বিদ্যুৎ বিল পরিশোধ সফল!");
+            acc.electricBill = 0; saveState(); renderCustomerDashboard(); showCardsUI(accId, true);
         }
 
         function renderCustomerDashboard(forceRefresh = true) {
             const cId = document.getElementById('customerSelect').value;
-            document.getElementById('btnRenameCustomer').style.display = cId ? 'block' : 'none';
-            document.getElementById('btnDeleteCustomer').style.display = cId ? 'block' : 'none';
-            const dash = document.getElementById('customerDashboard');
-            if(!cId) { dash.classList.add('d-none'); return; }
+            document.getElementById('btnRenameCustomer').style.display = cId ? 'block' : 'none'; document.getElementById('btnDeleteCustomer').style.display = cId ? 'block' : 'none';
+            const dash = document.getElementById('customerDashboard'); if(!cId) { dash.classList.add('d-none'); return; }
             
-            const cust = state.customers.find(c => c.id === cId);
-            const myAccounts = state.accounts.filter(a => a.customerId === cId);
-            
-            let html = `
-                <div class="card-glass p-4 mb-4 border-${cust.blocked?'danger':'primary'} shadow-sm">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h4 class="mb-0 fw-bold"><i class="fa-solid fa-user-circle text-primary me-2"></i> ${cust.name} এর ড্যাশবোর্ড</h4>
-                        <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" onclick="openAccount('${cId}')"><i class="fa-solid fa-folder-plus"></i> একাউন্ট খুলুন</button>
-                    </div>
-                </div>
-                <div class="row g-4">
-            `;
-
+            const cust = state.customers.find(c => c.id === cId); const myAccounts = state.accounts.filter(a => a.customerId === cId);
+            let html = `<div class="card-glass p-4 mb-4 border-${cust.blocked?'danger':'primary'} shadow-sm"><div class="d-flex justify-content-between align-items-center"><h4 class="mb-0 fw-bold"><i class="fa-solid fa-user-circle text-primary me-2"></i> ${cust.name} এর ড্যাশবোর্ড</h4><button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" onclick="openAccount('${cId}')"><i class="fa-solid fa-folder-plus"></i> একাউন্ট খুলুন</button></div></div><div class="row g-4">`;
             if(myAccounts.length === 0) html += `<div class="col-12 text-center text-muted fs-5 py-5 fw-bold card-glass">কোন একাউন্ট নেই। একটি নতুন একাউন্ট খুলুন।</div>`;
 
             myAccounts.forEach(acc => {
-                const srv = state.services.find(s => s.id === acc.serviceId);
-                if(!srv) return; 
+                const srv = state.services.find(s => s.id === acc.serviceId); if(!srv) return; 
                 const isBlocked = cust.blocked || srv.blocked || !cust.txEnabled || !srv.txEnabled || !state.bigBank.txEnabled;
-                
-                const myLoans = state.loans.filter(l => l.type === 'SRV_TO_CUST' && l.accountId === acc.id && l.active);
-                let loansHtml = '';
-                if(myLoans.length > 0) {
-                    loansHtml = `<hr class="border-secondary border-opacity-25 my-4"><h6 class="text-warning fw-bold mb-3"><i class="fa-solid fa-hand-holding-dollar"></i> আমার লোনসমূহ</h6>`;
-                    myLoans.forEach(l => {
-                        const due = l.principal + l.interest - l.paid;
-                        loansHtml += `
-                            <div class="bg-secondary bg-opacity-10 p-3 rounded-4 mb-3 border border-warning border-opacity-25 shadow-sm">
-                                <small class="text-muted fw-bold d-block mb-2">উৎস: ${l.source === 'main' ? 'মূল' : 'মুনাফা'} একাউন্ট</small>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <small>আসল: $${formatMoney(l.principal)} | মুনাফা: $${formatMoney(l.interest)}</small><br>
-                                        <strong class="text-danger fs-5">বকেয়া: $${formatMoney(due)}</strong>
-                                    </div>
-                                    <button class="btn btn-outline-success rounded-pill px-3 shadow-sm" onclick="payCustomerLoan('${l.id}')">পরিশোধ</button>
-                                </div>
-                            </div>
-                        `;
-                    });
-                }
-                
                 const activeFDRs = state.fdrs.filter(f => f.accountId === acc.id && f.active).length;
-                let fdrBadge = activeFDRs > 0 ? `<span class="badge bg-primary rounded-pill ms-2 shadow-sm">${activeFDRs}</span>` : '';
+                let fdrBadge = activeFDRs > 0 ? `<span class="badge bg-primary rounded-pill ms-2">${activeFDRs}</span>` : '';
                 
+                let electricBillHtml = '';
+                if(acc.electricBill > 0) {
+                    electricBillHtml = `
+                    <div class="alert alert-danger bg-opacity-10 border-danger border-opacity-50 p-3 mb-4 rounded-4 electric-alert shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div><small class="text-danger fw-bold d-block"><i class="fa-solid fa-bolt"></i> বিদ্যুৎ বিল ডিউ</small><h4 class="text-danger fw-bold m-0">$${formatMoney(acc.electricBill)}</h4></div>
+                            <button class="btn btn-danger fw-bold rounded-pill px-3 shadow-sm" onclick="payElectricBill('${acc.id}')">পে (CC)</button>
+                        </div>
+                    </div>`;
+                }
+
                 html += `
                     <div class="col-md-6 col-xl-4">
                         <div class="card card-glass h-100 border-${isBlocked ? 'danger':'secondary'} overflow-hidden">
@@ -1282,528 +813,291 @@
                                 <span>${isBlocked ? '<i class="fa-solid fa-lock text-danger fs-4"></i>' : '<i class="fa-solid fa-lock-open text-success fs-4"></i>'}</span>
                             </div>
                             <div class="card-body p-4">
-                                <h1 class="text-center text-success fw-bold display-5 mb-3">$${formatMoney(acc.balance)}</h1>
+                                ${electricBillHtml}
+                                <h1 class="text-center text-success fw-bold display-6 mb-2">$${formatMoney(acc.balance)}</h1>
                                 ${acc.cryptoBalance > 0 ? `<div class="text-center text-warning fw-bold mb-4 fs-5"><i class="fa-brands fa-bitcoin"></i> ${formatCrypto(acc.cryptoBalance)} VCN</div>` : ''}
-                                
-                                <div class="d-flex justify-content-center gap-3 mt-4 mb-4">
-                                    <button class="btn btn-outline-success rounded-pill px-4 fw-bold shadow-sm" onclick="manualBalChange('${acc.id}', 'add')">আয় যোগ</button>
-                                    <button class="btn btn-outline-danger rounded-pill px-4 fw-bold shadow-sm" onclick="manualBalChange('${acc.id}', 'sub')">ব্যয় বাদ</button>
-                                </div>
+                                <div class="d-flex justify-content-center gap-2 mt-4 mb-4"><button class="btn btn-outline-success rounded-pill flex-grow-1 fw-bold shadow-sm" onclick="manualBalChange('${acc.id}', 'add')">আয় যোগ</button><button class="btn btn-outline-danger rounded-pill flex-grow-1 fw-bold shadow-sm" onclick="manualBalChange('${acc.id}', 'sub')">ব্যয় বাদ</button></div>
                                 <hr class="border-secondary border-opacity-25 my-4">
-                                <button class="btn btn-primary w-100 mb-3 fw-bold shadow-sm rounded-pill py-2" onclick="showTransferUI('${acc.id}')" ${isBlocked?'disabled':''}>
-                                    <i class="fa-solid fa-paper-plane me-2"></i> মানি ট্রান্সফার
-                                </button>
-                                <button class="btn btn-secondary w-100 mb-3 fw-bold shadow-sm rounded-pill py-2" onclick="showCustomerLoanUI('${acc.id}')" ${isBlocked?'disabled':''}>
-                                    <i class="fa-solid fa-building-columns me-2"></i> ব্যাংক লোন নিন
-                                </button>
-                                <div class="d-flex gap-2 mb-3">
-                                    <button class="btn btn-info flex-grow-1 fw-bold text-dark shadow-sm rounded-pill py-2" onclick="showFDRUI('${acc.id}')" ${isBlocked?'disabled':''}>
-                                        <i class="fa-solid fa-piggy-bank me-2"></i> FDR করুন
-                                    </button>
-                                    <button class="btn btn-outline-info fw-bold rounded-pill px-3 shadow-sm" onclick="showFDRList('${acc.id}')" title="FDR তালিকা দেখুন">
-                                        <i class="fa-solid fa-list"></i> ${fdrBadge}
-                                    </button>
-                                </div>
-                                <button class="btn btn-warning w-100 fw-bold text-dark shadow-sm rounded-pill py-2" onclick="showCardsUI('${acc.id}')">
-                                    <i class="fa-solid fa-credit-card me-2"></i> কার্ড ম্যানেজমেন্ট
-                                </button>
-                                ${loansHtml}
+                                <button class="btn btn-primary w-100 mb-3 fw-bold shadow-sm rounded-pill py-2" onclick="showTransferUI('${acc.id}')" ${isBlocked?'disabled':''}><i class="fa-solid fa-paper-plane me-2"></i> মানি ট্রান্সফার</button>
+                                <button class="btn btn-secondary w-100 mb-3 fw-bold shadow-sm rounded-pill py-2" onclick="showCustomerLoanUI('${acc.id}')" ${isBlocked?'disabled':''}><i class="fa-solid fa-building-columns me-2"></i> ব্যাংক লোন নিন</button>
+                                <div class="d-flex gap-2 mb-3"><button class="btn btn-info flex-grow-1 fw-bold text-dark shadow-sm rounded-pill py-2" onclick="showFDRUI('${acc.id}')" ${isBlocked?'disabled':''}><i class="fa-solid fa-piggy-bank me-2"></i> FDR করুন</button><button class="btn btn-outline-info fw-bold rounded-pill px-3 shadow-sm" onclick="showFDRList('${acc.id}')"><i class="fa-solid fa-list"></i> ${fdrBadge}</button></div>
+                                <button class="btn btn-warning w-100 fw-bold text-dark shadow-sm rounded-pill py-2" onclick="showCardsUI('${acc.id}')"><i class="fa-solid fa-credit-card me-2"></i> কার্ড ম্যানেজমেন্ট</button>
                             </div>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             });
-            html += `</div>`;
-            dash.innerHTML = html; dash.classList.remove('d-none');
+            dash.innerHTML = html + `</div>`; dash.classList.remove('d-none');
         }
 
         function showTransferUI(fromAccId) {
             if(!state.bigBank.txEnabled) return showAlert("বিগ ব্যাংক কর্তৃক গ্লোবাল ট্রানজেকশন বন্ধ!", true);
-            const fromAcc = state.accounts.find(a => a.id === fromAccId);
-            const fromSrv = state.services.find(s => s.id === fromAcc.serviceId);
+            const fromAcc = state.accounts.find(a => a.id === fromAccId); const fromSrv = state.services.find(s => s.id === fromAcc.serviceId);
             if(fromSrv.blocked || !fromSrv.txEnabled) return showAlert("এই সার্ভিস থেকে ট্রানজেকশন বন্ধ!", true);
-
-            document.getElementById('transferFromAccId').value = fromAccId;
-            const select = document.getElementById('transferTargetSelect');
-            
+            document.getElementById('transferFromAccId').value = fromAccId; const select = document.getElementById('transferTargetSelect');
             let options = `<optgroup label="বিগ ব্যাংক"><option class="text-dark" value="bb_main">বিগ ব্যাংক (মূল একাউন্ট)</option><option class="text-dark" value="bb_profit">বিগ ব্যাংক (মুনাফা একাউন্ট)</option></optgroup>`;
             const otherAccs = state.accounts.filter(a => a.id !== fromAccId);
             if(otherAccs.length > 0) {
                 options += `<optgroup label="গ্রাহক একাউন্টসমূহ">`;
-                otherAccs.forEach(a => {
-                    const c = state.customers.find(c => c.id === a.customerId);
-                    const s = state.services.find(s => s.id === a.serviceId);
-                    if(c && s) options += `<option class="text-dark" value="acc_${a.id}">${c.name} - ${s.name}</option>`;
-                });
+                otherAccs.forEach(a => { const c = state.customers.find(c => c.id === a.customerId); const s = state.services.find(s => s.id === a.serviceId); if(c && s) options += `<option class="text-dark" value="acc_${a.id}">${c.name} - ${s.name}</option>`; });
                 options += `</optgroup>`;
             }
-
-            select.innerHTML = options;
-            document.getElementById('transferAmount').value = '';
-            
-            if (options.includes("acc_") || options.includes("bb_")) { new bootstrap.Modal(document.getElementById('transferModal')).show(); } 
-            else { showAlert("ট্রান্সফার করার মতো কোনো প্রাপক পাওয়া যায়নি!", true); }
+            select.innerHTML = options; document.getElementById('transferAmount').value = '';
+            if (options.includes("acc_") || options.includes("bb_")) { new bootstrap.Modal(document.getElementById('transferModal')).show(); } else { showAlert("প্রাপক পাওয়া যায়নি!", true); }
         }
 
         function submitTransfer() {
-            const fromAccId = document.getElementById('transferFromAccId').value;
-            const targetVal = document.getElementById('transferTargetSelect').value;
-            const amount = parseFloat(document.getElementById('transferAmount').value);
-
+            const fromAccId = document.getElementById('transferFromAccId').value; const targetVal = document.getElementById('transferTargetSelect').value; const amount = parseFloat(document.getElementById('transferAmount').value);
             if(isNaN(amount) || amount <= 0) return showAlert("ভুল পরিমাণ", true);
-            const fromAcc = state.accounts.find(a => a.id === fromAccId);
-            const fromSrv = state.services.find(s => s.id === fromAcc.serviceId);
+            const fromAcc = state.accounts.find(a => a.id === fromAccId); const fromSrv = state.services.find(s => s.id === fromAcc.serviceId); let feePercent = fromSrv.fee; let isPartner = false;
             
-            let feePercent = fromSrv.fee; let isPartner = false;
-
             if(targetVal.startsWith('acc_')) {
-                const toAcc = state.accounts.find(a => a.id === targetVal.split('_')[1]);
-                const toSrv = state.services.find(s => s.id === toAcc.serviceId);
-                const toCust = state.customers.find(c => c.id === toAcc.customerId);
-
-                if(toSrv.blocked || !toSrv.txEnabled) return showAlert("প্রাপকের ব্যাংক ব্লক বা লেনদেন বন্ধ!", true);
-                if(toCust.blocked || !toCust.txEnabled) return showAlert("প্রাপকের একাউন্ট ব্লক বা লেনদেন বন্ধ!", true);
-
-                isPartner = fromSrv.partners.includes(toSrv.id);
-                if(isPartner) feePercent = feePercent * 0.45; 
+                const toAcc = state.accounts.find(a => a.id === targetVal.split('_')[1]); const toSrv = state.services.find(s => s.id === toAcc.serviceId); const toCust = state.customers.find(c => c.id === toAcc.customerId);
+                if(toSrv.blocked || !toSrv.txEnabled) return showAlert("প্রাপকের ব্যাংক ব্লক!", true); if(toCust.blocked || !toCust.txEnabled) return showAlert("প্রাপকের একাউন্ট ব্লক!", true);
+                
+                isPartner = fromSrv.partners.includes(toSrv.id); 
+                if(isPartner) feePercent = feePercent * 0.55; // 45% discount, user pays 55% of the fee
             }
-
-            const actualFee = (amount * feePercent) / 100;
-            const totalDeduction = amount + actualFee;
-
-            if(fromAcc.balance < totalDeduction) return showAlert(`ব্যালেন্স কম। ট্র্যান্সফার $${amount} + ফি $${actualFee.toFixed(2)} = মোট $${totalDeduction.toFixed(2)} প্রয়োজন।`, true);
-
+            
+            const actualFee = (amount * feePercent) / 100; const totalDeduction = amount + actualFee;
+            if(fromAcc.balance < totalDeduction) return showAlert(`ব্যালেন্স কম। $${totalDeduction.toFixed(2)} প্রয়োজন।`, true);
             fromAcc.balance -= totalDeduction; fromSrv.profit += actualFee; 
-
-            if(targetVal.startsWith('acc_')) state.accounts.find(a => a.id === targetVal.split('_')[1]).balance += amount;
-            else if(targetVal === 'bb_main') state.bigBank.main += amount;
-            else if(targetVal === 'bb_profit') state.bigBank.profit += amount;
-
-            showAlert(`$${amount} ট্রান্সফার সফল! ফি কাটা হয়েছে $${actualFee.toFixed(2)}${isPartner?' (পার্টনারশিপ ছাড়)':''}`);
-            saveState(); renderAll(); bootstrap.Modal.getInstance(document.getElementById('transferModal')).hide();
+            
+            if(targetVal.startsWith('acc_')) state.accounts.find(a => a.id === targetVal.split('_')[1]).balance += amount; else if(targetVal === 'bb_main') state.bigBank.main += amount; else state.bigBank.profit += amount;
+            
+            showAlert(`$${amount} ট্রান্সফার সফল!${isPartner ? ' (পার্টনারশিপের কারণে ৪৫% ফি ছাড় দেওয়া হয়েছে)' : ''}`); saveState(); renderAll(); bootstrap.Modal.getInstance(document.getElementById('transferModal')).hide();
         }
 
-        function showCustomerLoanUI(accId) {
-            const acc = state.accounts.find(a => a.id === accId);
-            const srv = state.services.find(s => s.id === acc.serviceId);
-            document.getElementById('loanAccId').value = accId; document.getElementById('loanAmount').value = '';
-            
-            const sourceSelect = document.getElementById('loanSource');
-            const balLabel = document.getElementById('loanSourceBalance');
-            const updateLabel = () => { balLabel.innerText = `ব্যাংকের ${sourceSelect.value === 'main' ? 'মূল' : 'মুনাফা'} একাউন্টে ব্যালেন্স: $${formatMoney(srv[sourceSelect.value])}`; };
-            sourceSelect.onchange = updateLabel; updateLabel();
-            new bootstrap.Modal(document.getElementById('customerLoanModal')).show();
+        // CC Payment & Reward Points Logic
+        function openCCPayModal(cardId) {
+            document.getElementById('ccPayCardId').value = cardId; document.getElementById('ccPayAmount').value = ''; document.getElementById('ccEmiToggle').checked = false;
+            calculateEMI(); new bootstrap.Modal(document.getElementById('ccPayModal')).show();
         }
 
-        function submitCustomerLoan() {
-            const accId = document.getElementById('loanAccId').value;
-            const amount = parseFloat(document.getElementById('loanAmount').value);
-            const rate = parseFloat(document.getElementById('loanInterest').value);
-            const source = document.getElementById('loanSource').value;
-            
-            if(isNaN(amount) || amount <= 0 || isNaN(rate) || rate < 0) return showAlert("সঠিক তথ্য দিন", true);
-            const acc = state.accounts.find(a => a.id === accId);
-            const srv = state.services.find(s => s.id === acc.serviceId);
-            if(srv[source] < amount) return showAlert(`ব্যাংকের নির্বাচিত একাউন্টে পর্যাপ্ত ব্যালেন্স নেই!`, true);
-            
-            srv[source] -= amount; acc.balance += amount;
-            state.loans.push({
-                id: generateId(), type: 'SRV_TO_CUST', accountId: accId, serviceId: srv.id,
-                source: source, principal: amount, interest: amount * (rate / 100), paid: 0, active: true
-            });
-            
-            showAlert(`$${formatMoney(amount)} লোন সফলভাবে গ্রহণ করা হয়েছে!`); saveState(); renderAll();
-            bootstrap.Modal.getInstance(document.getElementById('customerLoanModal')).hide();
-        }
-
-        async function payCustomerLoan(loanId) {
-            const loan = state.loans.find(l => l.id === loanId);
-            const acc = state.accounts.find(a => a.id === loan.accountId);
-            const srv = state.services.find(s => s.id === loan.serviceId);
-            const due = loan.principal + loan.interest - loan.paid;
-            
-            const val = await showPrompt(`পরিশোধের পরিমাণ দিন (মোট বকেয়া: $${formatMoney(due)}):\nআপনার ব্যালেন্স: $${formatMoney(acc.balance)}`, due);
-            if(!val) return; const amt = parseFloat(val);
-            
-            if(isNaN(amt) || amt <= 0) return showAlert("ভুল পরিমাণ", true);
-            if(amt > due + 0.01) return showAlert("বকেয়ার চেয়ে বেশি পরিশোধ করা যাবে না!", true);
-            if(amt > acc.balance) return showAlert("পর্যাপ্ত ব্যালেন্স নেই!", true);
-            
-            acc.balance -= amt; loan.paid += amt;
-            const totalOriginal = loan.principal + loan.interest;
-            const toPrincipal = amt * (loan.principal / totalOriginal);
-            const toInterest = amt - toPrincipal;
-            
-            srv[loan.source] += toPrincipal; srv.profit += toInterest;        
-            if(Math.abs(totalOriginal - loan.paid) < 0.01) loan.active = false;
-            showAlert("লোন পরিশোধ সফল হয়েছে!"); saveState(); renderAll();
-        }
-
-        async function showFDRUI(accId) {
-            const acc = state.accounts.find(a => a.id === accId);
-            const p1 = await showPrompt(`FDR এ কত ডলার জমা রাখতে চান? (আপনার ব্যালেন্স $${formatMoney(acc.balance)})`);
-            if(!p1) return; const amt = parseFloat(p1);
-            if(isNaN(amt) || amt <= 0 || amt > acc.balance) return showAlert("ভুল পরিমাণ বা ব্যালেন্স নেই!", true);
-
-            const p2 = await showPrompt("মুনাফার হার দিন (%) (উদাঃ 10):");
-            if(!p2) return; const rate = parseFloat(p2);
-
-            const p3 = await showPrompt("কত সেকেন্ড (রিয়েল টাইম) পর পর মুনাফা পাবেন? (উদাঃ 5):");
-            if(!p3) return; const interval = parseFloat(p3);
-            if(isNaN(rate) || isNaN(interval) || interval < 1) return showAlert("সঠিক তথ্য দিন", true);
-
-            acc.balance -= amt;
-            state.fdrs.push({ id: generateId(), accountId: accId, principal: amt, rate: rate, intervalSec: interval * 5, lastYieldTime: state.virtualTime, active: true });
-            showAlert("FDR সফলভাবে তৈরী হয়েছে!"); saveState(); renderCustomerDashboard();
-        }
-
-        function showFDRList(accId) {
-            const accFDRs = state.fdrs.filter(f => f.accountId === accId && f.active);
-            const tbody = document.getElementById('fdrListBody');
-            if(accFDRs.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="text-muted py-5 fw-bold">কোন সক্রিয় FDR নেই।</td></tr>`; } 
-            else {
-                tbody.innerHTML = accFDRs.map(f => `
-                    <tr>
-                        <td class="text-success fw-bold">$${formatMoney(f.principal)}</td>
-                        <td><span class="badge bg-primary bg-opacity-50 rounded-pill text-light">${f.rate}%</span></td>
-                        <td>প্রতি ${f.intervalSec / 5} সেঃ</td>
-                        <td><span class="badge bg-success rounded-pill px-3 shadow-sm">সক্রিয়</span></td>
-                        <td><button class="btn btn-sm btn-danger rounded-pill px-3 shadow-sm" onclick="closeFDR('${f.id}')">ভেঙে ফেলুন</button></td>
-                    </tr>`).join('');
-            }
-            new bootstrap.Modal(document.getElementById('fdrListModal')).show();
-        }
-
-        async function closeFDR(fdrId) {
-            const conf = await showPrompt("FDR টি ভাঙতে চাইলে 'হ্যাঁ' লিখুন। (আসল ফেরত যাবে)", "");
-            if(conf !== "হ্যাঁ") return;
-            const fdr = state.fdrs.find(f => f.id === fdrId);
-            const acc = state.accounts.find(a => a.id === fdr.accountId);
-            if(fdr && acc) {
-                acc.balance += fdr.principal; fdr.active = false;
-                showAlert("FDR টি ভেঙে ফেলা হয়েছে এবং আসল টাকা ফেরত এসেছে।");
-                saveState(); showFDRList(acc.id); renderCustomerDashboard();
+        function calculateEMI() {
+            const isEmi = document.getElementById('ccEmiToggle').checked; const emiOptions = document.getElementById('ccEmiOptions');
+            if(isEmi) emiOptions.classList.remove('d-none'); else emiOptions.classList.add('d-none');
+            const amt = parseFloat(document.getElementById('ccPayAmount').value) || 0;
+            if(isEmi && amt > 0) {
+                const months = document.getElementById('ccEmiMonths').value; const rates = { '3': 5, '6': 8, '12': 15 }; const totalWithInterest = amt + ((amt * rates[months]) / 100);
+                document.getElementById('ccEmiCalcResult').innerText = `মোট: $${formatMoney(totalWithInterest)} | মাসিক কিস্তি: $${formatMoney(totalWithInterest / parseInt(months))}`;
             }
         }
 
-        const generateCardNumber = (type) => {
-            if(type === 'DEBIT') return Array.from({length: 4}, () => Math.floor(1000 + Math.random() * 9000)).join('-');
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            let res = '';
-            for(let i=0; i<16; i++) { if(i>0 && i%4===0) res += '-'; res += chars.charAt(Math.floor(Math.random() * chars.length)); }
-            return res;
-        };
+        function submitCCPayment() {
+            const cardId = document.getElementById('ccPayCardId').value; const amt = parseFloat(document.getElementById('ccPayAmount').value); const cat = document.getElementById('ccPayCategory').value; const isEmi = document.getElementById('ccEmiToggle').checked;
+            if(isNaN(amt) || amt <= 0) return showAlert("সঠিক পরিমাণ দিন", true);
+            const card = state.cards.find(c => c.id === cardId); const totalUsage = card.spent + (card.blockedEmiLimit||0);
 
-        function showCardsUI(accId) {
-            const acc = state.accounts.find(a => a.id === accId);
-            const myCards = state.cards.filter(c => c.accountId === accId);
-            let dCard = myCards.find(c => c.type === 'DEBIT');
-            let cCard = myCards.find(c => c.type === 'CREDIT');
+            if(!isEmi) {
+                if(totalUsage + amt > card.limit) return showAlert("ক্রেডিট লিমিট অতিক্রম করবে!", true);
+                if(card.spent === 0 && card.emis.length === 0) card.lastBillingDate = state.virtualTime;
+                card.spent += amt; card.rewardPoints += amt; // Points added
+                addNotification("মার্চেন্ট পেমেন্ট", `${cat} এর জন্য ক্রেডিট কার্ড থেকে $${formatMoney(amt)} পে করা হয়েছে।`, 'success');
+            } else {
+                const months = document.getElementById('ccEmiMonths').value; const rates = { '3': 5, '6': 8, '12': 15 }; const totalWithInterest = amt + ((amt * rates[months]) / 100);
+                if(totalUsage + totalWithInterest > card.limit) return showAlert("ক্রেডিট লিমিট অতিক্রম করবে!", true);
+                if(card.spent === 0 && card.emis.length === 0) card.lastBillingDate = state.virtualTime;
+                card.blockedEmiLimit += totalWithInterest; card.rewardPoints += amt; // Points for base amount
+                card.emis.push({ id: generateId(), category: cat, totalAmount: totalWithInterest, installment: totalWithInterest / parseInt(months), remainingMonths: parseInt(months), lastProcessed: state.virtualTime });
+                addNotification("EMI কনভার্সন", `${cat} এর $${formatMoney(amt)} বিলটি ${months} মাসের EMI করা হয়েছে।`, 'success');
+            }
+            showAlert("পেমেন্ট সফল হয়েছে!"); saveState(); bootstrap.Modal.getInstance(document.getElementById('ccPayModal')).hide(); showCardsUI(card.accountId, true);
+        }
+
+        function toggleAutoPay(cardId) {
+            const card = state.cards.find(c => c.id === cardId); card.autoPay = !card.autoPay; saveState();
+            addNotification("অটো পে সেটিং", `অটো-পে ${card.autoPay ? 'চালু' : 'বন্ধ'} করা হয়েছে।`, 'info'); showAlert(`Auto Pay ${card.autoPay ? 'চালু' : 'বন্ধ'}!`); showCardsUI(card.accountId, true);
+        }
+
+        async function redeemPoints(cardId) {
+            const card = state.cards.find(c => c.id === cardId);
+            if(card.rewardPoints < 100) return showAlert("ন্যূনতম ১০০ পয়েন্ট প্রয়োজন ($১ এর জন্য)", true);
+            if(card.spent <= 0) return showAlert("আপনার ক্রেডিট কার্ডে কোনো বকেয়া নেই!", true);
+            
+            const maxPointsToUse = Math.min(card.rewardPoints, card.spent * 100);
+            const val = await showPrompt(`আপনার পয়েন্ট: ${Math.floor(card.rewardPoints)}\nবকেয়া: $${formatMoney(card.spent)}\n(১০০ পয়েন্ট = $১)\nসর্বোচ্চ ক্লেইম: ${Math.floor(maxPointsToUse)} পয়েন্ট।\nকত পয়েন্ট ক্লেইম করতে চান?`);
+            if(!val) return; const pts = parseFloat(val);
+            if(isNaN(pts) || pts <= 0 || pts > card.rewardPoints) return showAlert("ভুল পরিমাণ!", true);
+            if(pts > maxPointsToUse) return showAlert("বকেয়ার চেয়ে বেশি ক্লেইম করা যাবে না!", true);
+            
+            const cash = pts / 100;
+            card.rewardPoints -= pts; card.spent -= cash;
+            addNotification("রিওয়ার্ড ক্লেইম", `${pts} পয়েন্ট ব্যবহার করে $${formatMoney(cash)} বিল পরিশোধ করা হয়েছে।`, 'success');
+            showAlert("ভাউচার ক্লেইম সফল!"); saveState(); showCardsUI(card.accountId, true); renderCustomerDashboard();
+        }
+
+        function showCardsUI(accId, isUpdate = false) {
+            const acc = state.accounts.find(a => a.id === accId); const myCards = state.cards.filter(c => c.accountId === accId);
+            let dCard = myCards.find(c => c.type === 'DEBIT'); let cCard = myCards.find(c => c.type === 'CREDIT');
 
             let html = `
                 <div class="row g-4 p-2">
                     <div class="col-md-6">
                         <h5 class="fw-bold mb-4 border-bottom border-secondary border-opacity-25 pb-2 text-center text-info">ডেবিট কার্ড</h5>
-                        ${dCard ? renderCard(dCard, acc) : `<div class="d-flex h-100 align-items-center"><button class="btn btn-outline-info w-100 py-3 fw-bold rounded-4 shadow-sm" onclick="issueCard('${accId}', 'DEBIT')"><i class="fa-solid fa-plus me-2"></i> ডেবিট কার্ড ইস্যু করুন</button></div>`}
+                        ${dCard ? renderCard(dCard, acc) : `<div class="d-flex h-100 align-items-center"><button class="btn btn-outline-info w-100 py-4 fw-bold rounded-4 shadow-sm" onclick="issueCard('${accId}', 'DEBIT')"><i class="fa-solid fa-plus me-2"></i> ডেবিট কার্ড ইস্যু করুন</button></div>`}
                     </div>
                     <div class="col-md-6 border-start border-secondary border-opacity-25">
                         <h5 class="fw-bold mb-4 border-bottom border-secondary border-opacity-25 pb-2 text-center text-warning">ক্রেডিট কার্ড</h5>
-                        ${cCard ? renderCard(cCard, acc) : `<div class="d-flex h-100 align-items-center"><button class="btn btn-outline-warning w-100 py-3 fw-bold rounded-4 shadow-sm" onclick="issueCard('${accId}', 'CREDIT')"><i class="fa-solid fa-plus me-2"></i> ক্রেডিট কার্ড ইস্যু করুন</button></div>`}
+                        ${cCard ? renderCard(cCard, acc) : `<div class="d-flex h-100 align-items-center"><button class="btn btn-outline-warning w-100 py-4 fw-bold rounded-4 shadow-sm" onclick="issueCard('${accId}', 'CREDIT')"><i class="fa-solid fa-plus me-2"></i> ক্রেডিট কার্ড ইস্যু করুন</button></div>`}
                     </div>
                 </div>`;
             
-            let modalHtml = `
-            <div class="modal fade" id="cardsModal" tabindex="-1">
-                <div class="modal-dialog modal-lg modal-dialog-centered">
-                    <div class="modal-content card-glass">
-                        <div class="modal-header border-secondary border-opacity-25">
-                            <h5 class="modal-title fw-bold"><i class="fa-solid fa-credit-card me-2"></i> কার্ড ম্যানেজমেন্ট</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body" id="cardsModalBody">${html}</div>
-                    </div>
-                </div>
-            </div>`;
-            
-            let oldModal = document.getElementById('cardsModal');
-            if(oldModal) oldModal.remove();
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            if(isUpdate && document.getElementById('cardsModalBody')) { document.getElementById('cardsModalBody').innerHTML = html; return; }
+            let modalHtml = `<div class="modal fade" id="cardsModal" tabindex="-1"><div class="modal-dialog modal-xl modal-dialog-centered"><div class="modal-content card-glass"><div class="modal-header border-secondary border-opacity-25"><h5 class="modal-title fw-bold"><i class="fa-solid fa-credit-card me-2"></i> কার্ড ম্যানেজমেন্ট</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="cardsModalBody">${html}</div></div></div></div>`;
+            let oldModal = document.getElementById('cardsModal'); if(oldModal) oldModal.remove(); document.body.insertAdjacentHTML('beforeend', modalHtml);
             new bootstrap.Modal(document.getElementById('cardsModal')).show();
         }
 
         function renderCard(card, acc) {
-            if(!card.active) return `<div class="alert alert-danger fw-bold rounded-4 text-center py-4 shadow-sm"><i class="fa-solid fa-ban fs-1 d-block mb-2"></i> কার্ডটি ব্যাংক কর্তৃক ব্লক করা হয়েছে</div>`;
+            if(!card.active) return `<div class="alert alert-danger fw-bold rounded-4 text-center py-4 shadow-sm"><i class="fa-solid fa-ban fs-1 d-block mb-2"></i> কার্ডটি ব্লক করা হয়েছে</div>`;
             if(card.type === 'DEBIT') {
                 return `
-                    <div class="card-debit mb-4 shadow-lg">
-                        <h5 class="fw-bold"><i class="fa-brands fa-cc-visa fs-3 align-middle me-2"></i> VISA Debit</h5>
-                        <h3 class="mt-5 tracking-widest text-center">${card.number}</h3>
-                        <div class="d-flex justify-content-between mt-5">
-                            <span>EXP: ${card.exp}</span><span>CVV: ${card.cvv}</span>
-                        </div>
-                    </div>
-                    <div class="bg-secondary bg-opacity-10 p-3 rounded-4 text-center border border-info border-opacity-25 shadow-sm">
-                        <small class="text-muted fw-bold d-block mb-1">লিংকড একাউন্ট ব্যালেন্স</small>
-                        <h3 class="text-success fw-bold m-0">$${formatMoney(acc.balance)}</h3>
-                    </div>`;
+                    <div class="card-debit mb-4 shadow-lg"><h5 class="fw-bold"><i class="fa-brands fa-cc-visa fs-3 align-middle me-2"></i> VISA Debit</h5><h3 class="mt-5 tracking-widest text-center">${card.number}</h3><div class="d-flex justify-content-between mt-5"><span>EXP: ${card.exp}</span><span>CVV: ${card.cvv}</span></div></div>
+                    <div class="bg-secondary bg-opacity-10 p-4 rounded-4 text-center border border-info border-opacity-25 shadow-sm"><small class="text-muted fw-bold d-block mb-2">লিংকড একাউন্ট ব্যালেন্স</small><h2 class="text-success fw-bold m-0">$${formatMoney(acc.balance)}</h2></div>`;
             } else {
-                const available = card.limit - card.spent;
-                const fine = card.fines || 0;
+                const available = card.limit - card.spent - (card.blockedEmiLimit || 0); const fine = card.fines || 0;
+                let emiBadge = card.emis && card.emis.length > 0 ? `<div class="alert alert-warning bg-opacity-10 py-2 border-warning border-opacity-25 text-center mt-3 mb-0 fw-bold small"><i class="fa-solid fa-rotate"></i> ${card.emis.length} টি অ্যাক্টিভ EMI চলছে (ব্লকড: $${formatMoney(card.blockedEmiLimit)})</div>` : '';
                 return `
-                    <div class="card-credit mb-4 shadow-lg">
-                        <h5 class="fw-bold"><i class="fa-brands fa-cc-mastercard fs-3 align-middle me-2"></i> MasterCard</h5>
+                    <div class="card-credit mb-3 shadow-lg">
+                        <div class="d-flex justify-content-between"><h5 class="fw-bold m-0"><i class="fa-brands fa-cc-mastercard fs-3 align-middle me-2"></i> MasterCard</h5></div>
                         <h4 class="mt-5 tracking-widest text-center">${card.number}</h4>
-                        <div class="d-flex justify-content-between mt-5">
-                            <span>EXP: ${card.exp}</span><span>CVV: ${card.cvv}</span>
-                        </div>
+                        <div class="d-flex justify-content-between mt-5"><span>EXP: ${card.exp}</span><span>CVV: ${card.cvv}</span></div>
                     </div>
                     <div class="bg-secondary bg-opacity-10 p-4 rounded-4 border border-warning border-opacity-50 shadow-sm">
-                        <div class="d-flex justify-content-between fw-bold mb-2 pb-2 border-bottom border-secondary border-opacity-25">
-                            <span>লিমিট: <span class="text-light">$${formatMoney(card.limit)}</span></span>
-                            <span>ব্যবহার: <span class="text-danger">$${formatMoney(card.spent)}</span></span>
+                        <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom border-secondary border-opacity-25">
+                            <div class="form-check form-switch m-0"><input class="form-check-input" type="checkbox" id="autoPaySwitch" ${card.autoPay ? 'checked' : ''} onchange="toggleAutoPay('${card.id}')"><label class="form-check-label text-info fw-bold small ms-2 mt-1" for="autoPaySwitch">অটো-পে (ডেবিট)</label></div>
+                            <div class="text-end"><span class="badge bg-warning text-dark px-2 py-1"><i class="fa-solid fa-star"></i> পয়েন্ট: ${Math.floor(card.rewardPoints||0)}</span> <button class="btn btn-sm btn-outline-warning p-1 px-2" onclick="redeemPoints('${card.id}')">ক্লেইম</button></div>
                         </div>
-                        <div class="d-flex justify-content-between fw-bold mb-4">
-                            <span>ফাইন: <span class="text-danger">$${formatMoney(fine)}</span></span>
-                            <span>এভেইলেবল: <span class="text-success">$${formatMoney(available)}</span></span>
+                        <div class="d-flex justify-content-between fw-bold mb-2"><span>লিমিট: <span class="text-light">$${formatMoney(card.limit)}</span></span><span>ব্যবহার: <span class="text-danger">$${formatMoney(card.spent)}</span></span></div>
+                        <div class="d-flex justify-content-between fw-bold mb-4"><span>ফাইন: <span class="text-danger">$${formatMoney(fine)}</span></span><span>এভেইলেবল: <span class="text-success">$${formatMoney(available)}</span></span></div>
+                        <div class="mt-2 d-flex flex-wrap gap-2">
+                            <button class="btn btn-warning fw-bold text-dark flex-grow-1 shadow-sm rounded-pill" onclick="openCCPayModal('${card.id}')"><i class="fa-solid fa-cart-shopping"></i> পে বিল</button>
+                            <button class="btn btn-success fw-bold flex-grow-1 shadow-sm rounded-pill" onclick="payCreditCardBill('${card.id}')"><i class="fa-solid fa-money-bill"></i> ডিউ পেমেন্ট</button>
+                            <button class="btn btn-outline-danger shadow-sm rounded-circle px-3" onclick="closeCard('${card.id}')" title="কার্ড বন্ধ"><i class="fa-solid fa-power-off"></i></button>
                         </div>
-                        <div class="mt-2 d-flex gap-2">
-                            <button class="btn btn-primary flex-grow-1 fw-bold shadow-sm rounded-pill" onclick="useCreditCard('${card.id}')">খরচ</button>
-                            <button class="btn btn-success flex-grow-1 fw-bold shadow-sm rounded-pill" onclick="payCreditCardBill('${card.id}')">বিল দিন</button>
-                            <button class="btn btn-outline-danger shadow-sm rounded-circle px-3" onclick="closeCard('${card.id}')" title="বন্ধ করুন"><i class="fa-solid fa-power-off"></i></button>
-                        </div>
+                        ${emiBadge}
                     </div>`;
             }
         }
 
         async function issueCard(accId, type) {
-            const acc = state.accounts.find(a => a.id === accId);
-            let limit = 0;
+            const acc = state.accounts.find(a => a.id === accId); let limit = 0;
             if(type === 'CREDIT') {
                 const val = await showPrompt("ক্রেডিট লিমিট কত দিতে চান? (এই পরিমাণ অর্থ ব্যাংকের মূল একাউন্ট থেকে কাটা হবে)");
-                if(!val) return; limit = parseFloat(val);
-                if(isNaN(limit) || limit <= 0) return showAlert("ভুল পরিমাণ", true);
+                if(!val) return; limit = parseFloat(val); if(isNaN(limit) || limit <= 0) return showAlert("ভুল পরিমাণ", true);
                 const srv = state.services.find(s => s.id === acc.serviceId);
-                if(srv.main < limit) return showAlert("ব্যাংকের মূল একাউন্টে ক্রেডিট লিমিট ইস্যু করার মত পর্যাপ্ত ফান্ড নেই!", true);
+                if(srv.main < limit) return showAlert("ব্যাংকের মূল একাউন্টে পর্যাপ্ত ফান্ড নেই!", true);
                 srv.main -= limit;
             }
-
-            const expYear = new Date().getFullYear() + 5;
-            const expMonth = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
-            state.cards.push({
-                id: generateId(), accountId: accId, serviceId: acc.serviceId, type: type,
-                number: generateCardNumber(type), exp: `${expMonth}/${String(expYear).substr(2,2)}`, cvv: Math.floor(100 + Math.random() * 900),
-                limit: limit, spent: 0, fines: 0, active: true, lastBillingDate: state.virtualTime
-            });
-
-            showAlert(`${type} কার্ড ইস্যু করা হয়েছে!`); saveState();
-            bootstrap.Modal.getInstance(document.getElementById('cardsModal')).hide(); showCardsUI(accId);
+            const expYear = new Date().getFullYear() + 5; const expMonth = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
+            state.cards.push({ id: generateId(), accountId: accId, serviceId: acc.serviceId, type: type, number: generateCardNumber(type), exp: `${expMonth}/${String(expYear).substr(2,2)}`, cvv: Math.floor(100 + Math.random() * 900), limit: limit, spent: 0, fines: 0, active: true, lastBillingDate: state.virtualTime, autoPay: false, emis: [], blockedEmiLimit: 0, rewardPoints: 0, lastFeeDate: state.virtualTime });
+            showAlert(`${type} কার্ড ইস্যু করা হয়েছে!`); saveState(); showCardsUI(accId, true);
         }
 
         async function closeCard(cardId) {
             const card = state.cards.find(c => c.id === cardId);
-            if(card.spent > 0 || (card.fines && card.fines > 0)) return showAlert("বন্ধ করার পূর্বে বকেয়া পরিশোধ করুন!", true);
-            const conf = await showPrompt(`কার্ডটি বন্ধ করতে 'হ্যাঁ' লিখুন। ($${formatMoney(card.limit)} ব্যাংকে ফেরত যাবে)`, "");
-            if(conf !== "হ্যাঁ") return;
+            if(card.spent > 0 || (card.fines && card.fines > 0) || card.blockedEmiLimit > 0) return showAlert("বন্ধ করার পূর্বে সকল বকেয়া ও EMI পরিশোধ করুন!", true);
+            const conf = await showPrompt(`কার্ডটি বন্ধ করতে 'হ্যাঁ' লিখুন। ($${formatMoney(card.limit)} ব্যাংকে ফেরত যাবে)`, ""); if(conf !== "হ্যাঁ") return;
             if(card.type === 'CREDIT') state.services.find(s => s.id === card.serviceId).main += card.limit;
-            state.cards = state.cards.filter(c => c.id !== cardId);
-            showAlert("কার্ড বন্ধ এবং ফান্ড ব্যাংকে ফেরত পাঠানো হয়েছে।"); saveState();
-            bootstrap.Modal.getInstance(document.getElementById('cardsModal')).hide(); showCardsUI(card.accountId);
-        }
-
-        async function useCreditCard(cardId) {
-            const card = state.cards.find(c => c.id === cardId);
-            const available = card.limit - card.spent;
-            const val = await showPrompt(`কত খরচ করতে চান? (এভেইলেবল: $${formatMoney(available)})`);
-            if(!val) return; const amt = parseFloat(val);
-            if(isNaN(amt) || amt <= 0 || amt > available) return showAlert("ভুল পরিমাণ বা লিমিট অতিক্রম করছে!", true);
-            if(card.spent === 0) card.lastBillingDate = state.virtualTime;
-            card.spent += amt; saveState();
-            bootstrap.Modal.getInstance(document.getElementById('cardsModal')).hide(); showCardsUI(card.accountId); showAlert("খরচ সফল হয়েছে!");
+            state.cards = state.cards.filter(c => c.id !== cardId); showAlert("কার্ড বন্ধ করা হয়েছে।"); saveState(); showCardsUI(card.accountId, true);
         }
 
         async function payCreditCardBill(cardId) {
-            const card = state.cards.find(c => c.id === cardId);
-            const acc = state.accounts.find(a => a.id === card.accountId);
-            const srv = state.services.find(s => s.id === card.serviceId);
-            const due = card.spent + (card.fines || 0);
-            
-            const val = await showPrompt(`কত বিল পরিশোধ করবেন? (মোট: $${formatMoney(due)})\nআপনার ব্যালেন্স: $${formatMoney(acc.balance)}`, due);
-            if(!val) return; const amt = parseFloat(val);
-            
-            if(isNaN(amt) || amt <= 0) return showAlert("ভুল পরিমাণ", true);
-            if(amt > acc.balance) return showAlert("একাউন্টে পর্যাপ্ত টাকা নেই!", true);
-            if(amt > due) return showAlert("বকেয়ার চেয়ে বেশি দেয়া যাবে না!", true);
+            const card = state.cards.find(c => c.id === cardId); const acc = state.accounts.find(a => a.id === card.accountId); const srv = state.services.find(s => s.id === card.serviceId); const due = card.spent + (card.fines || 0);
+            if(due <= 0) return showAlert("কোন ডিউ বা বকেয়া বিল নেই।");
+            const val = await showPrompt(`কত বিল পরিশোধ করবেন? (মোট বকেয়া: $${formatMoney(due)})\nআপনার ব্যালেন্স: $${formatMoney(acc.balance)}`, due);
+            if(!val) return; const amt = parseFloat(val); if(isNaN(amt) || amt <= 0) return showAlert("ভুল পরিমাণ", true); if(amt > acc.balance) return showAlert("একাউন্টে পর্যাপ্ত টাকা নেই!", true); if(amt > due) return showAlert("বকেয়ার চেয়ে বেশি দেয়া যাবে না!", true);
 
             acc.balance -= amt; let remaining = amt; let finesPaid = 0;
-            if(card.fines && card.fines > 0) {
-                if(remaining >= card.fines) { finesPaid = card.fines; remaining -= card.fines; card.fines = 0; } 
-                else { finesPaid = remaining; card.fines -= remaining; remaining = 0; }
-            }
-            if(remaining > 0) card.spent -= remaining;
-            if(finesPaid > 0 && srv) srv.profit += finesPaid;
-            if(card.spent === 0 && card.fines === 0) card.lastBillingDate = state.virtualTime; 
+            if(card.fines && card.fines > 0) { if(remaining >= card.fines) { finesPaid = card.fines; remaining -= card.fines; card.fines = 0; } else { finesPaid = remaining; card.fines -= remaining; remaining = 0; } }
+            if(remaining > 0) card.spent -= remaining; if(finesPaid > 0 && srv) srv.profit += finesPaid;
+            if(card.spent === 0 && card.fines === 0 && card.emis.length === 0) card.lastBillingDate = state.virtualTime; 
 
-            saveState(); bootstrap.Modal.getInstance(document.getElementById('cardsModal')).hide();
-            showCardsUI(card.accountId); renderCustomerDashboard(); showAlert("বিল পরিশোধ সফল!");
+            addNotification("ক্রেডিট কার্ড বিল পরিশোধ", `$${formatMoney(amt)} ক্রেডিট কার্ডের বিল দেওয়া হয়েছে।`, 'success');
+            saveState(); showCardsUI(card.accountId, true); renderCustomerDashboard(); showAlert("বিল পরিশোধ সফল!");
         }
 
+        function showCustomerLoanUI(accId) { const acc = state.accounts.find(a => a.id === accId); const srv = state.services.find(s => s.id === acc.serviceId); document.getElementById('loanAccId').value = accId; document.getElementById('loanAmount').value = ''; const sourceSelect = document.getElementById('loanSource'); const balLabel = document.getElementById('loanSourceBalance'); const updateLabel = () => { balLabel.innerText = `এভেইলেবল: $${formatMoney(srv[sourceSelect.value])}`; }; sourceSelect.onchange = updateLabel; updateLabel(); new bootstrap.Modal(document.getElementById('customerLoanModal')).show(); }
+        function submitCustomerLoan() { const accId = document.getElementById('loanAccId').value; const amount = parseFloat(document.getElementById('loanAmount').value); const rate = parseFloat(document.getElementById('loanInterest').value); const source = document.getElementById('loanSource').value; if(isNaN(amount) || amount <= 0 || isNaN(rate) || rate < 0) return showAlert("সঠিক তথ্য দিন", true); const acc = state.accounts.find(a => a.id === accId); const srv = state.services.find(s => s.id === acc.serviceId); if(srv[source] < amount) return showAlert(`ব্যাংকের নির্বাচিত একাউন্টে পর্যাপ্ত ব্যালেন্স নেই!`, true); srv[source] -= amount; acc.balance += amount; state.loans.push({ id: generateId(), type: 'SRV_TO_CUST', accountId: accId, serviceId: srv.id, source: source, principal: amount, interest: amount * (rate / 100), paid: 0, active: true }); showAlert(`লোন গ্রহণ সফল!`); saveState(); renderAll(); bootstrap.Modal.getInstance(document.getElementById('customerLoanModal')).hide(); }
+        async function payCustomerLoan(loanId) { const loan = state.loans.find(l => l.id === loanId); const acc = state.accounts.find(a => a.id === loan.accountId); const srv = state.services.find(s => s.id === loan.serviceId); const due = loan.principal + loan.interest - loan.paid; const val = await showPrompt(`পরিশোধের পরিমাণ দিন (মোট বকেয়া: $${formatMoney(due)}):\nআপনার ব্যালেন্স: $${formatMoney(acc.balance)}`, due); if(!val) return; const amt = parseFloat(val); if(isNaN(amt) || amt <= 0) return showAlert("ভুল পরিমাণ", true); if(amt > due + 0.01) return showAlert("বকেয়ার চেয়ে বেশি পরিশোধ করা যাবে না!", true); if(amt > acc.balance) return showAlert("পর্যাপ্ত ব্যালেন্স নেই!", true); acc.balance -= amt; loan.paid += amt; const totalOriginal = loan.principal + loan.interest; const toPrincipal = amt * (loan.principal / totalOriginal); const toInterest = amt - toPrincipal; srv[loan.source] += toPrincipal; srv.profit += toInterest; if(Math.abs(totalOriginal - loan.paid) < 0.01) loan.active = false; showAlert("লোন পরিশোধ সফল!"); saveState(); renderAll(); }
+        async function showFDRUI(accId) { const acc = state.accounts.find(a => a.id === accId); const p1 = await showPrompt(`FDR এ কত ডলার জমা রাখতে চান? (আপনার ব্যালেন্স $${formatMoney(acc.balance)})`); if(!p1) return; const amt = parseFloat(p1); if(isNaN(amt) || amt <= 0 || amt > acc.balance) return showAlert("ভুল পরিমাণ বা ব্যালেন্স নেই!", true); const p2 = await showPrompt("মুনাফার হার দিন (%) (উদাঃ 10):"); if(!p2) return; const rate = parseFloat(p2); const p3 = await showPrompt("কত সেকেন্ড (রিয়েল টাইম) পর পর মুনাফা পাবেন? (উদাঃ 5):"); if(!p3) return; const interval = parseFloat(p3); if(isNaN(rate) || isNaN(interval) || interval < 1) return showAlert("সঠিক তথ্য দিন", true); acc.balance -= amt; state.fdrs.push({ id: generateId(), accountId: accId, principal: amt, rate: rate, intervalSec: interval * 5, lastYieldTime: state.virtualTime, active: true }); addNotification("FDR তৈরি", `$${formatMoney(amt)} এর একটি নতুন FDR করা হয়েছে।`, 'success'); showAlert("FDR সফলভাবে তৈরী হয়েছে!"); saveState(); renderCustomerDashboard(); }
+        function showFDRList(accId) { const accFDRs = state.fdrs.filter(f => f.accountId === accId && f.active); const tbody = document.getElementById('fdrListBody'); if(accFDRs.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="text-muted py-5 fw-bold">কোন সক্রিয় FDR নেই।</td></tr>`; } else { tbody.innerHTML = accFDRs.map(f => `<tr><td class="text-success fw-bold">$${formatMoney(f.principal)}</td><td><span class="badge bg-primary bg-opacity-50 rounded-pill text-light">${f.rate}%</span></td><td>প্রতি ${f.intervalSec / 5} সেঃ</td><td><span class="badge bg-success rounded-pill px-3 shadow-sm">সক্রিয়</span></td><td><button class="btn btn-sm btn-danger rounded-pill px-3 shadow-sm" onclick="closeFDR('${f.id}')">ভেঙে ফেলুন</button></td></tr>`).join(''); } new bootstrap.Modal(document.getElementById('fdrListModal')).show(); }
+        async function closeFDR(fdrId) { const conf = await showPrompt("FDR টি ভাঙতে চাইলে 'হ্যাঁ' লিখুন। (আসল ফেরত যাবে)", ""); if(conf !== "হ্যাঁ") return; const fdr = state.fdrs.find(f => f.id === fdrId); const acc = state.accounts.find(a => a.id === fdr.accountId); if(fdr && acc) { acc.balance += fdr.principal; fdr.active = false; addNotification("FDR ভাঙা হয়েছে", `$${formatMoney(fdr.principal)} মূল একাউন্টে ফেরত এসেছে।`, 'warning'); showAlert("FDR টি ভেঙে ফেলা হয়েছে"); saveState(); showFDRList(acc.id); renderCustomerDashboard(); } }
+
         function renderCryptoTab() {
-            const pDisplay = document.getElementById('cryptoCurrentPrice');
-            pDisplay.innerText = '$' + formatCrypto(state.crypto.price);
-            const trendIcon = state.crypto.trend === 'up' ? '<i class="fa-solid fa-arrow-trend-up"></i> ঊর্ধ্বমুখী' : '<i class="fa-solid fa-arrow-trend-down"></i> নিম্নমুখী';
-            const trendClass = state.crypto.trend === 'up' ? 'text-success' : 'text-danger';
-            pDisplay.className = `display-3 fw-bold mt-2 ${trendClass}`;
-            document.getElementById('cryptoTrend').innerHTML = `<span class="badge ${state.crypto.trend === 'up' ? 'bg-success' : 'bg-danger'} bg-opacity-25 rounded-pill px-3 py-2 ${trendClass} fw-bold fs-6 shadow-sm">${trendIcon}</span>`;
-
-            let sHtml = '';
-            state.services.forEach(s => {
-                const valUsd = s.cryptoBalance * state.crypto.price;
-                sHtml += `
-                    <div class="d-flex justify-content-between align-items-center bg-secondary bg-opacity-10 p-3 rounded-4 border border-secondary border-opacity-25 shadow-sm">
-                        <div>
-                            <strong class="d-block fs-5">${s.name}</strong>
-                            <small class="text-warning fw-bold fs-6">${formatCrypto(s.cryptoBalance)} VCN</small> <small class="text-muted fw-bold">($${formatMoney(valUsd)})</small>
-                        </div>
-                        <div class="btn-group shadow-sm rounded-pill overflow-hidden">
-                            <button class="btn btn-outline-success border-end-0 fw-bold px-3" onclick="showCryptoTradeModal('${s.id}', 'service', 'buy')">Buy</button>
-                            <button class="btn btn-outline-danger border-end-0 fw-bold px-3" onclick="showCryptoTradeModal('${s.id}', 'service', 'sell')">Sell</button>
-                            <button class="btn btn-outline-info fw-bold px-3" onclick="showCryptoTransferModal('${s.id}', 'service')">Send</button>
-                        </div>
-                    </div>`;
-            });
-            document.getElementById('servicesCryptoList').innerHTML = sHtml || '<div class="text-muted fw-bold text-center py-4">কোন সার্ভিস নেই</div>';
-
-            let cHtml = '';
-            state.accounts.forEach(a => {
-                const cust = state.customers.find(c => c.id === a.customerId);
-                const srv = state.services.find(s => s.id === a.serviceId);
-                if(!cust || !srv) return;
-                const valUsd = a.cryptoBalance * state.crypto.price;
-                cHtml += `
-                    <div class="d-flex justify-content-between align-items-center bg-secondary bg-opacity-10 p-3 rounded-4 border border-secondary border-opacity-25 shadow-sm">
-                        <div>
-                            <strong class="d-block fs-5">${cust.name} <small class="text-muted fs-6">(${srv.name})</small></strong>
-                            <small class="text-warning fw-bold fs-6">${formatCrypto(a.cryptoBalance)} VCN</small> <small class="text-muted fw-bold">($${formatMoney(valUsd)})</small>
-                        </div>
-                        <div class="btn-group shadow-sm rounded-pill overflow-hidden">
-                            <button class="btn btn-outline-success border-end-0 fw-bold px-3" onclick="showCryptoTradeModal('${a.id}', 'customer', 'buy')">Buy</button>
-                            <button class="btn btn-outline-danger border-end-0 fw-bold px-3" onclick="showCryptoTradeModal('${a.id}', 'customer', 'sell')">Sell</button>
-                            <button class="btn btn-outline-info fw-bold px-3" onclick="showCryptoTransferModal('${a.id}', 'customer')">Send</button>
-                        </div>
-                    </div>`;
-            });
-            document.getElementById('customersCryptoList').innerHTML = cHtml || '<div class="text-muted fw-bold text-center py-4">কোন একাউন্ট নেই</div>';
+            const pDisplay = document.getElementById('cryptoCurrentPrice'); pDisplay.innerText = '$' + formatCrypto(state.crypto.price);
+            const trendIcon = state.crypto.trend === 'up' ? '<i class="fa-solid fa-arrow-trend-up"></i> ঊর্ধ্বমুখী' : '<i class="fa-solid fa-arrow-trend-down"></i> নিম্নমুখী'; const trendClass = state.crypto.trend === 'up' ? 'text-success' : 'text-danger'; pDisplay.className = `display-3 fw-bold mt-2 ${trendClass}`; document.getElementById('cryptoTrend').innerHTML = `<span class="badge ${state.crypto.trend === 'up' ? 'bg-success' : 'bg-danger'} bg-opacity-25 rounded-pill px-3 py-2 ${trendClass} fw-bold fs-6 shadow-sm">${trendIcon}</span>`;
+            let sHtml = ''; state.services.forEach(s => { const valUsd = s.cryptoBalance * state.crypto.price; sHtml += `<div class="d-flex justify-content-between align-items-center bg-secondary bg-opacity-10 p-3 rounded-4 border border-secondary border-opacity-25 shadow-sm"><div><strong class="d-block fs-5">${s.name}</strong><small class="text-warning fw-bold fs-6">${formatCrypto(s.cryptoBalance)} VCN</small> <small class="text-muted fw-bold">($${formatMoney(valUsd)})</small></div><div class="btn-group shadow-sm rounded-pill overflow-hidden"><button class="btn btn-outline-success border-end-0 fw-bold px-3" onclick="showCryptoTradeModal('${s.id}', 'service', 'buy')">Buy</button><button class="btn btn-outline-danger border-end-0 fw-bold px-3" onclick="showCryptoTradeModal('${s.id}', 'service', 'sell')">Sell</button><button class="btn btn-outline-info fw-bold px-3" onclick="showCryptoTransferModal('${s.id}', 'service')">Send</button></div></div>`; }); document.getElementById('servicesCryptoList').innerHTML = sHtml || '<div class="text-muted fw-bold text-center py-4">কোন সার্ভিস নেই</div>';
+            let cHtml = ''; state.accounts.forEach(a => { const cust = state.customers.find(c => c.id === a.customerId); const srv = state.services.find(s => s.id === a.serviceId); if(!cust || !srv) return; const valUsd = a.cryptoBalance * state.crypto.price; cHtml += `<div class="d-flex justify-content-between align-items-center bg-secondary bg-opacity-10 p-3 rounded-4 border border-secondary border-opacity-25 shadow-sm"><div><strong class="d-block fs-5">${cust.name} <small class="text-muted fs-6">(${srv.name})</small></strong><small class="text-warning fw-bold fs-6">${formatCrypto(a.cryptoBalance)} VCN</small> <small class="text-muted fw-bold">($${formatMoney(valUsd)})</small></div><div class="btn-group shadow-sm rounded-pill overflow-hidden"><button class="btn btn-outline-success border-end-0 fw-bold px-3" onclick="showCryptoTradeModal('${a.id}', 'customer', 'buy')">Buy (CC)</button><button class="btn btn-outline-danger border-end-0 fw-bold px-3" onclick="showCryptoTradeModal('${a.id}', 'customer', 'sell')">Sell</button><button class="btn btn-outline-info fw-bold px-3" onclick="showCryptoTransferModal('${a.id}', 'customer')">Send</button></div></div>`; }); document.getElementById('customersCryptoList').innerHTML = cHtml || '<div class="text-muted fw-bold text-center py-4">কোন একাউন্ট নেই</div>';
         }
 
         function showCryptoTradeModal(entityId, type, action) {
-            document.getElementById('ctEntityId').value = entityId;
-            document.getElementById('ctEntityType').value = type;
-            document.getElementById('ctActionType').value = action;
-            const isBuy = action === 'buy';
-            document.getElementById('ctActionLabel').innerText = isBuy ? "V-Coin ক্রয় (Buy)" : "V-Coin বিক্রয় (Sell)";
-            document.getElementById('ctActionLabel').className = `fw-bold fs-4 ${isBuy ? 'text-success' : 'text-danger'}`;
-            document.getElementById('ctCurrentPriceDisplay').innerText = `বর্তমান মূল্য: $${formatCrypto(state.crypto.price)}`;
-            
-            document.getElementById('ctSourceSelectorDiv').className = (type === 'service' && isBuy) ? 'mb-4' : 'd-none';
-            document.getElementById('ctAmountLabel').innerText = isBuy ? "কত ডলারের (USD) ক্রিপ্টো কিনবেন?" : "কতগুলো V-Coin বিক্রি করবেন?";
-            
-            let avail = "";
-            if(type === 'service') {
-                const s = state.services.find(x => x.id === entityId);
-                avail = isBuy ? `এভেইলেবল ব্যালেন্স চেক করতে উৎস সিলেক্ট করুন` : `এভেইলেবল: ${formatCrypto(s.cryptoBalance)} VCN`;
-            } else {
-                const a = state.accounts.find(x => x.id === entityId);
-                avail = isBuy ? `এভেইলেবল: $${formatMoney(a.balance)}` : `এভেইলেবল: ${formatCrypto(a.cryptoBalance)} VCN`;
+            document.getElementById('ctEntityId').value = entityId; document.getElementById('ctEntityType').value = type; document.getElementById('ctActionType').value = action;
+            const isBuy = action === 'buy'; document.getElementById('ctActionLabel').innerText = isBuy ? "V-Coin ক্রয় (Buy)" : "V-Coin বিক্রয় (Sell)"; document.getElementById('ctActionLabel').className = `fw-bold fs-4 ${isBuy ? 'text-success' : 'text-danger'}`; document.getElementById('ctCurrentPriceDisplay').innerText = `বর্তমান মূল্য: $${formatCrypto(state.crypto.price)}`;
+            document.getElementById('ctSourceSelectorDiv').className = (type === 'service' && isBuy) ? 'mb-4' : 'd-none'; document.getElementById('ctAmountLabel').innerText = isBuy ? "কত ডলারের (USD) ক্রিপ্টো কিনবেন?" : "কতগুলো V-Coin বিক্রি করবেন?";
+            let avail = ""; 
+            if(type === 'service') { const s = state.services.find(x => x.id === entityId); avail = isBuy ? `এভেইলেবল ব্যালেন্স চেক করতে উৎস সিলেক্ট করুন` : `এভেইলেবল: ${formatCrypto(s.cryptoBalance)} VCN`; } 
+            else { 
+                const a = state.accounts.find(x => x.id === entityId); 
+                if(isBuy) {
+                    const cc = state.cards.find(c => c.accountId === entityId && c.type === 'CREDIT' && c.active);
+                    avail = cc ? `ক্রেডিট কার্ড লিমিট: $${formatMoney(cc.limit - cc.spent - (cc.blockedEmiLimit||0))}` : `<span class="text-danger">ক্রিপ্টো কিনতে ক্রেডিট কার্ড প্রয়োজন!</span>`;
+                } else avail = `এভেইলেবল: ${formatCrypto(a.cryptoBalance)} VCN`;
             }
-            document.getElementById('ctAvailableBal').innerText = avail;
-            document.getElementById('ctAmount').value = '';
-            document.getElementById('ctCalculationResult').innerText = isBuy ? 'পাওয়া যাবে: 0.0000 VCN' : 'পাওয়া যাবে: $0.00';
+            document.getElementById('ctAvailableBal').innerHTML = avail; document.getElementById('ctAmount').value = ''; document.getElementById('ctCalculationResult').innerText = isBuy ? 'পাওয়া যাবে: 0.0000 VCN' : 'পাওয়া যাবে: $0.00';
             new bootstrap.Modal(document.getElementById('cryptoTradeModal')).show();
         }
 
-        function calculateCryptoTrade() {
-            const amt = parseFloat(document.getElementById('ctAmount').value) || 0;
-            const isBuy = document.getElementById('ctActionType').value === 'buy';
-            const resDisplay = document.getElementById('ctCalculationResult');
-            if(isBuy) resDisplay.innerText = `পাওয়া যাবে: ${formatCrypto(amt / state.crypto.price)} VCN`;
-            else resDisplay.innerText = `পাওয়া যাবে: $${formatMoney(amt * state.crypto.price)}`;
-        }
+        function calculateCryptoTrade() { const amt = parseFloat(document.getElementById('ctAmount').value) || 0; const isBuy = document.getElementById('ctActionType').value === 'buy'; const resDisplay = document.getElementById('ctCalculationResult'); if(isBuy) resDisplay.innerText = `পাওয়া যাবে: ${formatCrypto(amt / state.crypto.price)} VCN`; else resDisplay.innerText = `পাওয়া যাবে: $${formatMoney(amt * state.crypto.price)}`; }
 
         function submitCryptoTrade() {
-            const entityId = document.getElementById('ctEntityId').value;
-            const type = document.getElementById('ctEntityType').value;
-            const isBuy = document.getElementById('ctActionType').value === 'buy';
-            const amt = parseFloat(document.getElementById('ctAmount').value);
-            const price = state.crypto.price;
+            const entityId = document.getElementById('ctEntityId').value; const type = document.getElementById('ctEntityType').value; const isBuy = document.getElementById('ctActionType').value === 'buy'; const amt = parseFloat(document.getElementById('ctAmount').value); const price = state.crypto.price;
             if(isNaN(amt) || amt <= 0) return showAlert("সঠিক পরিমাণ দিন", true);
-
-            if(type === 'service') {
-                const srv = state.services.find(s => s.id === entityId);
-                if(isBuy) {
-                    const source = document.getElementById('ctSourceSelect').value;
-                    if(srv[source] < amt) return showAlert("পর্যাপ্ত USD নেই!", true);
-                    srv[source] -= amt; srv.cryptoBalance += (amt / price);
-                } else {
-                    if(srv.cryptoBalance < amt) return showAlert("পর্যাপ্ত VCN নেই!", true);
-                    srv.cryptoBalance -= amt; srv.main += (amt * price);
-                }
-            } else {
-                const acc = state.accounts.find(a => a.id === entityId);
-                if(isBuy) {
-                    if(acc.balance < amt) return showAlert("পর্যাপ্ত USD নেই!", true);
-                    acc.balance -= amt; acc.cryptoBalance += (amt / price);
-                } else {
-                    if(acc.cryptoBalance < amt) return showAlert("পর্যাপ্ত VCN নেই!", true);
-                    acc.cryptoBalance -= amt; acc.balance += (amt * price);
-                }
+            
+            if(type === 'service') { 
+                const srv = state.services.find(s => s.id === entityId); 
+                if(isBuy) { const source = document.getElementById('ctSourceSelect').value; if(srv[source] < amt) return showAlert("পর্যাপ্ত USD নেই!", true); srv[source] -= amt; srv.cryptoBalance += (amt / price); } 
+                else { if(srv.cryptoBalance < amt) return showAlert("পর্যাপ্ত VCN নেই!", true); srv.cryptoBalance -= amt; srv.main += (amt * price); } 
+            } else { 
+                const acc = state.accounts.find(a => a.id === entityId); 
+                if(isBuy) { 
+                    const cc = state.cards.find(c => c.accountId === acc.id && c.type === 'CREDIT' && c.active);
+                    if(!cc) return showAlert("ক্রিপ্টো শুধুমাত্র ক্রেডিট কার্ড দিয়ে কেনা সম্ভব!", true);
+                    const totalUsage = cc.spent + (cc.blockedEmiLimit || 0);
+                    if(totalUsage + amt > cc.limit) return showAlert("ক্রেডিট কার্ডে পর্যাপ্ত লিমিট নেই!", true);
+                    cc.spent += amt; cc.rewardPoints += amt; acc.cryptoBalance += (amt / price); 
+                    addNotification("ক্রিপ্টো ক্রয়", `ক্রেডিট কার্ড দিয়ে $${formatMoney(amt)} এর ক্রিপ্টো কেনা হয়েছে।`, 'success');
+                } else { 
+                    if(acc.cryptoBalance < amt) return showAlert("পর্যাপ্ত VCN নেই!", true); 
+                    acc.cryptoBalance -= amt; acc.balance += (amt * price); // Selling adds to main balance
+                    addNotification("ক্রিপ্টো বিক্রয়", `ক্রিপ্টো বিক্রি করে $${formatMoney(amt * price)} মূল একাউন্টে যুক্ত হয়েছে।`, 'success');
+                } 
             }
-
-            showAlert(`ক্রিপ্টো ${isBuy?'ক্রয়':'বিক্রয়'} সফল হয়েছে!`); saveState(); renderCryptoTab();
-            bootstrap.Modal.getInstance(document.getElementById('cryptoTradeModal')).hide();
+            showAlert(`ক্রিপ্টো ${isBuy?'ক্রয়':'বিক্রয়'} সফল হয়েছে!`); saveState(); renderCryptoTab(); bootstrap.Modal.getInstance(document.getElementById('cryptoTradeModal')).hide();
         }
 
         function showCryptoTransferModal(fromId, fromType) {
             document.getElementById('cxFromId').value = fromId; document.getElementById('cxFromType').value = fromType;
             let bal = fromType === 'service' ? state.services.find(s => s.id === fromId).cryptoBalance : state.accounts.find(a => a.id === fromId).cryptoBalance;
-            
             document.getElementById('cxAvailable').value = `${formatCrypto(bal)} VCN`; document.getElementById('cxAmount').value = '';
-            
-            let options = `<optgroup label="ব্যাংক/ওয়ালেট সমূহ">`;
-            state.services.forEach(s => { if(!(fromType === 'service' && fromId === s.id)) options += `<option class="text-dark" value="srv_${s.id}">${s.name} (Service)</option>`; });
-            options += `</optgroup><optgroup label="গ্রাহক একাউন্টসমূহ">`;
-            state.accounts.forEach(a => {
-                if(!(fromType === 'customer' && fromId === a.id)) {
-                    const c = state.customers.find(c => c.id === a.customerId);
-                    if(c) options += `<option class="text-dark" value="acc_${a.id}">${c.name}</option>`;
-                }
-            });
-            options += `</optgroup>`;
-            document.getElementById('cxTargetSelect').innerHTML = options;
-            new bootstrap.Modal(document.getElementById('cryptoTransferModal')).show();
+            let options = `<optgroup label="ব্যাংক/ওয়ালেট সমূহ">`; state.services.forEach(s => { if(!(fromType === 'service' && fromId === s.id)) options += `<option class="text-dark" value="srv_${s.id}">${s.name} (Service)</option>`; }); options += `</optgroup><optgroup label="গ্রাহক একাউন্টসমূহ">`; state.accounts.forEach(a => { if(!(fromType === 'customer' && fromId === a.id)) { const c = state.customers.find(c => c.id === a.customerId); if(c) options += `<option class="text-dark" value="acc_${a.id}">${c.name}</option>`; } }); options += `</optgroup>`;
+            document.getElementById('cxTargetSelect').innerHTML = options; new bootstrap.Modal(document.getElementById('cryptoTransferModal')).show();
         }
 
         function submitCryptoTransfer() {
-            const fromId = document.getElementById('cxFromId').value;
-            const fromType = document.getElementById('cxFromType').value;
-            const targetVal = document.getElementById('cxTargetSelect').value;
-            const amt = parseFloat(document.getElementById('cxAmount').value);
-            
+            const fromId = document.getElementById('cxFromId').value; const fromType = document.getElementById('cxFromType').value; const targetVal = document.getElementById('cxTargetSelect').value; const amt = parseFloat(document.getElementById('cxAmount').value);
             if(isNaN(amt) || amt <= 0) return showAlert("সঠিক পরিমাণ দিন", true);
             let sender = fromType === 'service' ? state.services.find(s => s.id === fromId) : state.accounts.find(a => a.id === fromId);
             if(sender.cryptoBalance < amt) return showAlert("পর্যাপ্ত VCN নেই!", true);
-            
-            sender.cryptoBalance -= amt;
-            if(targetVal.startsWith('srv_')) state.services.find(s => s.id === targetVal.split('_')[1]).cryptoBalance += amt;
-            else state.accounts.find(a => a.id === targetVal.split('_')[1]).cryptoBalance += amt;
-            
-            showAlert(`V-Coin ট্রান্সফার সফল হয়েছে!`); saveState(); renderCryptoTab();
-            bootstrap.Modal.getInstance(document.getElementById('cryptoTransferModal')).hide();
+            sender.cryptoBalance -= amt; if(targetVal.startsWith('srv_')) state.services.find(s => s.id === targetVal.split('_')[1]).cryptoBalance += amt; else state.accounts.find(a => a.id === targetVal.split('_')[1]).cryptoBalance += amt;
+            showAlert(`V-Coin ট্রান্সফার সফল হয়েছে!`); saveState(); renderCryptoTab(); bootstrap.Modal.getInstance(document.getElementById('cryptoTransferModal')).hide();
         }
 
         function renderAll() {
             renderAdmin(); renderServices(); populateCustomerSelect();
             if(!document.getElementById('customerDashboard').classList.contains('d-none')) renderCustomerDashboard();
             if(document.getElementById('crypto-tab').classList.contains('active')) renderCryptoTab();
+            if(document.getElementById('loans-tab').classList.contains('active')) renderLoans();
         }
 
         window.onload = () => {
@@ -1811,6 +1105,7 @@
             document.getElementById('admin-tab').addEventListener('shown.bs.tab', renderAdmin);
             document.getElementById('services-tab').addEventListener('shown.bs.tab', renderServices);
             document.getElementById('crypto-tab').addEventListener('shown.bs.tab', renderCryptoTab);
+            document.getElementById('loans-tab').addEventListener('shown.bs.tab', renderLoans);
             renderAll();
         };
     </script>
